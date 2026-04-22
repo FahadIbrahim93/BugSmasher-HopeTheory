@@ -9,7 +9,7 @@ import { GameEngine } from '../game/GameEngine';
 import { GameConfig } from '../game/GameConfig';
 import { useEffect } from 'react';
 
-export function Game({ onMainMenu, onSettings }: { onMainMenu: () => void; onSettings?: () => void }) {
+export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -95,7 +95,6 @@ export function Game({ onMainMenu, onSettings }: { onMainMenu: () => void; onSet
         <PauseMenu 
           onResume={togglePause}
           onMainMenu={onMainMenu}
-          onSettings={onSettings}
         />
       )}
       
@@ -116,14 +115,6 @@ export function Game({ onMainMenu, onSettings }: { onMainMenu: () => void; onSet
         <GameOver 
           score={finalScore} 
           onRetry={() => {
-            if (engineRef.current) {
-              engineRef.current.resetUpgrades();
-              engineRef.current.resetPowerups();
-              engineRef.current.resetStats();
-              engineRef.current.score = 0;
-              engineRef.current.wave = 1;
-              engineRef.current.health = engineRef.current.maxHealth;
-            }
             setIsGameOver(false);
             setIsUpgrading(false);
             setFinalScore(0);

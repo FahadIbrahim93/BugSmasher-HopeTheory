@@ -3,10 +3,9 @@ import { MainMenu } from './components/MainMenu';
 import { Game } from './components/Game';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Preloader } from './components/Preloader';
-import { Settings } from './components/Settings';
 
 export default function App() {
-  const [gameState, setGameState] = useState<'preloading' | 'menu' | 'playing' | 'settings'>('preloading');
+  const [gameState, setGameState] = useState<'preloading' | 'menu' | 'playing'>('preloading');
 
   return (
     <ErrorBoundary>
@@ -15,18 +14,11 @@ export default function App() {
           <Preloader onComplete={() => setGameState('menu')} />
         )}
         {gameState === 'menu' && (
-          <MainMenu 
-            onStart={() => setGameState('playing')} 
-            onSettings={() => setGameState('settings')}
-          />
-        )}
-        {gameState === 'settings' && (
-          <Settings onBack={() => setGameState('menu')} />
+          <MainMenu onStart={() => setGameState('playing')} />
         )}
         {gameState === 'playing' && (
           <Game 
             onMainMenu={() => setGameState('menu')} 
-            onSettings={() => setGameState('settings')}
           />
         )}
       </div>
