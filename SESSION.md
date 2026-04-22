@@ -1,27 +1,27 @@
 # Session Info
-**Date:** 2026-04-19
-**Status:** Active
-
-## Goal
-Implement a comprehensive game settings and lifecycle control system, including volume management, pause functionality, and an ambient settings overlay.
+**Date:** 2026-04-22
+**Status:** Starting Session
 
 ## Code Quality Audit
-**Current Rating:** 7.5 / 10
+**Current Rating:** 8.0 / 10
+*Reasoning: The base architecture is solid and the visual identity is world-class. However, it still lacks the polish of professional feedback loops (visual click confirmation) and the depth of persistent progression (saving/loading mid-run).*
 
 **Top 3 Strengths:**
-1. High-performance decoupled React-to-Canvas UI (HUD runs at 60fps without choking React).
-2. Sophisticated "Grok / Data Core" aesthetic that reads as premium, mid-2026 enterprise software rather than a generic web game.
-3. Strict separation of concerns (WaveManager, ParticleSystem, GameEngine are neatly decoupled).
+1. High-fidelity rendering performance with decoupled HUD.
+2. Cohesive "Grok/Data Core" aesthetic.
+3. Decoupled wave and particle management logic.
 
 **Top 3 Critical Weaknesses:**
-1. Lack of basic game lifecycle states (no Pause/Resume capability, breaking immersion and basic UX expectations).
-2. Hardcoded audio firing without an audio mixer, volume control, or persistent local storage for user preferences.
-3. No in-game settings overlay to adjust volume or abort the run gracefully.
+1. Lack of input feedback (clicks are invisible unless they hit a target).
+2. No data persistence for mid-game progress (refreshing wipes everything).
+3. Settings UI is currently coupled tightly to the Pause state rather than being a standalone system.
 
-**Project Definition:**
-An ultra-sleek, high-performance, browser-based base defense game styled like a mid-2026 AI copilot dashboard.
+## Project Definition
+An ultra-sleek, high-performance, browser-based base defense game styled like a mid-2026 AI copilot dashboard, featuring swarm-based combat and deep persistence.
 
-## Task List (Current Session)
-1. **[DONE] Audio Mixing & Persistence**: Upgraded `SoundManager.ts` to support global master volume control, a mute toggle, and `localStorage` persistence. It properly mixes via AudioNode graphs.
-2. **[DONE] Engine Pause State**: Implemented pause/resume logic inside `GameEngine.ts` and mapped it to a new on-screen button inside `HUD.tsx` and an `Escape` key capture in `Game.tsx`.
-3. **[DONE] Settings & Pause Overlay**: Built an elegant `PauseMenu.tsx` component matching our minimalist aesthetic that hooks into `Game.tsx` to handle sliders and aborting strings gracefully.
+## Task List (This Session)
+1. **Input Visual Feedback**: Add ripple/pulse effects at click locations in the `ParticleSystem`.
+2. **Persistence Layer**: Implement `SaveManager.ts` to handle local storage of score, wave, and upgrades.
+3. **Comprehensive Settings**: Upgrade `SoundManager` to handle SFX vs Music volumes and create a dedicated `SettingsMenu` component.
+4. **State Reset Enforcement**: Ensure 'Retry' correctly clears all engine volatility.
+5. **Save/Load UI**: Integrate Save/Load buttons into the Pause Menu.
