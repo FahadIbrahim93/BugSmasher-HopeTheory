@@ -1,5 +1,5 @@
 import { GameEngine, Bug, Powerup } from './GameEngine';
-import { Splatter, Particle, Shockwave, Laser, ClickRipple } from './ParticleSystem';
+import { Splatter, Particle, Shockwave, Laser, ClickRipple, DamageNumber } from './ParticleSystem';
 
 export class Renderer {
   engine: GameEngine;
@@ -36,6 +36,9 @@ export class Renderer {
     }
     for (let i = 0; i < this.engine.particleSystem.clickRipples.length; i++) {
       if (this.engine.particleSystem.clickRipples[i].active) this.drawClickRipple(this.engine.particleSystem.clickRipples[i]);
+    }
+    for (let i = 0; i < this.engine.particleSystem.damageNumbers.length; i++) {
+      if (this.engine.particleSystem.damageNumbers[i].active) this.drawDamageNumber(this.engine.particleSystem.damageNumbers[i]);
     }
     for (let i = 0; i < this.engine.particleSystem.particles.length; i++) {
       if (this.engine.particleSystem.particles[i].active) this.drawParticle(this.engine.particleSystem.particles[i]);
@@ -415,6 +418,25 @@ export class Renderer {
       ctx.shadowBlur = 15;
     }
     ctx.stroke();
+    ctx.restore();
+  }
+
+  drawDamageNumber(dn: DamageNumber) {
+    const ctx = this.engine.ctx;
+    ctx.save();
+    const alpha = dn.life / dn.maxLife;
+    ctx.globalAlpha = alpha;
+    const scale = 1 + (1 - alpha) * 0.3;
+    ctx.translate(dn.x, dn.y);
+    ctx.scale(scale, scale);
+    ctx.fillStyle = dn.color;
+    ctx.font = 'bold 24px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    if (!this.engine.isMobile) {
+      ctx.shadowColor = dn.color;
+      ctx.shadowBlur = 10;
+    }
+    ctx.fillText(`+${dn.value}`, 0, 0);
     ctx.restore();
   }
 

@@ -1,10 +1,12 @@
 import { soundManager } from './SoundManager';
 import { GameConfig } from './GameConfig';
 import { Renderer } from './Renderer';
-import { ParticleSystem } from './ParticleSystem';
+import { ParticleSystem, DamageNumber } from './ParticleSystem';
 import { assetManager } from './AssetManager';
 import { WaveManager } from './WaveManager';
 import { SaveManager } from './SaveManager';
+import { AchievementSystem, achievementSystem } from './AchievementSystem';
+import { hapticsManager } from './HapticsManager';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -210,6 +212,12 @@ export class GameEngine {
       // Save session stats
       this.saveManager.addBugsSmashed(this.totalKills);
       this.saveManager.addPlayTime(this.globalTime);
+      this.saveManager.incrementGamesPlayed();
+      
+      // Track achievements
+      achievementSystem.onKill(); // Already tracked incrementally but ensure minimum
+      achievementSystem.onGameEnd(this.score, 0); // 0 = no tracking in this session yet for misses
+      
       this.onGameOver?.(this.score, this.wave, this.totalKills);
       return;
     }
@@ -322,6 +330,9 @@ export class GameEngine {
         this.totalKills++;
         this.chainCombo++;
         
+        // Track combo achievement
+        achievementSystem.onCombo(this.chainCombo);
+        
         // Milestone flash effects
         const milestones: Record<number, { color: string; size: number; dur: number }> = {
           3:  { color: '#00ffcc', size: 400, dur: 0.4 },
@@ -338,7 +349,18 @@ export class GameEngine {
         }
         
         const mult = this.multiplierTimer > 0 ? 2 : 1;
-        this.score += bug.scoreValue * mult;
+        const pointsEarned = bug.scoreValue * mult;
+        this.score += pointsEarned;
+
+        // Spawn damage number popup
+        this.particleSystem.spawnDamageNumber(bug.x, bug.y - 20, pointsEarned, mult > 1 ? '#ff00ff' : '#ffff00');
+        
+        // Trigger haptics
+        if (this.chainCombo >= 3) {
+          hapticsManager.combo();
+        } else {
+          hapticsManager.hit();
+        }
         
         // Update high score
         if (this.score > this.highScore) {

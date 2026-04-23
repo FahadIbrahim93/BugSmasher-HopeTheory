@@ -7,6 +7,7 @@ import { PauseMenu } from './PauseMenu';
 import { TutorialOverlay } from './TutorialOverlay';
 import { GameEngine } from '../game/GameEngine';
 import { GameConfig } from '../game/GameConfig';
+import { achievementSystem } from '../game/AchievementSystem';
 import { useEffect } from 'react';
 
 export function Game({ onMainMenu }: { onMainMenu: () => void }) {
@@ -32,6 +33,9 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
 
   const handleWaveComplete = useCallback(() => {
     if (engineRef.current) {
+      // Track wave achievement
+      achievementSystem.onWaveComplete(engineRef.current.wave);
+      
       setFinalScore(engineRef.current.score);
       setCurrentWave(engineRef.current.wave);
     }

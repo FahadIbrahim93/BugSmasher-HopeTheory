@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Skull, RotateCcw, Home, Trophy, Target, Layers } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Skull, RotateCcw, Home, Trophy, Target, Layers, Share2 } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { leaderboard } from '../game/Leaderboard';
 
@@ -24,6 +24,20 @@ export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverP
     // Auto-add to leaderboard
     if (score > 0) {
       leaderboard.addEntry(score, waves, kills, 'Player');
+    }
+  }, [score, waves, kills]);
+
+  const handleShare = useCallback(async () => {
+    const text = `🎮 I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by Fahad!\n🐛 ${kills} bugs smashed\n#BugSmasher #HighScore`;
+    
+    if (navigator.share && navigator.canShare?.({ text })) {
+      try {
+        await navigator.share({ text });
+      } catch (e) { /* User cancelled */ }
+    } else {
+      // Fallback: copy to clipboard
+      await navigator.clipboard.writeText(text);
+      // Show brief feedback - you could add toast here
     }
   }, [score, waves, kills]);
 
@@ -96,6 +110,14 @@ export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverP
             >
               <Trophy className="w-4 h-4 mr-2" />
               Leaderboard
+            </button>
+            
+            <button 
+              onClick={() => { soundManager.uiClick(); handleShare(); }}
+              className="flex-1 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
+            >
+              <Share2 className="w-4 h-4 mr-2" />
+              Share
             </button>
             
             <button 

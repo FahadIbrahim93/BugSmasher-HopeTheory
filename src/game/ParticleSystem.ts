@@ -4,11 +4,13 @@ export interface Splatter { active: boolean; x: number; y: number; rotation: num
 export interface Shockwave { active: boolean; x: number; y: number; radius: number; speed: number; color: string; life: number; maxLife: number; }
 export interface Laser { active: boolean; x1: number; y1: number; x2: number; y2: number; life: number; maxLife: number; color: string; }
 export interface ClickRipple { active: boolean; x: number; y: number; radius: number; maxRadius: number; color: string; life: number; maxLife: number; }
+export interface DamageNumber { active: boolean; x: number; y: number; value: number; color: string; life: number; maxLife: number; }
 
 const MAX_PARTICLES = 300;
 const MAX_SPLATTERS = 50;
 const MAX_SHOCKWAVES = 20;
 const MAX_CLICK_RIPPLES = 10;
+const MAX_DAMAGE_NUMBERS = 15;
 
 export class ParticleSystem {
   particles: Particle[] = Array.from({ length: MAX_PARTICLES }, () => ({ active: false, x: 0, y: 0, vx: 0, vy: 0, size: 0, color: '', rotation: 0, life: 0, maxLife: 0 }));
@@ -23,6 +25,9 @@ shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active
   clickRipples: ClickRipple[] = Array.from({ length: MAX_CLICK_RIPPLES }, () => ({ active: false, x: 0, y: 0, radius: 0, maxRadius: 0, color: '', life: 0, maxLife: 0 }));
   clickRippleIdx = 0;
 
+  damageNumbers: DamageNumber[] = Array.from({ length: MAX_DAMAGE_NUMBERS }, () => ({ active: false, x: 0, y: 0, value: 0, color: '', life: 0, maxLife: 0 }));
+  damageNumberIdx = 0;
+
   lasers: Laser[] = [];
 
   reset() {
@@ -30,6 +35,7 @@ shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active
     this.splatters.forEach(s => s.active = false);
     this.shockwaves.forEach(sw => sw.active = false);
     this.clickRipples.forEach(cr => cr.active = false);
+    this.damageNumbers.forEach(dn => dn.active = false);
     this.lasers = [];
   }
 
@@ -70,6 +76,15 @@ shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active
         const l = this.lasers[i];
         l.life -= dt;
         if (l.life <= 0) this.lasers.splice(i, 1);
+      }
+
+      // Update damage numbers
+      for (let i = 0; i < MAX_DAMAGE_NUMBERS; i++) {
+        const dn = this.damageNumbers[i];
+        if (!dn.active) continue;
+        dn.life -= dt;
+        dn.y -= 60 * dt; // Float upward
+        if (dn.life <= 0) dn.active = false;
       }
   }
 
@@ -174,5 +189,17 @@ shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active
     cr.life = 0.4;
     cr.maxLife = 0.4;
     this.clickRippleIdx = (this.clickRippleIdx + 1) % MAX_CLICK_RIPPLES;
+  }
+
+  spawnDamageNumber(x: number, y: number, value: number, color: string = '#ffff00') {
+    const dn = this.damageNumbers[this.damageNumberIdx];
+    dn.active = true;
+    dn.x = x;
+    dn.y = y;
+    dn.value = value;
+    dn.color = color;
+    dn.life = 0.8;
+    dn.maxLife = 0.8;
+    this.damageNumberIdx = (this.damageNumberIdx + 1) % MAX_DAMAGE_NUMBERS;
   }
 }
