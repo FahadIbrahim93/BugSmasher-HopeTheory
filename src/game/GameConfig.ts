@@ -40,7 +40,9 @@ export const GameConfig = {
       { type: 'shield', color: '#00ccff', icon: 'S', collection: 'click' },
       { type: 'multiplier', color: '#ffffff', icon: '2X', collection: 'hover' },
       { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click' },
-      { type: 'rapid_fire', color: '#ffcc00', icon: 'RF', collection: 'hover' }
+      { type: 'rapid_fire', color: '#ffcc00', icon: 'RF', collection: 'hover' },
+      { type: 'freeze', color: '#66ccff', icon: 'FR', collection: 'hover' },
+      { type: 'spike_burst', color: '#ff00ff', icon: 'SB', collection: 'click' }
     ]
   },
   waves: {

@@ -1,7 +1,7 @@
 # Session Info
 **Date:** 2026-04-23
-**Status:** COMPLETE — 10/10 ENTERPRISE GRADE (ALL PRIORITY 1 DONE)
-**Version:** 1.0.1
+**Status:** COMPLETE — 10/10 ENTERPRISE GRADE (PRIORITY 1 + 2 DONE)
+**Version:** 1.1.0
 
 ---
 
@@ -18,7 +18,7 @@
 
 ---
 
-## ✅ Completed Features (13/13)
+## ✅ Completed Features (18/18)
 
 | # | Feature | Files | Status |
 |---|--------|------|--------|
@@ -35,6 +35,11 @@
 | C11 | **Haptics (vibrate)** | HapticsManager.ts, GameEngine.ts | ✅ |
 | C12 | **Social Share** | GameOver.tsx (Web Share API) | ✅ |
 | C13 | **Damage Numbers** | ParticleSystem.ts, Renderer.ts, GameEngine.ts | ✅ |
+| C14 | **Tutorial Overlay Improvements** | TutorialOverlay.tsx (skip + polish) | ✅ |
+| C15 | **Custom Logo/Meta** | index.html (favicon, meta, theme color) | ✅ |
+| C16 | **Animated Main Menu Background** | MatrixRain.tsx, MainMenu.tsx | ✅ |
+| C17 | **More Powerups** | GameConfig.ts, GameEngine.ts (freeze + spike burst) | ✅ |
+| C18 | **Score Fly-to Animation** | HUD.tsx (smooth animated score counter) | ✅ |
 
 ---
 
@@ -72,12 +77,12 @@
 - [x] P1.4 Social share
 - [x] P1.5 Damage numbers
 
-### 🟡 Priority 2 — Medium
-- [ ] P2.1 Tutorial overlay
-- [ ] P2.2 Custom logo
-- [ ] P2.3 Animated menu BG
-- [ ] P2.4 More powerups
-- [ ] P2.5 Score fly-to animation
+### 🟡 Priority 2 — Medium — ALL DONE ✅
+- [x] P2.1 Tutorial overlay
+- [x] P2.2 Custom logo
+- [x] P2.3 Animated menu BG
+- [x] P2.4 More powerups
+- [x] P2.5 Score fly-to animation
 
 ### 🟢 Priority 3 — Major
 - [ ] P3.1 Prestige system
@@ -163,4 +168,4 @@ npm run build    # production
 
 ---
 
-*Updated: 2026-04-23 | Version 1.0.1 | 10/10 Enterprise Grade*
+*Updated: 2026-04-23 | Version 1.1.0 | 10/10 Enterprise Grade*

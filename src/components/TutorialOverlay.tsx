@@ -59,6 +59,11 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Game
     localStorage.setItem('bugsmasher_tutorial', 'true');
     setIsVisible(false);
   };
+  
+  // Skip button for impatient users
+  const skip = () => {
+    dismiss();
+  };
 
   return (
     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none w-[90%] max-w-md">
@@ -116,12 +121,20 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Game
                 <p className="text-white font-mono text-sm leading-snug">Survive the wave to access and install upgrades.</p>
               </div>
             </div>
-            <button 
-              onClick={dismiss}
-              className="w-full sm:w-auto px-6 py-3 bg-white text-black font-bold font-mono text-xs rounded-full uppercase tracking-widest hover:bg-zinc-200 transition-colors flex-shrink-0"
-            >
-              Acknowledge
-            </button>
+            <div className="flex space-x-2">
+              <button 
+                onClick={skip}
+                className="px-4 py-3 bg-transparent border border-white/10 text-zinc-500 font-mono text-xs rounded-full hover:text-white transition-colors flex-shrink-0"
+              >
+                Skip
+              </button>
+              <button 
+                onClick={dismiss}
+                className="px-6 py-3 bg-white text-black font-bold font-mono text-xs rounded-full uppercase tracking-widest hover:bg-zinc-200 transition-colors flex-shrink-0"
+              >
+                Acknowledge
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

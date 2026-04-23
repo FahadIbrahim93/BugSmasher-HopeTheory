@@ -87,6 +87,18 @@ export class Renderer {
       ctx.textAlign = 'center';
       ctx.fillText(`SYSTEM: OVERRIDE (${Math.ceil(this.engine.rapidFireTimer)}s)`, width / 2, this.engine.multiplierTimer > 0 ? 70 : 40);
     }
+
+    if (this.engine.freezeTimer > 0) {
+      ctx.fillStyle = '#66ccff';
+      ctx.font = 'bold 20px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      const y = this.engine.multiplierTimer > 0 || this.engine.rapidFireTimer > 0 ? 100 : 40;
+      ctx.fillText(`SYSTEM: CRYO LOCK (${Math.ceil(this.engine.freezeTimer)}s)`, width / 2, y);
+
+      // subtle freeze overlay
+      ctx.fillStyle = 'rgba(102, 204, 255, 0.08)';
+      ctx.fillRect(0, 0, width, height);
+    }
     
     ctx.restore();
   }

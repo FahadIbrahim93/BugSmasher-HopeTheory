@@ -1,11 +1,11 @@
 import { soundManager } from './SoundManager';
 import { GameConfig } from './GameConfig';
 import { Renderer } from './Renderer';
-import { ParticleSystem, DamageNumber } from './ParticleSystem';
+import { ParticleSystem } from './ParticleSystem';
 import { assetManager } from './AssetManager';
 import { WaveManager } from './WaveManager';
 import { SaveManager } from './SaveManager';
-import { AchievementSystem, achievementSystem } from './AchievementSystem';
+import { achievementSystem } from './AchievementSystem';
 import { hapticsManager } from './HapticsManager';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
@@ -51,9 +51,11 @@ export class GameEngine {
   shieldTimer: number = 0;
   multiplierTimer: number = 0;
   rapidFireTimer: number = 0;
+  freezeTimer: number = 0;
   autoTurretTimer: number = 0;
 
-  // Tutorial tracking
+  // Session tracking
+  missCount: number = 0;
   totalKills: number = 0;
   totalPowerupsCollected: number = 0;
   forceNextPowerup: boolean = false;
@@ -143,6 +145,8 @@ export class GameEngine {
     this.powerups = [];
     this.chainCombo = 0;
     this.chainComboFlash = 0;
+    this.freezeTimer = 0;
+    this.missCount = 0;
   }
   
   startWave() {
@@ -212,11 +216,9 @@ export class GameEngine {
       // Save session stats
       this.saveManager.addBugsSmashed(this.totalKills);
       this.saveManager.addPlayTime(this.globalTime);
-      this.saveManager.incrementGamesPlayed();
       
       // Track achievements
-      achievementSystem.onKill(); // Already tracked incrementally but ensure minimum
-      achievementSystem.onGameEnd(this.score, 0); // 0 = no tracking in this session yet for misses
+      achievementSystem.onGameEnd(this.score, this.missCount);
       
       this.onGameOver?.(this.score, this.wave, this.totalKills);
       return;
@@ -230,6 +232,7 @@ export class GameEngine {
     if (this.shieldTimer > 0) this.shieldTimer -= dt;
     if (this.multiplierTimer > 0) this.multiplierTimer -= dt;
     if (this.rapidFireTimer > 0) this.rapidFireTimer -= dt;
+    if (this.freezeTimer > 0) this.freezeTimer -= dt;
     
     this.waveManager.update(dt);
     
@@ -272,6 +275,12 @@ export class GameEngine {
       
       let vx = (dx / dist) * bug.speed;
       let vy = (dy / dist) * bug.speed;
+
+      // Freeze powerup slows all bugs
+      if (this.freezeTimer > 0) {
+        vx *= 0.35;
+        vy *= 0.35;
+      }
       
       if (bug.type === 'scout') {
         const perpX = -vy;
@@ -328,6 +337,7 @@ export class GameEngine {
       const idx = this.bugs.indexOf(bug);
       if (idx > -1) {
         this.totalKills++;
+        achievementSystem.onKill();
         this.chainCombo++;
         
         // Track combo achievement
@@ -454,6 +464,7 @@ export class GameEngine {
     
     if (!hit) {
       this.chainCombo = 0;
+      this.missCount++;
       soundManager.shoot();
       this.particleSystem.spawnMissParticles(x, y);
       this.particleSystem.spawnClickRipple(x, y);
@@ -469,6 +480,18 @@ export class GameEngine {
       for (let i = this.bugs.length - 1; i >= 0; i--) {
         this.damageBug(this.bugs[i], 100);
       }
+    } else if (type === 'spike_burst') {
+      soundManager.powerup();
+      this.shake(0.7, 25);
+      const centerX = this.width / 2;
+      const centerY = this.height / 2;
+      this.particleSystem.spawnShockwave(centerX, centerY, '#ff00ff', 450);
+
+      // Burst damages closest bugs instantly
+      const targets = [...this.bugs]
+        .sort((a, b) => ((a.x - centerX) ** 2 + (a.y - centerY) ** 2) - ((b.x - centerX) ** 2 + (b.y - centerY) ** 2))
+        .slice(0, 8);
+      targets.forEach(b => this.damageBug(b, 2));
     } else {
       soundManager.powerup();
       this.particleSystem.spawnShockwave(this.width/2, this.height/2, '#ffffff', 300);
@@ -478,6 +501,9 @@ export class GameEngine {
         this.multiplierTimer = GameConfig.powerups.duration;
       } else if (type === 'rapid_fire') {
         this.rapidFireTimer = GameConfig.powerups.duration;
+      } else if (type === 'freeze') {
+        this.freezeTimer = GameConfig.powerups.duration * 0.8;
+        this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#66ccff', 500);
       }
     }
   }

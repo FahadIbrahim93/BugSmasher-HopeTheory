@@ -15,6 +15,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
   useEffect(() => {
     let animationFrameId: number;
     let lastScore = -1;
+    let displayedScore = 0;
     let lastWave = -1;
     let lastHealth = -1;
     let lastMaxHealth = -1;
@@ -23,9 +24,22 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     const updateHUD = () => {
       const engine = engineRef.current;
       if (engine) {
-        if (engine.score !== lastScore && scoreRef.current) {
-          scoreRef.current.textContent = engine.score.toString().padStart(6, '0');
-          if (lastScore !== -1 && engine.score > lastScore) {
+        if (scoreRef.current) {
+          // Reset displayed score when new game starts
+          if (engine.score < displayedScore) {
+            displayedScore = engine.score;
+          }
+
+          // Smooth score fly-to animation
+          const delta = engine.score - displayedScore;
+          if (Math.abs(delta) > 0.5) {
+            displayedScore += delta * 0.2;
+          } else {
+            displayedScore = engine.score;
+          }
+
+          scoreRef.current.textContent = Math.floor(displayedScore).toString().padStart(6, '0');
+          if (engine.score !== lastScore && lastScore !== -1 && engine.score > lastScore) {
             soundManager.scoreTick();
           }
           lastScore = engine.score;

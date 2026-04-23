@@ -2,12 +2,14 @@ import { Bug } from 'lucide-react';
 import { useState } from 'react';
 import { soundManager } from '../game/SoundManager';
 import { SettingsMenu } from './SettingsMenu';
+import { MatrixRain } from './MatrixRain';
 
 export function MainMenu({ onStart }: { onStart: () => void }) {
   const [showSettings, setShowSettings] = useState(false);
 
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
+      <MatrixRain />
       {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} />}
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">

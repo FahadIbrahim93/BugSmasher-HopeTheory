@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Volume2, VolumeX, Music, Music2, Trophy, Bug, Clock, Gamepad2, Award, Flame, Calendar } from 'lucide-react';
+import { X, Volume2, VolumeX, Music, Music2, Trophy, Bug, Clock, Gamepad2, Award, Flame } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { saveManager } from '../game/SaveManager';
 import { achievementSystem } from '../game/AchievementSystem';
