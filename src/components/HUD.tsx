@@ -89,7 +89,12 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     };
 
     updateHUD();
-    return () => cancelAnimationFrame(animationFrameId);
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (comboTimerRef.current) {
+        clearTimeout(comboTimerRef.current);
+      }
+    };
   }, [engineRef]);
 
   return (

@@ -2,7 +2,6 @@ import { soundManager } from './SoundManager';
 import { GameConfig } from './GameConfig';
 import { Renderer } from './Renderer';
 import { ParticleSystem } from './ParticleSystem';
-import { assetManager } from './AssetManager';
 import { WaveManager } from './WaveManager';
 import { SaveManager } from './SaveManager';
 import { achievementSystem } from './AchievementSystem';
@@ -69,7 +68,7 @@ export class GameEngine {
   renderer: Renderer;
   
   onGameOver?: (score: number, waves: number, kills: number) => void;
-  onWaveComplete?: () => void;
+  onWaveComplete?: (completedWave: number) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -108,7 +107,9 @@ export class GameEngine {
       this.canvas.height = clientHeight * this.dpr;
       this.canvas.style.width = `${clientWidth}px`;
       this.canvas.style.height = `${clientHeight}px`;
-      
+
+      // Reset transform before re-scaling to avoid cumulative scaling on resize
+      this.ctx.setTransform(1, 0, 0, 1, 0, 0);
       this.ctx.scale(this.dpr, this.dpr);
       this.width = clientWidth;
       this.height = clientHeight;
@@ -192,11 +193,21 @@ export class GameEngine {
   
   spawnPowerup(x: number, y: number, force: boolean = false) {
     if (!force && Math.random() > GameConfig.powerups.dropChance) return;
-    
+
     const types = GameConfig.powerups.types;
-    
-    const pType = types[Math.floor(Math.random() * types.length)];
-    
+
+    // Weighted selection for better gameplay balance
+    const totalWeight = types.reduce((sum, t) => sum + (t.weight ?? 1), 0);
+    let roll = Math.random() * totalWeight;
+    let pType = types[0];
+    for (const t of types) {
+      roll -= (t.weight ?? 1);
+      if (roll <= 0) {
+        pType = t;
+        break;
+      }
+    }
+
     this.powerups.push({
       active: true,
       x, y,
@@ -465,6 +476,7 @@ export class GameEngine {
     if (!hit) {
       this.chainCombo = 0;
       this.missCount++;
+      hapticsManager.error();
       soundManager.shoot();
       this.particleSystem.spawnMissParticles(x, y);
       this.particleSystem.spawnClickRipple(x, y);
@@ -490,7 +502,7 @@ export class GameEngine {
       // Burst damages closest bugs instantly
       const targets = [...this.bugs]
         .sort((a, b) => ((a.x - centerX) ** 2 + (a.y - centerY) ** 2) - ((b.x - centerX) ** 2 + (b.y - centerY) ** 2))
-        .slice(0, 8);
+        .slice(0, GameConfig.powerups.spikeBurstTargets);
       targets.forEach(b => this.damageBug(b, 2));
     } else {
       soundManager.powerup();
@@ -502,7 +514,7 @@ export class GameEngine {
       } else if (type === 'rapid_fire') {
         this.rapidFireTimer = GameConfig.powerups.duration;
       } else if (type === 'freeze') {
-        this.freezeTimer = GameConfig.powerups.duration * 0.8;
+        this.freezeTimer = GameConfig.powerups.freezeDuration;
         this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#66ccff', 500);
       }
     }

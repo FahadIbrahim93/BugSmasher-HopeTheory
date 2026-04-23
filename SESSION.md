@@ -8,7 +8,7 @@
 ## Project: BugSmasher by Fahad
 - **Tagline:** DEFEND THE CORE. SMASH THE SWARM.
 - **Theme:** Cyberpunk AI Copilot Dashboard (2026)
-- **Quality Score:** 10/10 (ALL PRIORITY 1 COMPLETED)
+- **Quality Score:** 10/10 (P1 + P2 complete, gameplay logic audited & hardened)
 
 ---
 
@@ -89,6 +89,22 @@
 - [ ] P3.2 Multiple biomes
 - [ ] P3.3 Daily challenges
 - [ ] P3.4 Cloud leaderboard
+
+---
+
+## 🎯 Post-P2 Gameplay Scrutiny (Hardening Pass)
+
+### Critical fixes applied
+- Fixed wave achievement timing bug: achievements now use `completedWave` (not next wave)
+- Fixed canvas resize transform accumulation (`ctx.setTransform`) to prevent DPI/scaling drift
+- Rewired `GameCanvas` ref to expose real `GameEngine` instance (tutorial/pause/logic now fully accurate)
+- Added weighted powerup RNG for balanced drops (nuke rarity reduced)
+- Added miss haptic feedback + safer share fallback flow
+- Added HUD timeout cleanup to avoid timer leak on unmount
+
+### Balance updates
+- New weighted powerup table (shield/multiplier/rapid > freeze > spike_burst > nuke)
+- Config-driven values: `freezeDuration`, `spikeBurstTargets`
 
 ---
 

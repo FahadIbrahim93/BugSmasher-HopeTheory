@@ -33,9 +33,10 @@ export class WaveManager {
       }
     } else if (this.engine.bugs.length === 0) {
       this.waveActive = false;
+      const completedWave = this.engine.wave;
       this.engine.wave++;
       this.engine.stop();
-      this.engine.onWaveComplete?.();
+      this.engine.onWaveComplete?.(completedWave);
     }
   }
 

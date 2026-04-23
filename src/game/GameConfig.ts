@@ -35,14 +35,16 @@ export const GameConfig = {
   powerups: {
     dropChance: 0.15,
     duration: 10, // shield/multiplier/rapid_fire
+    freezeDuration: 8,
     life: 8, // time on ground
+    spikeBurstTargets: 8,
     types: [
-      { type: 'shield', color: '#00ccff', icon: 'S', collection: 'click' },
-      { type: 'multiplier', color: '#ffffff', icon: '2X', collection: 'hover' },
-      { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click' },
-      { type: 'rapid_fire', color: '#ffcc00', icon: 'RF', collection: 'hover' },
-      { type: 'freeze', color: '#66ccff', icon: 'FR', collection: 'hover' },
-      { type: 'spike_burst', color: '#ff00ff', icon: 'SB', collection: 'click' }
+      { type: 'shield', color: '#00ccff', icon: 'S', collection: 'click', weight: 24 },
+      { type: 'multiplier', color: '#ffffff', icon: '2X', collection: 'hover', weight: 20 },
+      { type: 'rapid_fire', color: '#ffcc00', icon: 'RF', collection: 'hover', weight: 20 },
+      { type: 'freeze', color: '#66ccff', icon: 'FR', collection: 'hover', weight: 16 },
+      { type: 'spike_burst', color: '#ff00ff', icon: 'SB', collection: 'click', weight: 12 },
+      { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click', weight: 8 }
     ]
   },
   waves: {

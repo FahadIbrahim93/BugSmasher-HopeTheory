@@ -31,10 +31,10 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
     setIsGameOver(true);
   }, []);
 
-  const handleWaveComplete = useCallback(() => {
+  const handleWaveComplete = useCallback((completedWave: number) => {
     if (engineRef.current) {
-      // Track wave achievement
-      achievementSystem.onWaveComplete(engineRef.current.wave);
+      // Track wave achievement using completed wave number
+      achievementSystem.onWaveComplete(completedWave);
       
       setFinalScore(engineRef.current.score);
       setCurrentWave(engineRef.current.wave);

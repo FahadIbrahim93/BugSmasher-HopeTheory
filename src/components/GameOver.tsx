@@ -29,15 +29,28 @@ export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverP
 
   const handleShare = useCallback(async () => {
     const text = `🎮 I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by Fahad!\n🐛 ${kills} bugs smashed\n#BugSmasher #HighScore`;
-    
-    if (navigator.share && navigator.canShare?.({ text })) {
-      try {
+
+    // Try native share first
+    try {
+      if (navigator.share) {
         await navigator.share({ text });
-      } catch (e) { /* User cancelled */ }
-    } else {
-      // Fallback: copy to clipboard
+        return;
+      }
+    } catch {
+      // ignore and fallback to clipboard
+    }
+
+    // Clipboard fallback
+    try {
       await navigator.clipboard.writeText(text);
-      // Show brief feedback - you could add toast here
+    } catch {
+      // Last-resort fallback for older browsers
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
     }
   }, [score, waves, kills]);
 
