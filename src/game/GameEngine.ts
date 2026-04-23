@@ -4,6 +4,7 @@ import { Renderer } from './Renderer';
 import { ParticleSystem } from './ParticleSystem';
 import { assetManager } from './AssetManager';
 import { WaveManager } from './WaveManager';
+import { SaveManager } from './SaveManager';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -20,10 +21,12 @@ export class GameEngine {
   
   particleSystem: ParticleSystem;
   waveManager: WaveManager;
+  saveManager: SaveManager;
   
   powerups: Powerup[] = [];
   
   score: number = 0;
+  highScore: number = 0;
   health: number = GameConfig.player.maxHealth;
   maxHealth: number = GameConfig.player.maxHealth;
   wave: number = 1;
@@ -53,9 +56,15 @@ export class GameEngine {
   totalPowerupsCollected: number = 0;
   forceNextPowerup: boolean = false;
   
+  // Combo / Chain system
+  chainCombo: number = 0;
+  chainComboFlash: number = 0;     // seconds remaining for screen flash
+  chainComboFlashColor: string = '';
+  chainComboFlashAlpha: number = 0;
+  
   renderer: Renderer;
   
-  onGameOver?: (score: number) => void;
+  onGameOver?: (score: number, waves: number, kills: number) => void;
   onWaveComplete?: () => void;
 
   constructor(canvas: HTMLCanvasElement) {
@@ -70,6 +79,8 @@ export class GameEngine {
     
     this.particleSystem = new ParticleSystem();
     this.waveManager = new WaveManager(this);
+    this.saveManager = new SaveManager();
+    this.highScore = this.saveManager.getHighScore();
     
     this.handlePointerDown = this.handlePointerDown.bind(this);
     this.handlePointerMove = this.handlePointerMove.bind(this);
@@ -103,6 +114,7 @@ export class GameEngine {
   start() {
     if (this.isRunning) return;
     soundManager.init();
+    this.saveManager.recordGamePlayed();
     this.isRunning = true;
     this.lastTime = performance.now();
     this.globalTime = 0;
@@ -114,7 +126,7 @@ export class GameEngine {
     this.startWave();
     this.loop(this.lastTime);
   }
-  
+
   resume() {
     if (this.isRunning) return;
     this.isRunning = true;
@@ -122,11 +134,13 @@ export class GameEngine {
     this.startWave();
     this.loop(this.lastTime);
   }
-  
+
   resetEntities() {
     this.bugs = [];
     this.particleSystem.reset();
     this.powerups = [];
+    this.chainCombo = 0;
+    this.chainComboFlash = 0;
   }
   
   startWave() {
@@ -193,11 +207,18 @@ export class GameEngine {
   update(dt: number) {
     if (this.health <= 0) {
       this.isRunning = false;
-      this.onGameOver?.(this.score);
+      // Save session stats
+      this.saveManager.addBugsSmashed(this.totalKills);
+      this.saveManager.addPlayTime(this.globalTime);
+      this.onGameOver?.(this.score, this.wave, this.totalKills);
       return;
     }
     
     if (this.shakeTime > 0) this.shakeTime -= dt;
+    if (this.chainComboFlash > 0) {
+      this.chainComboFlash -= dt;
+      this.chainComboFlashAlpha = Math.max(0, this.chainComboFlash / 0.5);
+    }
     if (this.shieldTimer > 0) this.shieldTimer -= dt;
     if (this.multiplierTimer > 0) this.multiplierTimer -= dt;
     if (this.rapidFireTimer > 0) this.rapidFireTimer -= dt;
@@ -299,8 +320,31 @@ export class GameEngine {
       const idx = this.bugs.indexOf(bug);
       if (idx > -1) {
         this.totalKills++;
+        this.chainCombo++;
+        
+        // Milestone flash effects
+        const milestones: Record<number, { color: string; size: number; dur: number }> = {
+          3:  { color: '#00ffcc', size: 400, dur: 0.4 },
+          5:  { color: '#ffaa00', size: 600, dur: 0.5 },
+          10: { color: '#ff4444', size: 900, dur: 0.6 },
+        };
+        const m = milestones[this.chainCombo];
+        if (m) {
+          this.chainComboFlash = m.dur;
+          this.chainComboFlashColor = m.color;
+          this.chainComboFlashAlpha = 1;
+          this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, m.color, m.size);
+          this.shake(m.dur * 0.3, 15);
+        }
+        
         const mult = this.multiplierTimer > 0 ? 2 : 1;
         this.score += bug.scoreValue * mult;
+        
+        // Update high score
+        if (this.score > this.highScore) {
+          this.highScore = this.score;
+          this.saveManager.updateHighScore(this.highScore);
+        }
         
         soundManager.splat();
         this.shake(0.15, 8);
@@ -387,8 +431,10 @@ export class GameEngine {
     }
     
     if (!hit) {
+      this.chainCombo = 0;
       soundManager.shoot();
       this.particleSystem.spawnMissParticles(x, y);
+      this.particleSystem.spawnClickRipple(x, y);
     }
   }
   

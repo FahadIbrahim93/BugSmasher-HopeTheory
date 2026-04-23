@@ -26,6 +26,7 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
       set clickRadiusMultiplier(val) { if (engineRef.current) engineRef.current.clickRadiusMultiplier = val; },
       get autoTurretLevel() { return engineRef.current?.autoTurretLevel || 0; },
       set autoTurretLevel(val) { if (engineRef.current) engineRef.current.autoTurretLevel = val; },
+      get chainCombo() { return engineRef.current?.chainCombo || 0; },
       resume: () => engineRef.current?.resume()
     } as any;
   });

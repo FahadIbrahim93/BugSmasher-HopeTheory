@@ -1,10 +1,14 @@
 import { Bug } from 'lucide-react';
+import { useState } from 'react';
 import { soundManager } from '../game/SoundManager';
+import { SettingsMenu } from './SettingsMenu';
 
 export function MainMenu({ onStart }: { onStart: () => void }) {
+  const [showSettings, setShowSettings] = useState(false);
+
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
-      {/* Remove previous gradient backgrounds as we want absolute minimalist black */}
+      {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} />}
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center mb-6">
@@ -30,6 +34,14 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
           </button>
         </div>
+        
+        {/* Settings Button */}
+        <button
+          onClick={() => { soundManager.uiClick(); setShowSettings(true); }}
+          className="text-zinc-500 hover:text-white text-sm transition-colors"
+        >
+          Settings
+        </button>
       </div>
     </div>
   );

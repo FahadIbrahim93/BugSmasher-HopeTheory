@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Shield, Target, Zap, Pause, Play } from 'lucide-react';
+import { Shield, Target, Zap, Pause, Play, Flame } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 
 export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef: React.RefObject<any>, onPauseToggle?: () => void, isPaused?: boolean }) {
@@ -8,6 +8,9 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
   const healthTextRef = useRef<HTMLSpanElement>(null);
   const healthBarRef = useRef<HTMLDivElement>(null);
   const shieldIconRef = useRef<SVGSVGElement>(null);
+  const comboRef = useRef<HTMLDivElement>(null);
+  const comboTextRef = useRef<HTMLSpanElement>(null);
+  const comboTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     let animationFrameId: number;
@@ -15,6 +18,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     let lastWave = -1;
     let lastHealth = -1;
     let lastMaxHealth = -1;
+    let lastCombo = -1;
 
     const updateHUD = () => {
       const engine = engineRef.current;
@@ -45,6 +49,27 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           lastHealth = engine.health;
           lastMaxHealth = engine.maxHealth;
         }
+
+        // Combo tracking
+        const combo = engine.chainCombo || 0;
+        if (comboRef.current && comboTextRef.current) {
+          if (combo !== lastCombo) {
+            lastCombo = combo;
+            if (combo >= 2) {
+              comboTextRef.current.textContent = combo.toString();
+              comboRef.current.style.opacity = '1';
+              // Scale pop animation
+              comboRef.current.style.transform = 'scale(1.15)';
+              if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
+              comboTimerRef.current = window.setTimeout(() => {
+                if (comboRef.current) comboRef.current.style.transform = 'scale(1)';
+              }, 100);
+            } else {
+              comboRef.current.style.opacity = '0';
+              comboRef.current.style.transform = 'scale(0.9)';
+            }
+          }
+        }
       }
       animationFrameId = requestAnimationFrame(updateHUD);
     };
@@ -65,6 +90,17 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)]">
           <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
           <span ref={waveRef} className="text-sm sm:text-base font-medium font-mono text-white uppercase tracking-widest">WAVE 1</span>
+        </div>
+        
+        <div 
+          ref={comboRef}
+          className="flex items-center space-x-2 bg-black/20 backdrop-blur-xl px-4 py-1.5 rounded-full border-[0.5px] border-cyan-500/30 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all duration-200"
+          style={{ opacity: 0 }}
+        >
+          <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse" />
+          <span className="text-xs sm:text-sm font-bold font-mono text-cyan-300 uppercase tracking-wider">
+            COMBO <span className="text-white">x<span ref={comboTextRef}>0</span></span>
+          </span>
         </div>
       </div>
       

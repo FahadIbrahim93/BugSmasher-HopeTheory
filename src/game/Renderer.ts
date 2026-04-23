@@ -1,5 +1,5 @@
 import { GameEngine, Bug, Powerup } from './GameEngine';
-import { Splatter, Particle, Shockwave, Laser } from './ParticleSystem';
+import { Splatter, Particle, Shockwave, Laser, ClickRipple } from './ParticleSystem';
 
 export class Renderer {
   engine: GameEngine;
@@ -34,6 +34,9 @@ export class Renderer {
     for (let i = 0; i < this.engine.particleSystem.shockwaves.length; i++) {
       if (this.engine.particleSystem.shockwaves[i].active) this.drawShockwave(this.engine.particleSystem.shockwaves[i]);
     }
+    for (let i = 0; i < this.engine.particleSystem.clickRipples.length; i++) {
+      if (this.engine.particleSystem.clickRipples[i].active) this.drawClickRipple(this.engine.particleSystem.clickRipples[i]);
+    }
     for (let i = 0; i < this.engine.particleSystem.particles.length; i++) {
       if (this.engine.particleSystem.particles[i].active) this.drawParticle(this.engine.particleSystem.particles[i]);
     }
@@ -49,6 +52,30 @@ export class Renderer {
       ctx.font = 'bold 20px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
       ctx.fillText(`SYSTEM: 2X UPLINK (${Math.ceil(this.engine.multiplierTimer)}s)`, width / 2, 40);
+    }
+
+    // Combo chain display
+    if (this.engine.chainCombo >= 2) {
+      const comboScale = 1 + Math.sin(this.engine.globalTime * 8) * 0.05;
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+      ctx.scale(comboScale, comboScale);
+      ctx.fillStyle = '#00ffcc';
+      ctx.font = 'bold 28px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = '#00ffcc';
+      ctx.shadowBlur = 20;
+      ctx.fillText(`COMBO x${this.engine.chainCombo}`, 0, -60);
+      ctx.restore();
+    }
+
+    // Screen flash overlay for combo milestones
+    if (this.engine.chainComboFlash > 0 && this.engine.chainComboFlashColor) {
+      const alpha = this.engine.chainComboFlashAlpha * 0.25;
+      ctx.fillStyle = this.engine.chainComboFlashColor;
+      ctx.globalAlpha = alpha;
+      ctx.fillRect(0, 0, width, height);
+      ctx.globalAlpha = 1;
     }
 
     if (this.engine.rapidFireTimer > 0) {
@@ -369,6 +396,23 @@ export class Renderer {
     if (!this.engine.isMobile) {
       ctx.shadowColor = sw.color;
       ctx.shadowBlur = 20;
+    }
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  drawClickRipple(cr: ClickRipple) {
+    const ctx = this.engine.ctx;
+    ctx.save();
+    const alpha = cr.life / cr.maxLife;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(cr.x, cr.y, cr.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = cr.color;
+    ctx.lineWidth = 3;
+    if (!this.engine.isMobile) {
+      ctx.shadowColor = cr.color;
+      ctx.shadowBlur = 15;
     }
     ctx.stroke();
     ctx.restore();

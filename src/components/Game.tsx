@@ -11,6 +11,8 @@ import { useEffect } from 'react';
 
 export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   const [isGameOver, setIsGameOver] = useState(false);
+  const [finalWaves, setFinalWaves] = useState(1);
+  const [finalKills, setFinalKills] = useState(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [gameId, setGameId] = useState(0);
@@ -21,8 +23,10 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   
   const engineRef = useRef<GameEngine | null>(null);
 
-  const handleGameOver = useCallback((score: number) => {
+  const handleGameOver = useCallback((score: number, waves: number, kills: number) => {
     setFinalScore(score);
+    setFinalWaves(waves);
+    setFinalKills(kills);
     setIsGameOver(true);
   }, []);
 
@@ -114,6 +118,8 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
       {isGameOver && (
         <GameOver 
           score={finalScore} 
+          waves={finalWaves}
+          kills={finalKills}
           onRetry={() => {
             setIsGameOver(false);
             setIsUpgrading(false);

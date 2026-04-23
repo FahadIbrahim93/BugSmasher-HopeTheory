@@ -3,10 +3,12 @@ export interface SplatterDrop { x: number; y: number; size: number; }
 export interface Splatter { active: boolean; x: number; y: number; rotation: number; size: number; color: string; life: number; maxLife: number; drops: SplatterDrop[]; }
 export interface Shockwave { active: boolean; x: number; y: number; radius: number; speed: number; color: string; life: number; maxLife: number; }
 export interface Laser { active: boolean; x1: number; y1: number; x2: number; y2: number; life: number; maxLife: number; color: string; }
+export interface ClickRipple { active: boolean; x: number; y: number; radius: number; maxRadius: number; color: string; life: number; maxLife: number; }
 
 const MAX_PARTICLES = 300;
 const MAX_SPLATTERS = 50;
 const MAX_SHOCKWAVES = 20;
+const MAX_CLICK_RIPPLES = 10;
 
 export class ParticleSystem {
   particles: Particle[] = Array.from({ length: MAX_PARTICLES }, () => ({ active: false, x: 0, y: 0, vx: 0, vy: 0, size: 0, color: '', rotation: 0, life: 0, maxLife: 0 }));
@@ -15,15 +17,19 @@ export class ParticleSystem {
   splatters: Splatter[] = Array.from({ length: MAX_SPLATTERS }, () => ({ active: false, x: 0, y: 0, rotation: 0, size: 0, color: '', life: 0, maxLife: 0, drops: [] }));
   splatterIdx = 0;
   
-  shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active: false, x: 0, y: 0, radius: 0, speed: 0, color: '', life: 0, maxLife: 0 }));
+shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active: false, x: 0, y: 0, radius: 0, speed: 0, color: '', life: 0, maxLife: 0 }));
   shockwaveIdx = 0;
-  
+
+  clickRipples: ClickRipple[] = Array.from({ length: MAX_CLICK_RIPPLES }, () => ({ active: false, x: 0, y: 0, radius: 0, maxRadius: 0, color: '', life: 0, maxLife: 0 }));
+  clickRippleIdx = 0;
+
   lasers: Laser[] = [];
 
   reset() {
     this.particles.forEach(p => p.active = false);
     this.splatters.forEach(s => s.active = false);
     this.shockwaves.forEach(sw => sw.active = false);
+    this.clickRipples.forEach(cr => cr.active = false);
     this.lasers = [];
   }
 
@@ -50,6 +56,14 @@ export class ParticleSystem {
         sw.life -= dt;
         sw.radius += sw.speed * dt;
         if (sw.life <= 0) sw.active = false;
+      }
+      
+      for (let i = 0; i < MAX_CLICK_RIPPLES; i++) {
+        const cr = this.clickRipples[i];
+        if (!cr.active) continue;
+        cr.life -= dt;
+        cr.radius = cr.maxRadius * (1 - cr.life / cr.maxLife);
+        if (cr.life <= 0) cr.active = false;
       }
       
       for (let i = this.lasers.length - 1; i >= 0; i--) {
@@ -147,5 +161,18 @@ export class ParticleSystem {
       life: 0.1, maxLife: 0.1,
       color
     });
+  }
+
+  spawnClickRipple(x: number, y: number, color: string = '#00ffcc') {
+    const cr = this.clickRipples[this.clickRippleIdx];
+    cr.active = true;
+    cr.x = x;
+    cr.y = y;
+    cr.radius = 0;
+    cr.maxRadius = 30;
+    cr.color = color;
+    cr.life = 0.4;
+    cr.maxLife = 0.4;
+    this.clickRippleIdx = (this.clickRippleIdx + 1) % MAX_CLICK_RIPPLES;
   }
 }
