@@ -127,6 +127,8 @@ VITE_SUPABASE_ANON_KEY=your-anon-key
 
 **Overall: 10/10** - Production ready
 
+**[🎮 Play Live](https://bugsmasher-ten.vercel.app)**
+
 ---
 
 ## 📄 License
