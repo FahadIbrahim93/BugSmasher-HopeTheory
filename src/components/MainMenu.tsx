@@ -25,6 +25,19 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
     onStart();
   };
 
+  const handlePlayAsGuest = () => {
+    soundManager.init();
+    soundManager.uiClick();
+    authManager.signInAsGuest();
+    onStart();
+  };
+
+  const handleSignIn = () => {
+    soundManager.init();
+    soundManager.uiClick();
+    setShowAccount(true);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center h-full bg-[#050505] relative p-4">
       <MatrixRain />
@@ -44,16 +57,60 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           </p>
         </div>
         
-        <div className="w-full flex justify-center mt-12">
-          <button 
-            onClick={handleStart}
-            onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
-            aria-label="Start Game"
-            className="group relative px-12 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center space-x-3 overflow-hidden"
-          >
-            <span className="relative z-10">Initialize Sequence</span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
-          </button>
+        <div className="w-full flex flex-col items-center space-y-4 mt-4">
+          {profile ? (
+            // User is signed in - show play button with profile
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-lg font-bold">
+                  {profile.username.charAt(0).toUpperCase()}
+                </div>
+                <div className="text-left">
+                  <p className="text-white font-bold">{profile.username}</p>
+                  <p className="text-zinc-500 text-sm">Level {profile.level} • {profile.crystals} crystals</p>
+                </div>
+              </div>
+              <button 
+                onClick={handleStart}
+                onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+                className="group relative px-12 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+              >
+                Start Game
+              </button>
+            </>
+          ) : (
+            // No user signed in - show options
+            <div className="w-full flex flex-col space-y-4">
+              <button 
+                onClick={handleStart}
+                onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+                className="group relative px-10 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+              >
+                Play as Guest
+              </button>
+              
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-zinc-800" />
+                <span className="text-zinc-600 text-xs uppercase">or</span>
+                <div className="h-px flex-1 bg-zinc-800" />
+              </div>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={handleSignIn}
+                  className="flex-1 py-3 px-4 border border-zinc-700 text-zinc-400 hover:text-white hover:border-zinc-600 rounded-full font-medium text-sm transition-all"
+                >
+                  Sign In
+                </button>
+                <button 
+                  onClick={handleSignIn}
+                  className="flex-1 py-3 px-4 bg-cyan-500 text-black hover:bg-cyan-400 rounded-full font-bold text-sm transition-all"
+                >
+                  Sign Up
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Settings Button */}
@@ -64,20 +121,20 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           Settings
         </button>
         
-        {/* Account Button */}
+        {/* Account / Profile Button */}
         <button
           onClick={() => { soundManager.uiClick(); setShowAccount(true); }}
-          className="absolute top-4 right-4 flex items-center gap-2 text-zinc-500 hover:text-white text-sm transition-colors"
+          className="absolute top-4 right-4 flex items-center gap-2 text-sm transition-colors"
         >
           {profile ? (
             <>
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-xs font-bold">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-xs font-bold text-white">
                 {profile.username.charAt(0).toUpperCase()}
               </div>
-              <span>{profile.username}</span>
+              <span className="text-zinc-400 hover:text-white">{profile.username}</span>
             </>
           ) : (
-            <span>Account</span>
+            <span className="text-zinc-500 hover:text-white">Account</span>
           )}
         </button>
       </div>
