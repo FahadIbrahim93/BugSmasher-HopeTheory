@@ -1,7 +1,7 @@
 # 🪲 BugSmasher by HopeTheory
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.4.1-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.4.2-blue" alt="Version">
   <img src="https://img.shields.io/badge/status-10%2F10-green" alt="Status">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build">
@@ -25,7 +25,7 @@
 - **Biomes:** 5 unlockable themes
 - **Daily Challenges:** Extra crystals
 - **Achievements:** 16 unlockable badges
-- **Account System:** Guest + Email/Password + OAuth ready
+- **Account System:** Guest + Email/Password + Google OAuth
 - **Leaderboards:** Global rankings with CPU players
 - **Cloud Saves:** Auto-save with Supabase sync
 - **XP & Leveling:** Earn XP, level up
@@ -41,9 +41,10 @@
 | Styling | Tailwind CSS v4 |
 | Animation | Motion |
 | Backend | Supabase (PostgreSQL) |
-| Auth | Supabase Auth |
+| Auth | Supabase Auth (Email + Google) |
 | Storage | localStorage (offline-first) |
 | Build | Vite 6 |
+| Hosting | Vercel |
 
 ---
 
@@ -53,11 +54,16 @@
 src/
 ├── game/
 │   ├── database/          # Auth + Stats + Cloud
+│   │   ├── AuthManager.ts
+│   │   ├── StatsManager.ts
+│   │   ├── LeaderboardManager.ts
+│   │   ├── CloudSaveManager.ts
+│   │   └── types.ts
 │   ├── GameEngine.ts      # Core gameplay
 │   ├── Renderer.ts        # Canvas rendering
 │   └── *.ts              # Managers
 ├── components/
-│   ├── MainMenu.tsx      # Start screen
+│   ├── MainMenu.tsx      # Start + Auth screen
 │   ├── Game.tsx          # Main game
 │   └── *.tsx
 └── App.tsx
@@ -79,7 +85,7 @@ npm run build  # Production build
 
 ## 🔌 Supabase Database (ACTIVE)
 
-The game has full Supabase integration with persistent cloud storage:
+Full Supabase integration with persistent cloud storage:
 
 ### Database Tables
 - `profiles` - User accounts (17 users)
@@ -92,11 +98,10 @@ The game has full Supabase integration with persistent cloud storage:
 |--------|--------|
 | Guest (offline) | ✅ Working |
 | Email/Password | ✅ Working |
-| Google OAuth | ⚠️ Enable in Dashboard |
-| Discord OAuth | ⚠️ Enable in Dashboard |
+| Google OAuth | ✅ Working |
 
-### Test Accounts
-```bash
+### Test Account
+```
 Email: bugsmasher@test.com
 Password: GamePass123!
 ```

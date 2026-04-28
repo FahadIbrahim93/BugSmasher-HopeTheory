@@ -14,18 +14,27 @@ BugSmasher uses a **hybrid offline-first architecture** with Supabase cloud sync
 ┌─────────────────────────────────────────────────────────────┐
 │                        GAME CLIENT                         │
 ├─────────────────────────────────────────────────────────────┤
-│  AuthManager ───► CloudSaveManager ───► StatsManager       │
-│       │                │                    │                 │
+│  AuthManager ───► CloudSaveManager ───► StatsManager    │
+│       │                │                    │               │
 │       ▼                ▼                    ▼              │
-│  localStorage      localStorage         localStorage       │
-│       │                │                    │                 │
+│  localStorage      localStorage         localStorage     │
+│       │                │                    │               │
 │       ▼                ▼                    ▼              │
-│  ┌────────────────────────────────────────────────────┐   │
-│  │           Supabase (Cloud)                         │   │
-│  │  profiles | user_stats | game_saves | leaderboard │   │
-│  └────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │           Supabase (Cloud)                      │    │
+│  │  profiles | user_stats | game_saves | leaderboard│   │
+│  └─────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+## Current Status (v1.4.2)
+
+| System | Status |
+|--------|--------|
+| Database Tables | ✅ 4 tables active |
+| Auth | ✅ Email + Google OAuth |
+| Cloud Sync | ✅ Working |
+| Leaderboard | ✅ 17 players |
 
 ## Database Tables
 
