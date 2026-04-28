@@ -66,7 +66,7 @@ export function TutorialOverlay({ engineRef }: { engineRef: React.RefObject<Game
   };
 
   return (
-    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-40 pointer-events-none w-[90%] max-w-md">
+    <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 w-[90%] max-w-md">
       <AnimatePresence mode="wait">
         {step === 0 && (
           <motion.div 

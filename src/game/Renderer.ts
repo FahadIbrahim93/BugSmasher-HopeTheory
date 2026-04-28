@@ -281,53 +281,197 @@ export class Renderer {
     ctx.translate(p.x, p.y);
     
     const pulse = Math.sin(this.engine.globalTime * 10) * 2;
+    const glow = !this.engine.isMobile;
     
     if (p.life < 2 && Math.floor(this.engine.globalTime * 10) % 2 === 0) {
       ctx.globalAlpha = 0.3;
     }
     
-    if (p.collection === 'hover') {
-      // Hover collection: spinning dashed outer ring
-      ctx.save();
-      ctx.rotate(this.engine.globalTime * 2);
-      ctx.beginPath();
-      ctx.arc(0, 0, p.size + 8, 0, Math.PI * 2);
-      ctx.setLineDash([5, 5]);
-      ctx.strokeStyle = p.color;
-      ctx.lineWidth = 1; // Sleeker line
-      ctx.stroke();
-      ctx.restore();
-    } else {
-      // Click collection: solid pulsing outer ring
-      ctx.beginPath();
-      ctx.arc(0, 0, p.size + 6 + pulse, 0, Math.PI * 2);
-      ctx.strokeStyle = p.color;
-      ctx.lineWidth = 1; // Sleeker line
-      ctx.stroke();
+    const size = p.size + pulse;
+    
+    switch (p.type) {
+      case 'shield':
+        // Shield: Blue hexagon with shield icon
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI * 2) / 6 - Math.PI / 2;
+          const x = Math.cos(angle) * (size + 10);
+          const y = Math.sin(angle) * (size + 10);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(0, 150, 255, 0.15)';
+        ctx.strokeStyle = '#00ccff';
+        ctx.lineWidth = 2;
+        if (glow) { ctx.shadowColor = '#00ccff'; ctx.shadowBlur = 15; }
+        ctx.fill();
+        ctx.stroke();
+        break;
+        
+      case 'multiplier':
+        // Multiplier: White diamond with 2X
+        ctx.rotate(this.engine.globalTime * 0.5);
+        ctx.beginPath();
+        ctx.moveTo(0, -(size + 10));
+        ctx.lineTo(size + 8, 0);
+        ctx.lineTo(0, size + 10);
+        ctx.lineTo(-(size + 8), 0);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        if (glow) { ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15; }
+        ctx.fill();
+        ctx.stroke();
+        ctx.rotate(-this.engine.globalTime * 0.5);
+        break;
+        
+      case 'rapid_fire':
+        // Rapid Fire: Yellow lightning bolt
+        ctx.save();
+        ctx.rotate(Math.sin(this.engine.globalTime * 5) * 0.1);
+        ctx.beginPath();
+        ctx.moveTo(0, -(size + 12));
+        ctx.lineTo(-5, -3);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(5, -3);
+        ctx.lineTo(0, size + 12);
+        ctx.lineTo(-3, 0);
+        ctx.lineTo(0, 0);
+        ctx.lineTo(3, 0);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 200, 0, 0.3)';
+        ctx.strokeStyle = '#ffcc00';
+        ctx.lineWidth = 2;
+        if (glow) { ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 15; }
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+        break;
+        
+      case 'slow_mo':
+        // Slow Mo: Purple spiral
+        ctx.save();
+        ctx.rotate(this.engine.globalTime);
+        ctx.beginPath();
+        for (let i = 0; i < 3; i++) {
+          const spiralRadius = size + 5 + i * 4;
+          ctx.beginPath();
+          ctx.arc(0, 0, spiralRadius, i * 2, i * 2 + 1.5);
+          ctx.strokeStyle = '#9966ff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        if (glow) { ctx.shadowColor = '#9966ff'; ctx.shadowBlur = 10; }
+        ctx.restore();
+        break;
+        
+      case 'freeze':
+        // Freeze: Cyan snowflake
+        ctx.save();
+        ctx.rotate(this.engine.globalTime * 0.3);
+        for (let i = 0; i < 6; i++) {
+          ctx.rotate(Math.PI / 3);
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.lineTo(0, size + 8);
+          ctx.moveTo(0, size * 0.6);
+          ctx.lineTo(size * 0.3, size * 0.9);
+          ctx.moveTo(0, size * 0.6);
+          ctx.lineTo(-size * 0.3, size * 0.9);
+          ctx.strokeStyle = '#66ccff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        if (glow) { ctx.shadowColor = '#66ccff'; ctx.shadowBlur = 10; }
+        ctx.restore();
+        break;
+        
+      case 'spike_burst':
+        // Spike Burst: Magenta star
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const angle = (i * Math.PI * 2) / 8;
+          const radius = i % 2 === 0 ? size + 12 : size + 5;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(255, 0, 255, 0.2)';
+        ctx.strokeStyle = '#ff00ff';
+        ctx.lineWidth = 2;
+        if (glow) { ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15; }
+        ctx.fill();
+        ctx.stroke();
+        break;
+        
+      case 'nuke':
+        // Nuke: Red warning
+        const flash = Math.sin(this.engine.globalTime * 15) > 0;
+        ctx.beginPath();
+        ctx.arc(0, 0, size + 12, 0, Math.PI * 2);
+        ctx.fillStyle = flash ? 'rgba(255, 50, 50, 0.3)' : 'rgba(50, 0, 0, 0.5)';
+        ctx.strokeStyle = '#ff3333';
+        ctx.lineWidth = 3;
+        if (glow) { ctx.shadowColor = '#ff3333'; ctx.shadowBlur = 20; }
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(0, -size);
+        ctx.lineTo(0, size);
+        ctx.moveTo(-size, 0);
+        ctx.lineTo(size, 0);
+        ctx.strokeStyle = '#ff3333';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        break;
+        
+      default:
+        // Default: Diamond shape
+        if (p.collection === 'hover') {
+          ctx.save();
+          ctx.rotate(this.engine.globalTime * 2);
+          ctx.beginPath();
+          ctx.arc(0, 0, size + 8, 0, Math.PI * 2);
+          ctx.setLineDash([5, 5]);
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          ctx.beginPath();
+          ctx.arc(0, 0, size + 6 + pulse, 0, Math.PI * 2);
+          ctx.strokeStyle = p.color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+        
+        ctx.rotate(this.engine.globalTime);
+        ctx.beginPath();
+        ctx.moveTo(0, -(size + pulse));
+        ctx.lineTo(size + pulse, 0);
+        ctx.lineTo(0, size + pulse);
+        ctx.lineTo(-(size + pulse), 0);
+        ctx.closePath();
+        
+        ctx.fillStyle = 'rgba(5, 5, 5, 0.9)';
+        ctx.fill();
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = 2;
+        if (glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 10; }
+        ctx.stroke();
+        
+        ctx.rotate(-this.engine.globalTime);
+        break;
     }
     
-    ctx.rotate(this.engine.globalTime);
-    ctx.beginPath();
-    ctx.moveTo(0, -(p.size + pulse));
-    ctx.lineTo(p.size + pulse, 0);
-    ctx.lineTo(0, p.size + pulse);
-    ctx.lineTo(-(p.size + pulse), 0);
-    ctx.closePath();
-    
-    ctx.fillStyle = 'rgba(5, 5, 5, 0.9)'; // Dark center
-    ctx.fill();
-    ctx.strokeStyle = p.color;
-    ctx.lineWidth = 2; // Strong border
-    if (!this.engine.isMobile) {
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 10;
-    }
-    ctx.stroke();
-    
-    ctx.rotate(-this.engine.globalTime);
-    
+    // Draw icon
     ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px "JetBrains Mono", monospace';
+    ctx.font = 'bold 11px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowBlur = 0;

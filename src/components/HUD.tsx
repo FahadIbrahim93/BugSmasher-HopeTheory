@@ -99,34 +99,34 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
 
   return (
     <div className="absolute top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none z-10">
-      <div className="flex flex-col space-y-2 sm:space-y-4">
-        <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)]">
+      <div className="flex flex-col space-y-2 sm:space-y-4 pointer-events-none">
+        <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none">
           <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
           <span className="text-zinc-500 font-medium text-xs sm:text-sm tracking-wider uppercase">Score</span>
-          <span ref={scoreRef} className="text-lg sm:text-xl font-bold font-mono text-white tracking-widest pl-1">000000</span>
+          <span ref={scoreRef} className="text-lg sm:text-xl font-bold font-mono text-white tracking-widest pl-1 pointer-events-none">000000</span>
         </div>
         
-        <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none">
           <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-          <span ref={waveRef} className="text-sm sm:text-base font-medium font-mono text-white uppercase tracking-widest">WAVE 1</span>
+          <span ref={waveRef} className="text-sm sm:text-base font-medium font-mono text-white uppercase tracking-widest pointer-events-none">WAVE 1</span>
         </div>
         
         <div 
           ref={comboRef}
-          className="flex items-center space-x-2 bg-black/20 backdrop-blur-xl px-4 py-1.5 rounded-full border-[0.5px] border-cyan-500/30 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all duration-200"
+          className="flex items-center space-x-2 bg-black/20 backdrop-blur-xl px-4 py-1.5 rounded-full border-[0.5px] border-cyan-500/30 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all duration-200 pointer-events-none"
           style={{ opacity: 0 }}
         >
           <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse" />
-          <span className="text-xs sm:text-sm font-bold font-mono text-cyan-300 uppercase tracking-wider">
+          <span className="text-xs sm:text-sm font-bold font-mono text-cyan-300 uppercase tracking-wider pointer-events-none">
             COMBO <span className="text-white">x<span ref={comboTextRef}>0</span></span>
           </span>
         </div>
       </div>
       
-      <div className="flex flex-col space-y-2 sm:space-y-4 items-end pointer-events-auto">
+      <div className="flex flex-col space-y-2 sm:space-y-4 items-end">
         <button 
           onClick={() => { soundManager.uiClick(); onPauseToggle?.(); }}
-          className="flex items-center justify-center bg-black/20 backdrop-blur-xl p-2 sm:p-2.5 rounded-full border-[0.5px] border-white/10 hover:bg-white/10 hover:scale-105 active:scale-95 transition-all shadow-[0_4_20px_rgba(0,0,0,0.5)]"
+          className="flex items-center justify-center bg-black/20 backdrop-blur-xl p-2 sm:p-2.5 rounded-full border-[0.5px] border-white/10 hover:bg-white/10 hover:scale-105 active:scale-95 transition-all shadow-[0_4_20px_rgba(0,0,0,0.5)] z-50"
           aria-label={isPaused ? "Resume Game" : "Pause Game"}
         >
           {isPaused ? <Play className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-300" /> : <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-300" />}
@@ -134,14 +134,14 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
         
         <div className="flex items-center space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none">
           <Shield ref={shieldIconRef} className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-          <div className="w-20 sm:w-32 h-1.5 sm:h-2 bg-zinc-900 rounded-full overflow-hidden">
+          <div className="w-20 sm:w-32 h-1.5 sm:h-2 bg-zinc-900 rounded-full overflow-hidden pointer-events-none">
             <div 
               ref={healthBarRef}
               className="h-full transition-all duration-300 bg-white"
               style={{ width: '100%' }}
             />
           </div>
-          <span ref={healthTextRef} className="text-sm sm:text-lg font-bold text-white font-mono w-8 text-right">100</span>
+          <span ref={healthTextRef} className="text-sm sm:text-lg font-bold text-white font-mono w-8 text-right pointer-events-none">100</span>
         </div>
       </div>
     </div>
