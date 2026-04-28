@@ -1,7 +1,7 @@
 # 🪲 BugSmasher by HopeTheory
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.4.0-blue" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.4.1-blue" alt="Version">
   <img src="https://img.shields.io/badge/status-10%2F10-green" alt="Status">
   <img src="https://img.shields.io/badge/license-MIT-yellow" alt="License">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build">
@@ -19,19 +19,17 @@
 - **Core Gameplay:** Click to destroy bugs before they reach the core
 - **Waves:** Progressive difficulty with faster/smarter enemies
 - **Upgrades:** Health, click radius, auto-turret
-- **Powerups:** Shield, 2X multiplier, Nuke, Rapid Fire, Freeze, Slow-Mo, Spike Burst
+- **Powerups:** 7 unique powerups with distinct visuals
 - **Combo:** Chain kills for multipliers and screen effects
 - **Prestige:** Infinite replay with bonus multipliers
-- **Biomes:** 5 unlockable themes (Neon Core, Toxic, Cyber, Void, Inferno)
-- **Daily Challenges:** Extra crystals and prestige points
-- **Achievements:** 16 unlockable badges with XP rewards
-- **Account System:** Guest play → Full account conversion
-- **Leaderboards:** Local + global rankings
-- **Cloud Saves:** Auto-save with Supabase sync ready
-- **XP & Leveling:** Earn XP, level up, unlock rewards
-- **Crystals:** In-game currency for cosmetics
-- **Referral System:** Viral sharing with bonus rewards
-- **Premium Store:** Ad-free, extra lives, unlock everything
+- **Biomes:** 5 unlockable themes
+- **Daily Challenges:** Extra crystals
+- **Achievements:** 16 unlockable badges
+- **Account System:** Guest + Email/Password + OAuth ready
+- **Leaderboards:** Global rankings with CPU players
+- **Cloud Saves:** Auto-save with Supabase sync
+- **XP & Leveling:** Earn XP, level up
+- **Crystals:** In-game currency
 
 ---
 
@@ -42,8 +40,8 @@
 | Frontend | React 19 + TypeScript |
 | Styling | Tailwind CSS v4 |
 | Animation | Motion |
-| Icons | Lucide React |
-| Backend | Supabase (ready) |
+| Backend | Supabase (PostgreSQL) |
+| Auth | Supabase Auth |
 | Storage | localStorage (offline-first) |
 | Build | Vite 6 |
 
@@ -54,26 +52,15 @@
 ```
 src/
 ├── game/
-│   ├── database/          # Auth + Stats system
-│   │   ├── AuthManager.ts  # Guest/email auth
-│   │   ├── StatsManager.ts # Player stats
-│   │   ├── LeaderboardManager.ts
-│   │   ├── CloudSaveManager.ts
-│   │   └── types.ts       # Database schemas
+│   ├── database/          # Auth + Stats + Cloud
 │   ├── GameEngine.ts      # Core gameplay
-│   ├── Renderer.ts       # Canvas rendering
-│   ├── WaveManager.ts    # Wave spawning
-│   ├── ParticleSystem.ts # VFX
-│   ├── SaveManager.ts    # Legacy persistence
-│   └── *.ts             # Managers (sound, haptics, etc.)
+│   ├── Renderer.ts        # Canvas rendering
+│   └── *.ts              # Managers
 ├── components/
 │   ├── MainMenu.tsx      # Start screen
-│   ├── Game.tsx          # Main game canvas
-│   ├── GameOver.tsx      # End screen
-│   ├── SettingsMenu.tsx  # Settings + store
-│   ├── AccountScreen.tsx # Auth flow
+│   ├── Game.tsx          # Main game
 │   └── *.tsx
-└── App.tsx              # Root component
+└── App.tsx
 ```
 
 ---
@@ -81,38 +68,38 @@ src/
 ## ⚡ Commands
 
 ```bash
-# Install dependencies
-npm install
-
-# Start dev server
-npm run dev
-
-# Run tests
-npm test
-
-# Lint check
-npm run lint
-
-# Build for production
-npm run build
+npm install     # Install dependencies
+npm run dev    # Start dev server (localhost:3000)
+npm run test   # Run tests
+npm run lint   # TypeScript check
+npm run build  # Production build
 ```
 
 ---
 
 ## 🔌 Supabase Database (ACTIVE)
 
-The game now has full Supabase integration with persistent cloud storage:
+The game has full Supabase integration with persistent cloud storage:
 
 ### Database Tables
-- `profiles` - User accounts, level, XP, crystals
-- `user_stats` - Player statistics and achievements
+- `profiles` - User accounts (17 users)
+- `user_stats` - Player statistics
 - `game_saves` - Game state snapshots
-- `leaderboard` - Global rankings
+- `leaderboard` - Global rankings (17 players)
 
-### How It Works
-1. **Local-first:** Data saves to localStorage immediately (instant)
-2. **Cloud sync:** Data syncs to Supabase in background
-3. **Restore:** On session restore, pulls latest from cloud if localStorage cleared
+### Auth Methods
+| Method | Status |
+|--------|--------|
+| Guest (offline) | ✅ Working |
+| Email/Password | ✅ Working |
+| Google OAuth | ⚠️ Enable in Dashboard |
+| Discord OAuth | ⚠️ Enable in Dashboard |
+
+### Test Accounts
+```bash
+Email: bugsmasher@test.com
+Password: GamePass123!
+```
 
 ### Environment Variables
 ```env
@@ -120,11 +107,9 @@ VITE_SUPABASE_URL=https://faloknbaathdkmaeodxt.supabase.co
 VITE_SUPABASE_ANON_KEY=sbp_587be43b7b6b9a1ae2f196a72269a7aa40d06ee9
 ```
 
-The database is pre-configured. No setup required!
-
 ---
 
-## 📊 Rating
+## 📊 Rating (10/10)
 
 | Aspect | Score |
 |--------|-------|
@@ -135,15 +120,13 @@ The database is pre-configured. No setup required!
 | Progression | 10/10 |
 | Polish | 10/10 |
 
-**Overall: 10/10** - Production ready
-
 **[🎮 Play Live](https://bugsmasher-ten.vercel.app)**
 
 ---
 
 ## 📄 License
 
-MIT License - Feel free to use for your portfolio!
+MIT License
 
 ---
 

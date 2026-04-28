@@ -10,5 +10,17 @@ coverage/
 .vercel
 *.exe
 *.tar.gz
-test-*.mjs
-setup-*.mjs
+
+# Admin scripts (run locally)
+*admin.mjs
+*system.mjs
+check-*.mjs
+show-*.mjs
+seed-*.mjs
+enable-*.mjs
+configure-*.mjs
+create-*.mjs
+add-*.mjs
+test-auth.mjs
+test-db.mjs
+get-link.mjs

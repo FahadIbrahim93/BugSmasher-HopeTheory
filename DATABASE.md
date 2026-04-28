@@ -172,6 +172,28 @@ VITE_SUPABASE_ANON_KEY=sbp_587be43b7b6b9a1ae2f196a72269a7aa40d06ee9
 - Ensure `restoreUserData()` is called on app init
 - Check cloud data exists
 
+---
+
+## Test Credentials
+
+```bash
+Email: bugsmasher@test.com
+Password: GamePass123!
+```
+
+## Admin Commands
+
+```bash
+# List all users
+node user-admin.mjs list
+
+# Show leaderboard
+node user-admin.mjs leaderboard
+
+# Full system check
+node check-system.mjs
+```
+
 ## Files
 
 - `src/game/database/AuthManager.ts` - User authentication
@@ -179,5 +201,4 @@ VITE_SUPABASE_ANON_KEY=sbp_587be43b7b6b9a1ae2f196a72269a7aa40d06ee9
 - `src/game/database/CloudSaveManager.ts` - Game state persistence
 - `src/game/database/LeaderboardManager.ts` - Global rankings
 - `src/game/database/types.ts` - TypeScript interfaces
-- `src/game/database/index.ts` - Module exports
-- `supabase/schema.sql` - Database schema (run in SQL Editor)
+- `src/game/database/index.ts` - Module exports- `supabase/schema.sql` - Database schema (run in SQL Editor)
