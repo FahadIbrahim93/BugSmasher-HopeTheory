@@ -159,9 +159,9 @@
 ## 🚀 Quick Start
 
 ```bash
-cd /mnt/h/DevJourney/Projects/BugSmasher-AiStudio
+cd bugsmasher
 npm install
-npm run dev      # → http://localhost:5173
+npm run dev      # → http://localhost:3000
 npm run build    # production
 ```
 
@@ -170,18 +170,16 @@ npm run build    # production
 ## 📁 Key Files
 
 - `README.md` — Main documentation
+- `DATABASE.md` — Database system docs
 - `TASKS.md` — Task board
-- `ANALYSIS.md` — Full industry + visual analysis
 - `src/game/GameEngine.ts` — Core logic
-- `src/game/AchievementSystem.ts` — 17 achievements + streak
-- `src/game/HapticsManager.ts` — Device vibration
 
 ---
 
 ## 🔗 Links
 
-- **GitHub:** https://github.com/FahadIbrahim93/BugSmasher-AiStudio
+- **GitHub:** https://github.com/FahadIbrahim93/bugsmasher
 
 ---
 
-*Updated: 2026-04-23 | Version 1.1.0 | 10/10 Enterprise Grade*
+*Updated: 2026-04-29 | Version 1.4.0 | Full Supabase*

@@ -202,12 +202,12 @@ src/
 
 ### Vercel (Production)
 ```
-https://bugsmasher-by-fahad.vercel.app
+https://bugsmasher-ten.vercel.app
 ```
 
 ### Local Dev
 ```bash
-cd /mnt/h/DevJourney/Projects/BugSmasher-AiStudio
+cd bugsmasher
 npm run dev
 ```
 
@@ -220,8 +220,13 @@ npm run build  # → dist/
 
 ## 📝 CHANGELOG
 
+### v1.4.0 (April 29, 2026)
+- ✅ Full Supabase database with cloud sync
+- ✅ Persistent user data (survives refresh)
+- ✅ Hybrid localStorage + cloud architecture
+
 ### v1.0.0 (April 23, 2026)
-- ✅ Complete rebrand to "BugSmasher by Fahad"
+- ✅ Complete rebrand to "BugSmasher by HopeTheory"
 - ✅ Fix dotenv process error
 - ✅ Add combo/chain system with screen flash
 - ✅ Add ClickRipple on miss

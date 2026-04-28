@@ -156,10 +156,10 @@
 
 ## 🔗 Resources
 
-- **GitHub:** https://github.com/FahadIbrahim93/BugSmasher-AiStudio
+- **GitHub:** https://github.com/FahadIbrahim93/bugsmasher
 - **ANALYSIS.md:** Full industry & visual analysis
 - **SESSION.md:** Session notes
-- **Game:** http://localhost:5173
+- **Game:** http://localhost:3000
 
 ---
 
