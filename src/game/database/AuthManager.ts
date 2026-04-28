@@ -1,7 +1,7 @@
-// Authentication System - Guest mode, Email, OAuth ready
-// Works locally, Supabase-ready
+// Authentication System - Full Supabase Integration
+// Hybrid local-first with cloud sync
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { Profile, UserStats, UserSettings } from './types';
 
 export type AuthProvider = 'guest' | 'email' | 'google' | 'discord' | 'apple';
@@ -28,6 +28,21 @@ const PROFILE_KEY = 'bugsmasher_profile';
 const STATS_KEY = 'bugsmasher_stats';
 const SETTINGS_KEY = 'bugsmasher_settings';
 
+let supabase: SupabaseClient | null = null;
+
+function getSupabaseClient(): SupabaseClient | null {
+  if (supabase) return supabase;
+  
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) {
+    console.warn('Supabase not configured');
+    return null;
+  }
+  supabase = createClient(url, key);
+  return supabase;
+}
+
 function generateId(): string {
   return 'id_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
 }
@@ -45,6 +60,7 @@ export class AuthManager {
   private user: AuthUser | null = null;
   private profile: Profile | null = null;
   private listeners: Set<(state: AuthState) => void> = new Set();
+  private initialized = false;
 
   constructor() {
     this.load();
@@ -66,7 +82,7 @@ export class AuthManager {
     }
   }
 
-  private save(): void {
+  save(): void {
     try {
       if (this.user) {
         localStorage.setItem(AUTH_KEY, JSON.stringify(this.user));
@@ -84,6 +100,57 @@ export class AuthManager {
     }
 
     this.notify();
+  }
+
+  async syncToCloud(): Promise<void> {
+    if (!this.profile || !getSupabaseClient()) return;
+    
+    const sb = getSupabaseClient();
+    if (!sb) return;
+
+    try {
+      const { error } = await sb.from('profiles').upsert({
+        id: this.profile.id,
+        username: this.profile.username,
+        email: this.profile.email,
+        avatar_url: this.profile.avatar_url,
+        avatar_id: this.profile.avatar_id,
+        is_guest: this.profile.is_guest,
+        level: this.profile.level,
+        xp: this.profile.xp,
+        crystals: this.profile.crystals,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'id' });
+
+      if (error) {
+        console.warn('Failed to sync profile to cloud:', error.message);
+      }
+    } catch (e) {
+      console.warn('Cloud sync error:', e);
+    }
+  }
+
+  async loadFromCloud(): Promise<Profile | null> {
+    const sb = getSupabaseClient();
+    if (!sb || !this.user) return null;
+
+    try {
+      const { data, error } = await sb
+        .from('profiles')
+        .select('*')
+        .eq('id', this.user.id)
+        .single();
+
+      if (error) {
+        console.warn('Failed to load from cloud:', error.message);
+        return null;
+      }
+
+      return data as Profile;
+    } catch (e) {
+      console.warn('Cloud load error:', e);
+      return null;
+    }
   }
 
   private notify(): void {
@@ -122,7 +189,7 @@ export class AuthManager {
   }
 
   async signInAsGuest(): Promise<AuthUser> {
-    const userId = generateId();
+    const userId = 'guest_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
     const username = generateUsername();
 
     this.user = {
@@ -149,9 +216,8 @@ export class AuthManager {
       updated_at: new Date().toISOString(),
     };
 
-    this.initializeStats();
-    this.initializeSettings();
     this.save();
+    await this.syncToCloud();
 
     return this.user;
   }
@@ -301,6 +367,7 @@ export class AuthManager {
     this.profile.username = username;
     this.profile.updated_at = new Date().toISOString();
     this.save();
+    await this.syncToCloud();
   }
 
   async updateAvatar(avatarId: string): Promise<void> {
@@ -309,6 +376,7 @@ export class AuthManager {
     this.profile.avatar_id = avatarId;
     this.profile.updated_at = new Date().toISOString();
     this.save();
+    await this.syncToCloud();
   }
 
   addXP(amount: number): void {
@@ -316,15 +384,14 @@ export class AuthManager {
 
     this.profile.xp += amount;
 
-    // Level up logic
-    const { XP_PER_LEVEL } = require('./types');
-    while (this.profile.xp >= XP_PER_LEVEL * this.profile.level) {
-      this.profile.xp -= XP_PER_LEVEL * this.profile.level;
+    while (this.profile.xp >= 100 * this.profile.level) {
+      this.profile.xp -= 100 * this.profile.level;
       this.profile.level++;
     }
 
     this.profile.updated_at = new Date().toISOString();
     this.save();
+    this.syncToCloud();
   }
 
   addCrystals(amount: number): void {
@@ -333,6 +400,7 @@ export class AuthManager {
     this.profile.crystals += amount;
     this.profile.updated_at = new Date().toISOString();
     this.save();
+    this.syncToCloud();
   }
 
   spendCrystals(amount: number): boolean {
@@ -341,6 +409,7 @@ export class AuthManager {
     this.profile.crystals -= amount;
     this.profile.updated_at = new Date().toISOString();
     this.save();
+    this.syncToCloud();
     return true;
   }
 
@@ -350,6 +419,17 @@ export class AuthManager {
     localStorage.removeItem(AUTH_KEY);
     localStorage.removeItem(PROFILE_KEY);
     this.notify();
+  }
+
+  async restoreSession(): Promise<Profile | null> {
+    if (!this.user) return null;
+    
+    const cloudProfile = await this.loadFromCloud();
+    if (cloudProfile) {
+      this.profile = cloudProfile;
+      this.save();
+    }
+    return cloudProfile;
   }
 
   deleteAccount(): void {
@@ -378,7 +458,6 @@ export class AuthManager {
 
   async convertGuest(username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // Keep existing stats, upgrade to full account
       await this.signUpWithEmail(email, password, username);
       return { success: true };
     } catch (e) {
@@ -386,7 +465,6 @@ export class AuthManager {
     }
   }
 
-  // Supabase integration helpers
   getSupabaseConfig(): { url: string; anonKey: string } {
     return {
       url: import.meta.env.VITE_SUPABASE_URL || '',
@@ -400,24 +478,8 @@ export class AuthManager {
   }
 }
 
-export function createSupabaseClient() {
-  return createClient(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
-}
-
-let supabaseClient: ReturnType<typeof createClient> | null = null;
-
 export function getSupabase() {
-  if (!supabaseClient) {
-    const url = import.meta.env.VITE_SUPABASE_URL;
-    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    if (url && key) {
-      supabaseClient = createClient(url, key);
-    }
-  }
-  return supabaseClient;
+  return getSupabaseClient();
 }
 
 export function isSupabaseConfigured(): boolean {

@@ -1,18 +1,31 @@
-// Leaderboard - Global and friends leaderboards
-// Local-first with Supabase sync ready
+// Leaderboard - Full Supabase Integration
+// Global and friends leaderboards with cloud sync
 
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { LeaderboardEntry, FriendProfile } from './types';
 import { authManager } from './AuthManager';
 
 const LEADERBOARD_KEY = 'bugsmasher_leaderboard';
 const FRIENDS_KEY = 'bugsmasher_friends';
 
+let supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient | null {
+  if (supabase) return supabase;
+  
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  
+  supabase = createClient(url, key);
+  return supabase;
+}
+
 interface LeaderboardData {
   entries: LeaderboardEntry[];
   lastUpdated: string;
 }
 
-// Mock players for global leaderboard
 const MOCK_PLAYERS: Omit<LeaderboardEntry, 'rank'>[] = [
   { profile_id: 'cpu_1', username: 'NeonSlayer', avatar_id: 'legend', score: 125000, wave: 45, updated_at: '2026-04-26' },
   { profile_id: 'cpu_2', username: 'CyberHunter', avatar_id: 'assassin', score: 98500, wave: 38, updated_at: '2026-04-25' },
@@ -28,6 +41,7 @@ const MOCK_PLAYERS: Omit<LeaderboardEntry, 'rank'>[] = [
 
 export class LeaderboardManager {
   private data: LeaderboardData = { entries: [], lastUpdated: '' };
+  private cachedLeaderboard: LeaderboardEntry[] | null = null;
 
   constructor() {
     this.load();
@@ -52,13 +66,72 @@ export class LeaderboardManager {
     }
   }
 
-  getGlobalLeaderboard(limit: number = 25): LeaderboardEntry[] {
-    const entries = MOCK_PLAYERS.map((player, idx) => ({
+  async syncToCloud(score: number, wave: number): Promise<void> {
+    const sb = getSupabase();
+    const profile = authManager.getProfile();
+    if (!sb || !profile) return;
+
+    try {
+      await sb.from('leaderboard').upsert({
+        profile_id: profile.id,
+        score,
+        wave,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'profile_id' });
+    } catch (e) {
+      console.warn('Leaderboard sync failed:', e);
+    }
+  }
+
+  async loadFromCloud(): Promise<LeaderboardEntry[]> {
+    const sb = getSupabase();
+    if (!sb) return this.getLocalLeaderboard();
+
+    try {
+      const { data, error } = await sb
+        .from('leaderboard')
+        .select('*, profiles(username, avatar_id)')
+        .order('score', { ascending: false })
+        .limit(25);
+
+      if (error || !data) {
+        return this.getLocalLeaderboard();
+      }
+
+      const profiles = await sb.from('profiles').select('id, username, avatar_id').in('id', data.map((d: any) => d.profile_id));
+      const profileMap = new Map(profiles.data?.map((p: any) => [p.id, p]) || []);
+
+      const entries: LeaderboardEntry[] = data.map((entry: any, idx: number) => {
+        const profile = profileMap.get(entry.profile_id);
+        return {
+          rank: idx + 1,
+          profile_id: entry.profile_id,
+          username: profile?.username || 'Unknown',
+          avatar_id: profile?.avatar_id || 'default',
+          score: entry.score,
+          wave: entry.wave,
+          updated_at: entry.updated_at,
+        };
+      });
+
+      this.cachedLeaderboard = entries;
+      return entries;
+    } catch (e) {
+      console.warn('Leaderboard load failed:', e);
+      return this.getLocalLeaderboard();
+    }
+  }
+
+  private getLocalLeaderboard(): LeaderboardEntry[] {
+    return MOCK_PLAYERS.map((player, idx) => ({
       ...player,
       rank: idx + 1,
     }));
+  }
 
-    // Add current player's score if authenticated
+  async getGlobalLeaderboard(limit: number = 25): Promise<LeaderboardEntry[]> {
+    const entries = await this.loadFromCloud();
+
     const profile = authManager.getProfile();
     const stats = this.getMyStats();
 
@@ -73,17 +146,21 @@ export class LeaderboardManager {
         updated_at: new Date().toISOString(),
       };
 
-      // Find insertion point
       let insertIndex = entries.findIndex(e => stats.total_score > e.score);
       if (insertIndex === -1) insertIndex = entries.length;
 
       entries.splice(insertIndex, 0, playerEntry);
-
-      // Recalculate ranks
       entries.forEach((e, i) => e.rank = i + 1);
     }
 
     return entries.slice(0, limit);
+  }
+
+  getGlobalLeaderboardSync(limit: number = 25): LeaderboardEntry[] {
+    if (this.cachedLeaderboard) {
+      return this.cachedLeaderboard.slice(0, limit);
+    }
+    return this.getLocalLeaderboard().slice(0, limit);
   }
 
   private getMyStats(): { total_score: number; highest_wave: number } | null {
@@ -102,25 +179,23 @@ export class LeaderboardManager {
     return null;
   }
 
-  submitScore(score: number, wave: number): number {
+  async submitScore(score: number, wave: number): Promise<number> {
+    await this.syncToCloud(score, wave);
+
+    const leaderboard = await this.getGlobalLeaderboard(100);
     const profile = authManager.getProfile();
     if (!profile) return 0;
 
-    const leaderboard = this.getGlobalLeaderboard(100);
     const myEntry = leaderboard.find(e => e.profile_id === profile.id);
-
-    if (!myEntry) return 0;
-
-    return myEntry.rank;
+    return myEntry?.rank || 0;
   }
 
-  getMyRank(): number {
+  async getMyRank(): Promise<number> {
+    const leaderboard = await this.getGlobalLeaderboard(100);
     const profile = authManager.getProfile();
     if (!profile) return 0;
 
-    const leaderboard = this.getGlobalLeaderboard(100);
     const myEntry = leaderboard.find(e => e.profile_id === profile.id);
-
     return myEntry?.rank || 0;
   }
 
@@ -140,29 +215,62 @@ export class LeaderboardManager {
     return 'Top 75%';
   }
 
-  // Friends functionality
-  getFriends(): FriendProfile[] {
+  async getFriends(): Promise<FriendProfile[]> {
+    const sb = getSupabase();
+    const profile = authManager.getProfile();
+    if (!sb || !profile) return [];
+
     try {
-      const stored = localStorage.getItem(FRIENDS_KEY);
-      if (stored) {
-        return JSON.parse(stored);
-      }
+      const { data, error } = await sb
+        .from('friends')
+        .select('friend_id, profiles!inner(id, username, avatar_id, level), last_seen, online)')
+        .eq('profile_id', profile.id)
+        .eq('status', 'accepted');
+
+      if (error || !data) return [];
+
+      return data.map((f: any) => ({
+        id: f.friend_id,
+        username: f.profiles.username,
+        avatar_id: f.profiles.avatar_id,
+        level: f.profiles.level,
+        last_seen: f.last_seen,
+        online: f.online,
+      }));
     } catch (e) {
-      console.warn('Failed to load friends:', e);
+      console.warn('Friends load failed:', e);
+      return [];
     }
-    return [];
   }
 
-  addFriend(friendId: string): void {
-    const friends = this.getFriends();
-    // In production, this would call Supabase
-    // For now, just mock it
-    console.log('Friend request sent to:', friendId);
+  async addFriend(friendId: string): Promise<void> {
+    const sb = getSupabase();
+    const profile = authManager.getProfile();
+    if (!sb || !profile) return;
+
+    try {
+      await sb.from('friends').insert({
+        profile_id: profile.id,
+        friend_id: friendId,
+        status: 'pending',
+      });
+    } catch (e) {
+      console.warn('Add friend failed:', e);
+    }
   }
 
-  removeFriend(friendId: string): void {
-    const friends = this.getFriends().filter(f => f.id !== friendId);
-    localStorage.setItem(FRIENDS_KEY, JSON.stringify(friends));
+  async removeFriend(friendId: string): Promise<void> {
+    const sb = getSupabase();
+    const profile = authManager.getProfile();
+    if (!sb || !profile) return;
+
+    try {
+      await sb.from('friends').delete()
+        .eq('profile_id', profile.id)
+        .eq('friend_id', friendId);
+    } catch (e) {
+      console.warn('Remove friend failed:', e);
+    }
   }
 }
 

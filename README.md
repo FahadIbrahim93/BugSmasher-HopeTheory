@@ -99,18 +99,28 @@ npm run build
 
 ---
 
-## 🔌 Supabase Setup
+## 🔌 Supabase Database (ACTIVE)
 
-The game works offline-first. To enable cloud sync:
+The game now has full Supabase integration with persistent cloud storage:
 
-1. Create a Supabase project at supabase.com
-2. Copy `.env.example` to `.env`
-3. Add your credentials:
+### Database Tables
+- `profiles` - User accounts, level, XP, crystals
+- `user_stats` - Player statistics and achievements
+- `game_saves` - Game state snapshots
+- `leaderboard` - Global rankings
 
+### How It Works
+1. **Local-first:** Data saves to localStorage immediately (instant)
+2. **Cloud sync:** Data syncs to Supabase in background
+3. **Restore:** On session restore, pulls latest from cloud if localStorage cleared
+
+### Environment Variables
 ```env
-VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_URL=https://faloknbaathdkmaeodxt.supabase.co
+VITE_SUPABASE_ANON_KEY=sbp_587be43b7b6b9a1ae2f196a72269a7aa40d06ee9
 ```
+
+The database is pre-configured. No setup required!
 
 ---
 

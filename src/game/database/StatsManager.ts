@@ -1,11 +1,26 @@
-// StatsManager - Player statistics and achievements
-// Tracks all game metrics and achievements
+// StatsManager - Full Supabase Integration
+// Tracks all game metrics and achievements with cloud sync
 
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { UserStats, Achievement } from './types';
-import { ACHIEVEMENTS_LIST } from './types';
+import { ACHIEVEMENTS_LIST, XP_PER_LEVEL } from './types';
 import { authManager } from './AuthManager';
 
 const STATS_KEY = 'bugsmasher_stats';
+const ACHIEVEMENTS_KEY = 'bugsmasher_achievements';
+
+let supabase: SupabaseClient | null = null;
+
+function getSupabase(): SupabaseClient | null {
+  if (supabase) return supabase;
+  
+  const url = import.meta.env.VITE_SUPABASE_URL;
+  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  if (!url || !key) return null;
+  
+  supabase = createClient(url, key);
+  return supabase;
+}
 
 export class StatsManager {
   private stats: UserStats | null = null;
@@ -23,7 +38,7 @@ export class StatsManager {
         this.stats = JSON.parse(statsData);
       }
 
-      const achievementsData = localStorage.getItem('bugsmasher_achievements');
+      const achievementsData = localStorage.getItem(ACHIEVEMENTS_KEY);
       if (achievementsData) {
         const saved = JSON.parse(achievementsData);
         this.achievements = ACHIEVEMENTS_LIST.map(a => {
@@ -41,7 +56,7 @@ export class StatsManager {
       if (this.stats) {
         localStorage.setItem(STATS_KEY, JSON.stringify(this.stats));
       }
-      localStorage.setItem('bugsmasher_achievements', JSON.stringify(this.achievements));
+      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(this.achievements));
       this.notify();
     } catch (e) {
       console.warn('Failed to save stats:', e);
@@ -83,6 +98,7 @@ export class StatsManager {
     };
 
     this.save();
+    this.syncToCloud();
   }
 
   private ensureStats(): UserStats {
@@ -90,6 +106,60 @@ export class StatsManager {
       this.initialize();
     }
     return this.stats!;
+  }
+
+  async syncToCloud(): Promise<void> {
+    const sb = getSupabase();
+    if (!sb || !this.stats) return;
+
+    try {
+      await sb.from('user_stats').upsert({
+        profile_id: this.stats.profile_id,
+        total_playtime: this.stats.total_playtime,
+        total_kills: this.stats.total_kills,
+        total_score: this.stats.total_score,
+        highest_wave: this.stats.highest_wave,
+        games_played: this.stats.games_played,
+        bugs_smashed: this.stats.bugs_smashed,
+        enemies_killed: this.stats.enemies_killed,
+        powerups_collected: this.stats.powerups_collected,
+        upgrades_purchased: this.stats.upgrades_purchased,
+        achievements_unlocked: this.stats.achievements_unlocked,
+        current_streak: this.stats.current_streak,
+        longest_streak: this.stats.longest_streak,
+        last_played_at: this.stats.last_played_at,
+      }, { onConflict: 'profile_id' });
+    } catch (e) {
+      console.warn('Stats cloud sync failed:', e);
+    }
+  }
+
+  async loadFromCloud(): Promise<UserStats | null> {
+    const sb = getSupabase();
+    const profile = authManager.getProfile();
+    if (!sb || !profile) return null;
+
+    try {
+      const { data, error } = await sb
+        .from('user_stats')
+        .select('*')
+        .eq('profile_id', profile.id)
+        .single();
+
+      if (error || !data) return null;
+
+      this.stats = data as UserStats;
+      this.save();
+      return this.stats;
+    } catch (e) {
+      console.warn('Stats cloud load failed:', e);
+      return null;
+    }
+  }
+
+  async restore(): Promise<boolean> {
+    const cloudStats = await this.loadFromCloud();
+    return !!cloudStats;
   }
 
   recordGameEnd(score: number, wave: number, kills: number, playTimeSeconds: number): void {
@@ -107,6 +177,7 @@ export class StatsManager {
     this.updateStreak();
     this.checkAchievements(score, wave, kills);
     this.save();
+    this.syncToCloud();
   }
 
   recordKill(): void {
@@ -148,7 +219,6 @@ export class StatsManager {
 
   private checkAchievements(score: number, wave: number, kills: number): void {
     const stats = this.ensureStats();
-    const { XP_PER_LEVEL } = require('./types');
 
     for (const achievement of this.achievements) {
       if (achievement.unlocked) continue;

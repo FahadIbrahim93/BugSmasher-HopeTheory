@@ -10,19 +10,27 @@ import { cloudSaveManager } from './CloudSaveManager';
 import { statsManager } from './StatsManager';
 import { leaderboardManager } from './LeaderboardManager';
 
-// Initialize database on import
 export function initializeDatabase(): void {
   const state = authManager.getState();
   
   if (!state.isAuthenticated) {
-    // Auto-login as guest
     authManager.signInAsGuest();
   }
   
   statsManager.initialize();
 }
 
-// Export singleton instances
+export async function restoreUserData(): Promise<void> {
+  await authManager.restoreSession();
+  await statsManager.restore();
+  await cloudSaveManager.restoreGame();
+}
+
+export async function saveAllData(): Promise<void> {
+  await authManager.syncToCloud();
+  await statsManager.syncToCloud();
+}
+
 export const db = {
   auth: authManager,
   cloudSave: cloudSaveManager,

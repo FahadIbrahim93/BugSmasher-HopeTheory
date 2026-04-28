@@ -21,10 +21,11 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
   const [myRank, setMyRank] = useState(0);
 
   useEffect(() => {
-    const updateData = () => {
+    const updateData = async () => {
       setProfile(authManager.getProfile());
       setStats(statsManager.getStats());
-      setMyRank(leaderboardManager.getMyRank());
+      const rank = await leaderboardManager.getMyRank();
+      setMyRank(rank);
     };
     updateData();
     const unsub1 = authManager.subscribe(() => updateData());
