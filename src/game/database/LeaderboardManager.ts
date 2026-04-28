@@ -4,6 +4,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { LeaderboardEntry, FriendProfile } from './types';
 import { authManager } from './AuthManager';
+import { getSupabaseUrl, getSupabaseAnonKey } from './supabaseConfig';
 
 const LEADERBOARD_KEY = 'bugsmasher_leaderboard';
 const FRIENDS_KEY = 'bugsmasher_friends';
@@ -13,8 +14,8 @@ let supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient | null {
   if (supabase) return supabase;
   
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
   if (!url || !key) return null;
   
   supabase = createClient(url, key);

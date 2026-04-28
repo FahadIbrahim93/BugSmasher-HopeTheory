@@ -5,6 +5,7 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { UserStats, Achievement } from './types';
 import { ACHIEVEMENTS_LIST, XP_PER_LEVEL } from './types';
 import { authManager } from './AuthManager';
+import { getSupabaseUrl, getSupabaseAnonKey } from './supabaseConfig';
 
 const STATS_KEY = 'bugsmasher_stats';
 const ACHIEVEMENTS_KEY = 'bugsmasher_achievements';
@@ -14,8 +15,8 @@ let supabase: SupabaseClient | null = null;
 function getSupabase(): SupabaseClient | null {
   if (supabase) return supabase;
   
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const url = getSupabaseUrl();
+  const key = getSupabaseAnonKey();
   if (!url || !key) return null;
   
   supabase = createClient(url, key);

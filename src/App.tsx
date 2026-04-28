@@ -10,17 +10,36 @@ export default function App() {
   const [dbReady, setDbReady] = useState(false);
 
   useEffect(() => {
+    console.log('Starting app initialization...');
     initializeDatabase();
-    authManager.initialize().then(() => {
-      authManager.checkSession();
-      restoreUserData().then(() => {
+    authManager.initialize()
+      .then(() => {
+        console.log('Auth initialized');
+        return authManager.checkSession();
+      })
+      .then(() => {
+        console.log('Session checked');
+        return restoreUserData();
+      })
+      .then(() => {
+        console.log('User data restored');
         statsManager.initialize();
+        console.log('Stats initialized, setting dbReady');
+        setDbReady(true);
+      })
+      .catch((e) => {
+        console.error('Initialization error:', e);
         setDbReady(true);
       });
-    });
   }, []);
 
-  if (!dbReady) return null;
+  if (!dbReady) {
+    return (
+      <div className="w-full h-full bg-zinc-950 text-white flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <ErrorBoundary>

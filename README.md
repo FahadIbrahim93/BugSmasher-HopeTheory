@@ -48,96 +48,107 @@
 
 ---
 
+## 🔐 Authentication (v1.4.2)
+
+BugSmasher uses **Supabase Auth** for user accounts with multiple login methods:
+
+### Login Methods
+| Method | Status | Description |
+|--------|--------|------------|
+| Guest | ✅ Working | Offline-first, local storage |
+| Email/Password | ✅ Working | Supabase email auth |
+| Google OAuth | ✅ Working | Full OAuth flow |
+| Discord OAuth | ✅ Working | Full OAuth flow |
+
+### Auth Flow (Production)
+
+1. **App Start** → Check session from localStorage
+2. **OAuth Redirect** → Extract tokens from URL hash
+3. **Token Exchange** → Create session via `setSession()`
+4. **State Update** → `onAuthStateChange` listener updates UI
+5. **Persist** → Save to localStorage + sync to cloud
+
+### Supabase Configuration
+
+```typescript
+// src/game/database/supabaseConfig.ts
+export const supabaseConfig = {
+  url: 'https://faloknbaathdkmaeodxt.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' // JWT format
+};
+```
+
+### Known Issues
+
+| Issue | Severity | Status |
+|-------|----------|--------|
+| Clock skew warning | Low | Non-breaking - device time issue |
+| Token lock warnings | Low | Race condition - recovers automatically |
+| Session exchange race | Low | `onAuthStateChange` catches it |
+
+### Test Credentials
+
+```
+Email: bugsmasher@test.com
+Password: GamePass123!
+Google: Any Gmail account works
+```
+
+---
+
 ## 🏗️ Architecture
 
 ```
 src/
 ├── game/
 │   ├── database/          # Auth + Stats + Cloud
-│   │   ├── AuthManager.ts
-│   │   ├── StatsManager.ts
+│   │   ├── AuthManager.ts      # User authentication
+│   │   ├── StatsManager.ts   # Player stats & XP
 │   │   ├── LeaderboardManager.ts
 │   │   ├── CloudSaveManager.ts
-│   │   └── types.ts
-│   ├── GameEngine.ts      # Core gameplay
-│   ├── Renderer.ts        # Canvas rendering
-│   └── *.ts              # Managers
-├── components/
-│   ├── MainMenu.tsx      # Start + Auth screen
-│   ├── Game.tsx          # Main game
-│   └── *.tsx
-└── App.tsx
+│   │   └── supabaseConfig.ts # Central config
+│   ├── components/       # React components
+│   ├── GameEngine.ts      # Main game logic
+│   └── ...
 ```
 
 ---
 
-## ⚡ Commands
+## 🚦 Quick Commands
 
-```bash
-npm install     # Install dependencies
-npm run dev    # Start dev server (localhost:3000)
-npm run test   # Run tests
-npm run lint   # TypeScript check
-npm run build  # Production build
-```
-
----
-
-## 🔌 Supabase Database (ACTIVE)
-
-Full Supabase integration with persistent cloud storage:
-
-### Database Tables
-- `profiles` - User accounts (17 users)
-- `user_stats` - Player statistics
-- `game_saves` - Game state snapshots
-- `leaderboard` - Global rankings (17 players)
-
-### Auth Methods
-| Method | Status |
-|--------|--------|
-| Guest (offline) | ✅ Working |
-| Email/Password | ✅ Working |
-| Google OAuth | ✅ Working |
-
-### Test Account
-```
-Email: bugsmasher@test.com
-Password: GamePass123!
-```
-
-### Environment Variables
-```env
-VITE_SUPABASE_URL=https://faloknbaathdkmaeodxt.supabase.co
-VITE_SUPABASE_ANON_KEY=sbp_587be43b7b6b9a1ae2f196a72269a7aa40d06ee9
-```
+| Command | Action |
+|---------|--------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run lint` | Type check |
+| `npm test` | Run tests |
 
 ---
 
-## 📊 Rating (10/10)
+## 📦 Deployment
 
-| Aspect | Score |
-|--------|-------|
-| Core Gameplay | 10/10 |
-| Database System | 10/10 |
-| Account System | 10/10 |
-| UI/UX | 10/10 |
-| Progression | 10/10 |
-| Polish | 10/10 |
-
-**[🎮 Play Live](https://bugsmasher-ten.vercel.app)**
+- **Production:** https://bugsmasher-ten.vercel.app
+- **GitHub:** https://github.com/FahadIbrahim93/BugSmasher-HopeTheory
+- **Supabase:** https://supabase.com/dashboard/project/faloknbaathdkmaeodxt
 
 ---
 
-## 📄 License
+## 📝 Changelog
 
-MIT License
+### v1.4.2 (2026-04-29)
+- ✅ Full Supabase Auth integration
+- ✅ Google OAuth working
+- ✅ Session persistence
+- ✅ Centralized supabaseConfig.ts
+- ⚠️ Minor clock skew warnings (non-breaking)
+
+### v1.4.1 (2026-04-26)
+- ✅ Initial auth system
+- ✅ Supabase database tables
+- ⚠️ OAuth redirect issues fixed in v1.4.2
 
 ---
 
-## 🙏 Credits
+## License
 
-Built with ❤️ by HopeTheory
-
-- **GitHub:** https://github.com/FahadIbrahim93
-- **Twitter:** @hopetheory__
+MIT © 2026 HopeTheory

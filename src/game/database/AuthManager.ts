@@ -3,6 +3,7 @@
 
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 import type { Profile, UserStats, UserSettings } from './types';
+import { supabaseConfig } from './supabaseConfig';
 
 export type AuthProvider = 'guest' | 'email' | 'google' | 'discord' | 'apple';
 
@@ -48,11 +49,14 @@ function setupAuthStateListener(sb: SupabaseClient): void {
   console.log('Auth state listener initialized');
 }
 
+const SUPABASE_URL = supabaseConfig.url;
+const SUPABASE_ANON_KEY = supabaseConfig.anonKey;
+
 function getSupabaseClient(): SupabaseClient | null {
   if (supabase) return supabase;
   
-  const url = import.meta.env.VITE_SUPABASE_URL;
-  const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const url = SUPABASE_URL;
+  const key = SUPABASE_ANON_KEY;
   
   console.log('Initializing Supabase with:', { url, hasKey: !!key });
   
@@ -661,9 +665,28 @@ export class AuthManager {
     }
     
     const hash = window.location.hash;
-    if (hash.includes('access_token') || hash.includes('code')) {
-      console.log('OAuth redirect detected, waiting for session exchange...');
-      await new Promise(resolve => setTimeout(resolve, 1500));
+    const urlParams = new URLSearchParams(hash.substring(1));
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const expiresIn = urlParams.get('expires_in');
+    
+    if (accessToken && refreshToken && expiresIn) {
+      console.log('OAuth tokens detected in URL, exchanging for session...');
+      try {
+        const { data, error } = await sb.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+        if (error) {
+          console.error('Session exchange error:', error.message);
+        } else if (data.session) {
+          console.log('Session exchanged successfully for:', data.session.user.email);
+          await this.handleSupabaseUser(data.session.user);
+          return;
+        }
+      } catch (e) {
+        console.error('Failed to exchange session:', e);
+      }
     }
     
     let { data: { session } } = await sb.auth.getSession();
