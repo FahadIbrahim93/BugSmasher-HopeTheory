@@ -11,19 +11,19 @@ import { statsManager } from './StatsManager';
 import { leaderboardManager } from './LeaderboardManager';
 
 export function initializeDatabase(): void {
-  const state = authManager.getState();
-  
-  if (!state.isAuthenticated) {
-    authManager.signInAsGuest();
-  }
+  localStorage.removeItem('bugsmasher_auth');
   
   statsManager.initialize();
 }
 
 export async function restoreUserData(): Promise<void> {
   await authManager.restoreSession();
-  await statsManager.restore();
-  await cloudSaveManager.restoreGame();
+  
+  const state = authManager.getState();
+  if (state.isAuthenticated) {
+    await statsManager.restore();
+    await cloudSaveManager.restoreGame();
+  }
 }
 
 export async function saveAllData(): Promise<void> {

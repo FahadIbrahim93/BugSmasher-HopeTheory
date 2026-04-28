@@ -35,16 +35,22 @@ function getSupabaseClient(): SupabaseClient | null {
   
   const url = import.meta.env.VITE_SUPABASE_URL;
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  
+  console.log('Initializing Supabase with:', { url, hasKey: !!key });
+  
   if (!url || !key) {
-    console.warn('Supabase not configured');
+    console.error('Supabase not configured - missing env vars', { url: !!url, key: !!key });
     return null;
   }
+  
   supabase = createClient(url, key, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
     }
   });
+  
+  console.log('Supabase client initialized successfully');
   return supabase;
 }
 
@@ -498,29 +504,37 @@ export class AuthManager {
     } catch (e) {
       return { success: false, error: e instanceof Error ? e.message : 'Registration failed' };
     }
-  }
+}
+
+  private static readonly REDIRECT_URL = 'https://bugsmasher-ten.vercel.app';
 
   async signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
     try {
       const sb = getSupabaseClient();
+      console.log('Google sign-in attempt, client:', !!sb);
+      
       if (!sb) {
-        return { success: false, error: 'Supabase not configured' };
+        console.error('Supabase client is null');
+        return { success: false, error: 'Supabase not configured. Please refresh and try again.' };
       }
 
-      const { error } = await sb.auth.signInWithOAuth({
+      console.log('Attempting Google OAuth sign-in...');
+      const { data, error } = await sb.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`,
-          scopes: 'email profile',
+          redirectTo: AuthManager.REDIRECT_URL,
         }
       });
 
       if (error) {
+        console.error('Google OAuth error:', error);
         return { success: false, error: error.message };
       }
 
+      console.log('Google OAuth initiated, url:', data?.url ? 'generated' : 'none');
       return { success: true };
     } catch (e) {
+      console.error('Google sign-in exception:', e);
       return { success: false, error: e instanceof Error ? e.message : 'Google sign-in failed' };
     }
   }
@@ -535,7 +549,7 @@ export class AuthManager {
       const { error } = await sb.auth.signInWithOAuth({
         provider: 'discord',
         options: {
-          redirectTo: `${window.location.origin}`,
+          redirectTo: AuthManager.REDIRECT_URL,
         }
       });
 
