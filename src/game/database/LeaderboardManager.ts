@@ -90,16 +90,21 @@ export class LeaderboardManager {
     try {
       const { data, error } = await sb
         .from('leaderboard')
-        .select('*, profiles(username, avatar_id)')
+        .select('*')
         .order('score', { ascending: false })
         .limit(25);
 
-      if (error || !data) {
+      if (error || !data || data.length === 0) {
         return this.getLocalLeaderboard();
       }
 
-      const profiles = await sb.from('profiles').select('id, username, avatar_id').in('id', data.map((d: any) => d.profile_id));
-      const profileMap = new Map(profiles.data?.map((p: any) => [p.id, p]) || []);
+      const profileIds = data.map((d: any) => d.profile_id);
+      const { data: profiles } = await sb
+        .from('profiles')
+        .select('id, username, avatar_id')
+        .in('id', profileIds);
+
+      const profileMap = new Map(profiles?.map((p: any) => [p.id, p]) || []);
 
       const entries: LeaderboardEntry[] = data.map((entry: any, idx: number) => {
         const profile = profileMap.get(entry.profile_id);
