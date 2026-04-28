@@ -1,7 +1,7 @@
 // Authentication System - Full Supabase Integration
-// Hybrid local-first with cloud sync
+// Hybrid local-first with Supabase Auth + OAuth
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 import type { Profile, UserStats, UserSettings } from './types';
 
 export type AuthProvider = 'guest' | 'email' | 'google' | 'discord' | 'apple';
@@ -39,7 +39,12 @@ function getSupabaseClient(): SupabaseClient | null {
     console.warn('Supabase not configured');
     return null;
   }
-  supabase = createClient(url, key);
+  supabase = createClient(url, key, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  });
   return supabase;
 }
 
@@ -440,7 +445,25 @@ export class AuthManager {
 
   async signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.signInWithEmail(email, password);
+      const sb = getSupabaseClient();
+      if (!sb) {
+        await this.signInWithEmail(email, password);
+        return { success: true };
+      }
+
+      const { data, error } = await sb.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (data.user) {
+        await this.handleSupabaseUser(data.user);
+      }
+
       return { success: true };
     } catch (e) {
       return { success: false, error: e instanceof Error ? e.message : 'Login failed' };
@@ -449,19 +472,137 @@ export class AuthManager {
 
   async signUp(username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.signUpWithEmail(email, password, username);
+      const sb = getSupabaseClient();
+      if (!sb) {
+        await this.signUpWithEmail(email, password, username);
+        return { success: true };
+      }
+
+      const { data, error } = await sb.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username }
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (data.user) {
+        await this.handleSupabaseUser(data.user);
+      }
+
       return { success: true };
     } catch (e) {
       return { success: false, error: e instanceof Error ? e.message : 'Registration failed' };
     }
   }
 
+  async signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
+    try {
+      const sb = getSupabaseClient();
+      if (!sb) {
+        return { success: false, error: 'Supabase not configured' };
+      }
+
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}`,
+          scopes: 'email profile',
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Google sign-in failed' };
+    }
+  }
+
+  async signInWithDiscord(): Promise<{ success: boolean; error?: string }> {
+    try {
+      const sb = getSupabaseClient();
+      if (!sb) {
+        return { success: false, error: 'Supabase not configured' };
+      }
+
+      const { error } = await sb.auth.signInWithOAuth({
+        provider: 'discord',
+        options: {
+          redirectTo: `${window.location.origin}`,
+        }
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e instanceof Error ? e.message : 'Discord sign-in failed' };
+    }
+  }
+
+  private async handleSupabaseUser(sbUser: SupabaseUser): Promise<void> {
+    const userId = sbUser.id;
+    const email = sbUser.email || null;
+    const username = sbUser.user_metadata?.username || sbUser.email?.split('@')[0] || 'Player';
+    
+    let provider: AuthProvider = 'email';
+    if (sbUser.app_metadata?.provider) {
+      provider = sbUser.app_metadata.provider as AuthProvider;
+    }
+
+    this.user = {
+      id: userId,
+      provider,
+      email,
+      username,
+      createdAt: sbUser.created_at,
+      isAnonymous: sbUser.is_anonymous,
+      linkedProviders: [provider],
+    };
+
+    this.profile = {
+      id: userId,
+      username,
+      email,
+      avatar_url: sbUser.user_metadata?.avatar_url || null,
+      avatar_id: sbUser.user_metadata?.avatar_id || 'default',
+      is_guest: false,
+      level: 1,
+      xp: 0,
+      crystals: 0,
+      created_at: sbUser.created_at,
+      updated_at: new Date().toISOString(),
+    };
+
+    this.save();
+    await this.syncToCloud();
+  }
+
   async convertGuest(username: string, email: string, password: string): Promise<{ success: boolean; error?: string }> {
     try {
-      await this.signUpWithEmail(email, password, username);
+      await this.signUp(username, email, password);
       return { success: true };
     } catch (e) {
       return { success: false, error: e instanceof Error ? e.message : 'Conversion failed' };
+    }
+  }
+
+  async checkSession(): Promise<void> {
+    const sb = getSupabaseClient();
+    if (!sb) return;
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (session?.user) {
+      await this.handleSupabaseUser(session.user);
     }
   }
 
