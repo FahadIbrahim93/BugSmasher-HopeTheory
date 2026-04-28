@@ -29,6 +29,24 @@ const STATS_KEY = 'bugsmasher_stats';
 const SETTINGS_KEY = 'bugsmasher_settings';
 
 let supabase: SupabaseClient | null = null;
+let authStateListenerInitialized = false;
+
+function setupAuthStateListener(sb: SupabaseClient): void {
+  if (authStateListenerInitialized) return;
+  
+  sb.auth.onAuthStateChange(async (event, session) => {
+    console.log('Auth state changed:', event, session?.user?.email);
+    
+    if (event === 'SIGNED_IN' && session?.user) {
+      await authManager.handleSupabaseUser(session.user);
+    } else if (event === 'SIGNED_OUT') {
+      authManager.signOut();
+    }
+  });
+  
+  authStateListenerInitialized = true;
+  console.log('Auth state listener initialized');
+}
 
 function getSupabaseClient(): SupabaseClient | null {
   if (supabase) return supabase;
@@ -47,9 +65,11 @@ function getSupabaseClient(): SupabaseClient | null {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
+      detectSessionInUrl: true,
     }
   });
   
+  setupAuthStateListener(supabase);
   console.log('Supabase client initialized successfully');
   return supabase;
 }
@@ -563,7 +583,7 @@ export class AuthManager {
     }
   }
 
-  private async handleSupabaseUser(sbUser: SupabaseUser): Promise<void> {
+  async handleSupabaseUser(sbUser: SupabaseUser): Promise<void> {
     const userId = sbUser.id;
     const email = sbUser.email || null;
     const username = sbUser.user_metadata?.username || sbUser.email?.split('@')[0] || 'Player';
@@ -630,6 +650,37 @@ export class AuthManager {
   isSupabaseConfigured(): boolean {
     const config = this.getSupabaseConfig();
     return !!config.url && !!config.anonKey;
+  }
+
+  async initialize(): Promise<void> {
+    console.log('Initializing auth system...');
+    const sb = getSupabaseClient();
+    if (!sb) {
+      console.log('Supabase not available, using local-only mode');
+      return;
+    }
+    
+    const hash = window.location.hash;
+    if (hash.includes('access_token') || hash.includes('code')) {
+      console.log('OAuth redirect detected, waiting for session exchange...');
+      await new Promise(resolve => setTimeout(resolve, 1500));
+    }
+    
+    let { data: { session } } = await sb.auth.getSession();
+    
+    if (!session?.user && sb) {
+      console.log('No session yet, checking again...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await sb.auth.getSession();
+      session = result.data.session;
+    }
+    
+    if (session?.user) {
+      console.log('Found session for:', session.user.email);
+      await this.handleSupabaseUser(session.user);
+    } else {
+      console.log('No existing session found');
+    }
   }
 }
 

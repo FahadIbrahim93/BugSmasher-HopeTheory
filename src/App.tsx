@@ -3,7 +3,7 @@ import { MainMenu } from './components/MainMenu';
 import { Game } from './components/Game';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Preloader } from './components/Preloader';
-import { initializeDatabase, restoreUserData, statsManager } from './game/database';
+import { initializeDatabase, restoreUserData, authManager, statsManager } from './game/database';
 
 export default function App() {
   const [gameState, setGameState] = useState<'preloading' | 'menu' | 'playing'>('preloading');
@@ -11,9 +11,12 @@ export default function App() {
 
   useEffect(() => {
     initializeDatabase();
-    restoreUserData().then(() => {
-      statsManager.initialize();
-      setDbReady(true);
+    authManager.initialize().then(() => {
+      authManager.checkSession();
+      restoreUserData().then(() => {
+        statsManager.initialize();
+        setDbReady(true);
+      });
     });
   }, []);
 
