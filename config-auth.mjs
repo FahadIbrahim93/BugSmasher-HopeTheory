@@ -1,25 +1,30 @@
 import { createClient } from '@supabase/supabase-js';
+import dotenv from 'dotenv';
 
-const supabaseUrl = 'https://faloknbaathdkmaeodxt.supabase.co';
-const serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhbG9rbmJhYXRoZGttYWVvZHh0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzIyNzU0NywiZXhwIjoyMDkyODAzNTQ3fQ.i3hGk8Pib_o1ISX4RHhKXqq90grwci8Wa6GnUGbKajA';
+dotenv.config();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !serviceKey) {
+  console.error('Missing VITE_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in local environment.');
+  process.exit(1);
+}
 
 const supabase = createClient(supabaseUrl, serviceKey);
 
 async function configureAuth() {
-  console.log('⚙️ Configuring Supabase Auth...\n');
-  
-  console.log('Checking auth configuration...');
-  
-  // Try to access the auth config via the admin API
+  console.log('Configuring Supabase Auth...');
+
   try {
     const response = await fetch(`${supabaseUrl}/auth/v1/settings`, {
       method: 'GET',
       headers: {
-        'apikey': serviceKey,
-        'Authorization': `Bearer ${serviceKey}`,
-      }
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
     });
-    
+
     if (response.ok) {
       const settings = await response.json();
       console.log('Current settings:', JSON.stringify(settings, null, 2));
@@ -29,80 +34,85 @@ async function configureAuth() {
   } catch (e) {
     console.log('Could not fetch settings:', e.message);
   }
-  
-  // Try to create a user directly via admin API
-  console.log('\n📝 Creating user via admin API...');
-  
+
   const testUser = {
     email: 'player1@bugsmasher.game',
     password: 'GamePassword123!',
     email_confirm: true,
-    user_metadata: { username: 'PlayerOne' }
+    user_metadata: { username: 'PlayerOne' },
   };
-  
+
   try {
     const response = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
       method: 'POST',
       headers: {
-        'apikey': serviceKey,
-        'Authorization': `Bearer ${serviceKey}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(testUser)
+      body: JSON.stringify(testUser),
     });
-    
+
     const result = await response.json();
     console.log('Admin create response:', response.status);
     console.log(JSON.stringify(result, null, 2));
-    
+
     if (result.id) {
-      console.log('\n✅ User created! ID:', result.id);
-      
-      // Add to profiles table
-      const { error: profileError } = await supabase.from('profiles').upsert({
-        id: result.id,
-        username: 'PlayerOne',
-        email: testUser.email,
-        avatar_id: 'default',
-        is_guest: false,
-        level: 1,
-        xp: 0,
-        crystals: 10,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }, { onConflict: 'id' });
-      
+      console.log('User created. ID:', result.id);
+
+      const { error: profileError } = await supabase.from('profiles').upsert(
+        {
+          id: result.id,
+          username: 'PlayerOne',
+          email: testUser.email,
+          avatar_id: 'default',
+          is_guest: false,
+          level: 1,
+          xp: 0,
+          crystals: 10,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' },
+      );
+
       if (profileError) {
         console.log('Profile error:', profileError.message);
       } else {
-        console.log('✅ Profile created!');
+        console.log('Profile created.');
       }
-      
-      // Add stats
-      await supabase.from('user_stats').upsert({
-        profile_id: result.id,
-        total_playtime: 0,
-        total_kills: 0,
-        total_score: 0,
-        highest_wave: 0,
-        games_played: 0,
-      }, { onConflict: 'profile_id' });
-      
-      // Add to leaderboard
-      await supabase.from('leaderboard').upsert({
-        profile_id: result.id,
-        score: 0,
-        wave: 0,
-      }, { onConflict: 'profile_id' });
+
+      await supabase.from('user_stats').upsert(
+        {
+          profile_id: result.id,
+          total_playtime: 0,
+          total_kills: 0,
+          total_score: 0,
+          highest_wave: 0,
+          games_played: 0,
+        },
+        { onConflict: 'profile_id' },
+      );
+
+      await supabase.from('leaderboard').upsert(
+        {
+          profile_id: result.id,
+          score: 0,
+          wave: 0,
+        },
+        { onConflict: 'profile_id' },
+      );
     }
   } catch (e) {
     console.log('Error creating user:', e.message);
   }
-  
-  console.log('\n✅ Configuration complete!');
+
+  console.log('Configuration complete.');
 }
 
-configureAuth().then(() => process.exit(0)).catch(e => {
-  console.log('Error:', e.message);
-  process.exit(1);
-});
+configureAuth()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.log('Error:', e.message);
+    process.exit(1);
+  });

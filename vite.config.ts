@@ -20,5 +20,19 @@ export default defineConfig(({mode}) => {
       'import.meta.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(env.VITE_SUPABASE_ANON_KEY || ''),
       'import.meta.env.VITE_GOOGLE_CLIENT_ID': JSON.stringify(env.VITE_GOOGLE_CLIENT_ID || ''),
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return;
+            if (id.includes('react') || id.includes('react-dom')) return 'vendor-react';
+            if (id.includes('@supabase')) return 'vendor-supabase';
+            if (id.includes('motion')) return 'vendor-motion';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            return 'vendor';
+          },
+        },
+      },
+    },
   };
 });

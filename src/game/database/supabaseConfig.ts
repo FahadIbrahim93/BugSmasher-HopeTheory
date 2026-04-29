@@ -1,7 +1,8 @@
-// Supabase Configuration - Centralized for the app
+// Supabase Configuration - Centralized for the app.
+// Values must come from Vite environment variables. Do not commit project keys.
 export const supabaseConfig = {
-  url: import.meta.env.VITE_SUPABASE_URL || 'https://faloknbaathdkmaeodxt.supabase.co',
-  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhbG9rbmJhYXRoZGttYWVvZHh0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyMjc1NDcsImV4cCI6MjA5MjgwMzU0N30.vnmos6JGHAtJ9w5J1QgmSq7BgTwMEdztvWBv9sId7GQ',
+  url: import.meta.env.VITE_SUPABASE_URL || '',
+  anonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
 };
 
 export function getSupabaseUrl(): string {

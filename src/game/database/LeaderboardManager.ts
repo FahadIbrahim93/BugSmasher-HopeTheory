@@ -7,8 +7,6 @@ import { authManager } from './AuthManager';
 import { getSupabaseUrl, getSupabaseAnonKey } from './supabaseConfig';
 
 const LEADERBOARD_KEY = 'bugsmasher_leaderboard';
-const FRIENDS_KEY = 'bugsmasher_friends';
-
 let supabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient | null {
@@ -179,7 +177,7 @@ export class LeaderboardManager {
           highest_wave: stats.highest_wave || 0,
         };
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
     return null;

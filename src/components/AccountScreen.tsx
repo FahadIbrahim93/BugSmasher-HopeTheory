@@ -1,4 +1,4 @@
-import { X, User, Mail, Lock, Crown, Trophy, LogOut, ArrowRight, AlertCircle, CheckCircle, Star, Flame, Gamepad2 } from 'lucide-react';
+import { X, User, Crown, LogOut, AlertCircle, CheckCircle, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { authManager } from '../game/database/AuthManager';
 import { statsManager } from '../game/database/StatsManager';
@@ -23,10 +23,6 @@ const DiscordIcon = () => (
     <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 1 .196-.17.071.071 0 0 1 .071-.005c3.928 1.793 8.18 1.793 12.062 0a.071.071 0 0 1 .071.005c.12.098.246.118.308.018a17.894 17.894 0 0 1 1.832.892.077.077 0 0 1-.008.128 12.254 12.254 0 0 1-.196.17.076.076 0 0 0-.041.107c.36.698.772.862 1.205.892a.07.07 0 0 0 .033-.027c.412-.613.772-1.222 1.108-1.855a.076.076 0 0 0-.031-.055 19.866 19.866 0 0 0-5.792-2.34zm-13.12 8.75a1.653 1.653 0 0 1-1.497-1.64.072.072 0 0 1 .058-.07 1.622 1.622 0 0 1 1.493-1.64.072.072 0 0 1 .058.07 1.631 1.631 0 0 1 .058 1.64.071.071 0 0 1-.057.07zm7.18-1.65a1.642 1.642 0 0 1-1.488-1.64.072.072 0 0 1 .058-.07 1.62 1.62 0 0 1 1.488-1.64.072.072 0 0 1 .058.07 1.631 1.631 0 0 1 .058 1.64.072.072 0 0 1-.058.07z"/>
   </svg>
 );
-
-interface AccountScreenProps {
-  onClose: () => void;
-}
 
 export function AccountScreen({ onClose }: AccountScreenProps) {
   const [mode, setMode] = useState<'main' | 'login' | 'register' | 'upgrade'>('main');
@@ -182,8 +178,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Username</label>
+              <label htmlFor="upgrade-username" className="block text-zinc-400 text-sm mb-1">Username</label>
               <input
+                id="upgrade-username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -192,8 +189,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Email</label>
+              <label htmlFor="upgrade-email" className="block text-zinc-400 text-sm mb-1">Email</label>
               <input
+                id="upgrade-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -202,8 +200,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Password</label>
+              <label htmlFor="upgrade-password" className="block text-zinc-400 text-sm mb-1">Password</label>
               <input
+                id="upgrade-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -253,8 +252,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Email</label>
+              <label htmlFor="login-email" className="block text-zinc-400 text-sm mb-1">Email</label>
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -263,8 +263,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Password</label>
+              <label htmlFor="login-password" className="block text-zinc-400 text-sm mb-1">Password</label>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -349,8 +350,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Username</label>
+              <label htmlFor="register-username" className="block text-zinc-400 text-sm mb-1">Username</label>
               <input
+                id="register-username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -359,8 +361,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Email</label>
+              <label htmlFor="register-email" className="block text-zinc-400 text-sm mb-1">Email</label>
               <input
+                id="register-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -369,8 +372,9 @@ export function AccountScreen({ onClose }: AccountScreenProps) {
               />
             </div>
             <div>
-              <label className="block text-zinc-400 text-sm mb-1">Password</label>
+              <label htmlFor="register-password" className="block text-zinc-400 text-sm mb-1">Password</label>
               <input
+                id="register-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

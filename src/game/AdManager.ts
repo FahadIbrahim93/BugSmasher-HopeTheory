@@ -47,16 +47,23 @@ export class AdManager {
     this.state = 'loading';
 
     try {
+      let loaded = false;
       switch (this.config.provider) {
         case 'admob':
-          return await this.loadAdMob();
+          loaded = await this.loadAdMob();
+          break;
         case 'carbon':
-          return await this.loadCarbon();
+          loaded = await this.loadCarbon();
+          break;
         case 'demo':
-          return await this.loadDemo();
+          loaded = await this.loadDemo();
+          break;
         default:
           return false;
       }
+
+      this.state = loaded ? 'idle' : 'failed';
+      return loaded;
     } catch (error) {
       this.state = 'failed';
       this.callbacks.onAdFailed?.(String(error));
@@ -103,6 +110,7 @@ export class AdManager {
 
   private async showAdMob(): Promise<boolean> {
     await new Promise(resolve => setTimeout(resolve, 1000));
+    this.state = 'idle';
     this.callbacks.onAdDismissed?.();
     return true;
   }
@@ -114,6 +122,7 @@ export class AdManager {
 
   private async showCarbon(): Promise<boolean> {
     await new Promise(resolve => setTimeout(resolve, 1500));
+    this.state = 'idle';
     this.callbacks.onAdDismissed?.();
     return true;
   }

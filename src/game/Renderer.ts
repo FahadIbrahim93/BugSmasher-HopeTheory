@@ -408,7 +408,7 @@ export class Renderer {
         ctx.stroke();
         break;
         
-      case 'nuke':
+      case 'nuke': {
         // Nuke: Red warning
         const flash = Math.sin(this.engine.globalTime * 15) > 0;
         ctx.beginPath();
@@ -429,6 +429,7 @@ export class Renderer {
         ctx.lineWidth = 1;
         ctx.stroke();
         break;
+      }
         
       default:
         // Default: Diamond shape

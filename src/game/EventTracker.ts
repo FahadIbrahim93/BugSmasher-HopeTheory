@@ -52,8 +52,6 @@ export interface DailyMetrics {
 
 const EVENTS_KEY = 'bugsmasher_events';
 const SESSIONS_KEY = 'bugsmasher_sessions';
-const METRICS_KEY = 'bugsmasher_metrics';
-
 export class EventTracker {
   private sessionId: string = '';
   private sessionStart: number = 0;

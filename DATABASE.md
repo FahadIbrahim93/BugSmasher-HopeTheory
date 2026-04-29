@@ -162,8 +162,8 @@ leaderboardManager.getMyRank(): Promise<number>
 ## Environment Variables
 
 ```env
-VITE_SUPABASE_URL=https://faloknbaathdkmaeodxt.supabase.co
-VITE_SUPABASE_ANON_KEY=sbp_587be43b7b6b9a1ae2f196a72269a7aa40d06ee9
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
 ## Troubleshooting

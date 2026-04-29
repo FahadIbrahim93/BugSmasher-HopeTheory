@@ -299,7 +299,7 @@ export class AuthManager {
       if (!statsData) {
         this.initializeStats();
       }
-    } catch (e) {
+    } catch {
       this.initializeStats();
     }
   }
@@ -310,7 +310,7 @@ export class AuthManager {
       if (!settingsData) {
         this.initializeSettings();
       }
-    } catch (e) {
+    } catch {
       this.initializeSettings();
     }
   }
@@ -351,7 +351,7 @@ export class AuthManager {
     return this.user;
   }
 
-  async signInWithEmail(email: string, password: string): Promise<AuthUser> {
+  async signInWithEmail(email: string, _password: string): Promise<AuthUser> {
     // Simulate sign in - in production, use Supabase
     const userId = generateId();
 
