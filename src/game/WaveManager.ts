@@ -49,6 +49,11 @@ export class WaveManager {
       
       this.engine.wave++;
       this.engine.stop();
+
+      // Award XP for completing wave
+      const waveXP = completedWave * 10;
+      this.engine.awardXP(waveXP, 'wave_complete');
+
       this.engine.onWaveComplete?.(completedWave);
     }
   }

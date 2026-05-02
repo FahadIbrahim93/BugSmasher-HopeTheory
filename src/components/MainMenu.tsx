@@ -5,12 +5,14 @@ import { MatrixRain } from './MatrixRain';
 import { CustomBugLogo } from './CustomBugLogo';
 import { authManager } from '../game/database/AuthManager';
 import { AccountScreen } from './AccountScreen';
-import type { Profile } from '../game/database/types';
+import { cloudSaveManager } from '../game/database/CloudSaveManager';
+import type { Profile, GameStateSnapshot } from '../game/database/types';
 
-export function MainMenu({ onStart }: { onStart: () => void }) {
+export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapshot) => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [savedGame, setSavedGame] = useState<{ wave: number; score: number; timestamp: string } | null>(null);
 
   useEffect(() => {
     const updateProfile = () => setProfile(authManager.getProfile());
@@ -19,10 +21,37 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
     return unsub;
   }, []);
 
-  const handleStart = () => {
+  // Check for existing save on mount
+  useEffect(() => {
+    const save = cloudSaveManager.getCurrentSave();
+    if (save) {
+      const saveAge = Date.now() - new Date(save.timestamp).getTime();
+      const oneDay = 24 * 60 * 60 * 1000;
+      if (saveAge < oneDay) {
+        setSavedGame({
+          wave: save.game_state.wave,
+          score: save.game_state.score,
+          timestamp: save.timestamp,
+        });
+      }
+    }
+  }, []);
+
+  const handleStart = (resumeState?: GameStateSnapshot) => {
     soundManager.init();
     soundManager.uiClick();
-    onStart();
+    onStart(resumeState);
+  };
+
+  const handleContinue = () => {
+    soundManager.init();
+    soundManager.uiClick();
+    const save = cloudSaveManager.loadGame();
+    if (save) {
+      onStart(save);
+    } else {
+      onStart();
+    }
   };
 
   const handleSignIn = () => {
@@ -52,7 +81,6 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
         
         <div className="w-full flex flex-col items-center space-y-4 mt-4">
           {profile ? (
-            // User is signed in - show play button with profile
             <>
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center text-lg font-bold">
@@ -63,19 +91,39 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
                   <p className="text-zinc-500 text-sm">Level {profile.level} • {profile.crystals} crystals</p>
                 </div>
               </div>
-              <button 
-                onClick={handleStart}
-                onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
-                className="group relative px-12 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
-              >
-                Start Game
-              </button>
+
+              {/* Continue / New Game buttons */}
+              {savedGame ? (
+                <div className="w-full flex flex-col space-y-3">
+                  <button 
+                    onClick={handleContinue}
+                    onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+                    className="group relative px-12 py-4 bg-cyan-500 text-black hover:bg-cyan-400 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+                  >
+                    Continue — Wave {savedGame.wave}, {savedGame.score.toLocaleString()} pts
+                  </button>
+                  <button 
+                    onClick={() => handleStart()}
+                    onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+                    className="group relative px-12 py-3 border border-white/20 text-zinc-400 hover:text-white hover:border-white/40 rounded-full font-medium text-sm uppercase tracking-widest transition-all"
+                  >
+                    New Game
+                  </button>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => handleStart()}
+                  onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+                  className="group relative px-12 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+                >
+                  Start Game
+                </button>
+              )}
             </>
           ) : (
-            // No user signed in - show options
             <div className="w-full flex flex-col space-y-4">
               <button 
-                onClick={handleStart}
+                onClick={() => handleStart()}
                 onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
                 className="group relative px-10 py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm sm:text-base uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
               >
@@ -106,7 +154,6 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           )}
         </div>
         
-        {/* Settings Button */}
         <button
           onClick={() => { soundManager.uiClick(); setShowSettings(true); }}
           className="text-zinc-500 hover:text-white text-sm transition-colors"
@@ -114,7 +161,6 @@ export function MainMenu({ onStart }: { onStart: () => void }) {
           Settings
         </button>
         
-        {/* Account / Profile Button */}
         <button
           onClick={() => { soundManager.uiClick(); setShowAccount(true); }}
           className="absolute top-4 right-4 flex items-center gap-2 text-sm transition-colors"

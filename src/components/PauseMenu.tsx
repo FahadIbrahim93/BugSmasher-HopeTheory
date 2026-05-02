@@ -1,19 +1,20 @@
 import { motion } from 'motion/react';
-import { Volume2, VolumeX, Home, Play, Settings2 } from 'lucide-react';
+import { Volume2, VolumeX, Home, Play, Settings2, Save } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { useEffect, useState } from 'react';
 
 export function PauseMenu({ 
   onResume, 
-  onMainMenu 
+  onMainMenu,
+  onSaveQuit,
 }: { 
   onResume: () => void, 
-  onMainMenu: () => void 
+  onMainMenu: () => void,
+  onSaveQuit?: () => void,
 }) {
   const [volTracker, setVolTracker] = useState(soundManager.volume);
   const [muteTracker, setMuteTracker] = useState(soundManager.isMuted);
 
-  // Sync state if it was changed externally
   useEffect(() => {
     setVolTracker(soundManager.volume);
     setMuteTracker(soundManager.isMuted);
@@ -81,6 +82,16 @@ export function PauseMenu({
               Resume Operations
             </span>
           </button>
+
+          {onSaveQuit && (
+            <button 
+              onClick={() => { soundManager.uiClick(); soundManager.uiHover(); onSaveQuit(); }}
+              className="w-full py-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 rounded-full font-bold text-sm uppercase tracking-widest transition-all flex items-center justify-center"
+            >
+              <Save className="w-4 h-4 mr-3" />
+              Save &amp; Quit
+            </button>
+          )}
           
           <button 
             onClick={() => { soundManager.uiClick(); onMainMenu(); }}

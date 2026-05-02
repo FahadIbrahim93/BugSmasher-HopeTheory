@@ -10,6 +10,7 @@ import { statsManager } from './database/StatsManager';
 import { authManager } from './database/AuthManager';
 import { cloudSaveManager } from './database/CloudSaveManager';
 import { leaderboardManager } from './database/LeaderboardManager';
+import { cosmeticsManager } from './CosmeticsManager';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -63,6 +64,11 @@ export class GameEngine {
   totalKills: number = 0;
   totalPowerupsCollected: number = 0;
   forceNextPowerup: boolean = false;
+
+  // Session progression tracking
+  sessionXP: number = 0;
+  sessionCrystals: number = 0;
+  startLevel: number = 1;
   
   // Combo / Chain system
   chainCombo: number = 0;
@@ -72,8 +78,9 @@ export class GameEngine {
   
   renderer: Renderer;
   
-  onGameOver?: (score: number, waves: number, kills: number) => void;
+  onGameOver?: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number) => void;
   onWaveComplete?: (completedWave: number) => void;
+  onLevelUp?: (newLevel: number, crystalReward: number) => void;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -97,6 +104,9 @@ export class GameEngine {
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
     
     this.renderer = new Renderer(this);
+
+    // Hook achievement XP rewards
+    achievementSystem.setOnXPUnlock((xp) => this.awardXP(xp, 'achievement'));
   }
   
   applyPrestigeBonus(): void {
@@ -141,7 +151,15 @@ export class GameEngine {
     this.health = this.maxHealth;
     this.wave = 1;
     this.resetEntities();
-    
+
+    // Reset session progression
+    this.sessionXP = 0;
+    this.sessionCrystals = 0;
+    this.startLevel = authManager.getProfile()?.level ?? 1;
+
+    // Start cloud auto-save
+    cloudSaveManager.startAutoSave(() => this.getState());
+
     this.startWave();
     this.loop(this.lastTime);
   }
@@ -170,7 +188,76 @@ export class GameEngine {
   
   stop() {
     this.isRunning = false;
+    cloudSaveManager.stopAutoSave();
     cancelAnimationFrame(this.animationFrameId);
+  }
+
+  saveAndQuit(): void {
+    cloudSaveManager.saveGame(this.getState());
+    this.stop();
+  }
+
+  resumeFromSave(state: import('./database/types').GameStateSnapshot): void {
+    this.score = state.score;
+    this.wave = state.wave;
+    this.health = state.health;
+    this.maxHealth = Math.max(this.health, GameConfig.player.maxHealth);
+    this.applyPrestigeBonus();
+    this.clickRadiusMultiplier = this.maxHealth / GameConfig.player.maxHealth;
+    this.autoTurretLevel = state.upgrades.turret;
+
+    this.sessionXP = 0;
+    this.sessionCrystals = 0;
+    this.startLevel = authManager.getProfile()?.level ?? 1;
+  }
+
+  awardXP(amount: number, reason: string = ''): void {
+    const profile = authManager.getProfile();
+    if (!profile) return;
+
+    const prevLevel = profile.level;
+    this.sessionXP += amount;
+    authManager.addXP(amount);
+
+    const newProfile = authManager.getProfile();
+    if (newProfile && newProfile.level > prevLevel) {
+      const levelsGained = newProfile.level - prevLevel;
+      // Crystal reward: +5 * new level for each level-up
+      for (let i = 0; i < levelsGained; i++) {
+        const lvl = prevLevel + i + 1;
+        const reward = 5 * lvl;
+        authManager.addCrystals(reward);
+        this.sessionCrystals += reward;
+      }
+      this.onLevelUp?.(newProfile.level, this.sessionCrystals);
+      // Particle burst for level-up
+      this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#00ffcc', 800);
+      this.shake(0.5, 20);
+    }
+  }
+
+  getState(): import('./database/types').GameStateSnapshot {
+    return {
+      score: this.score,
+      wave: this.wave,
+      health: this.health,
+      upgrades: {
+        health: 1,
+        radius: 1,
+        turret: this.autoTurretLevel,
+      },
+      unlocked_biomes: [],
+      equipped_cosmetics: {
+        core: cosmeticsManager.getEquipped('core') || 'core_default',
+        bug: cosmeticsManager.getEquipped('bug') || '',
+        trail: cosmeticsManager.getEquipped('trail') || '',
+        ui: cosmeticsManager.getEquipped('ui') || '',
+      },
+      prestige_level: this.saveManager.getPrestigeLevel(),
+      achievement_unlocks: [],
+      daily_challenge_date: '',
+      daily_challenge_completed: false,
+    };
   }
   
   destroy() {
@@ -249,11 +336,12 @@ export class GameEngine {
       const playTimeSeconds = Math.floor(this.globalTime);
       statsManager.recordGameEnd(this.score, this.wave, this.totalKills, playTimeSeconds);
       
-      // Award XP and crystals based on performance
+      // Award XP and crystals based on performance (supplements in-game awards)
       const xpEarned = Math.floor(this.score / 50) + (this.wave * 5);
       const crystalsEarned = Math.floor(this.score / 500) + (this.wave > 5 ? 5 : 0);
-      authManager.addXP(xpEarned);
+      this.awardXP(xpEarned, 'game_over');
       authManager.addCrystals(crystalsEarned);
+      this.sessionCrystals += crystalsEarned;
       
       // Submit to leaderboard
       leaderboardManager.submitScore(this.score, this.wave);
@@ -261,7 +349,7 @@ export class GameEngine {
       // Auto-save cloud state
       this.saveCloudState();
       
-      this.onGameOver?.(this.score, this.wave, this.totalKills);
+      this.onGameOver?.(this.score, this.wave, this.totalKills, this.sessionXP, this.sessionCrystals);
       return;
     }
     
@@ -438,6 +526,9 @@ export class GameEngine {
         }
         
         this.bugs.splice(idx, 1);
+        
+        // Award XP for kill
+        this.awardXP(1, 'kill');
       }
     } else {
       soundManager.shoot();

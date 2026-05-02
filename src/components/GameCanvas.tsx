@@ -1,14 +1,17 @@
 import { useEffect, useRef, forwardRef } from 'react';
 import { GameEngine } from '../game/GameEngine';
+import type { GameStateSnapshot } from '../game/database/types';
 
 interface GameCanvasProps {
-  onGameOver: (score: number, waves: number, kills: number) => void;
+  onGameOver: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number) => void;
   onWaveComplete: (completedWave: number) => void;
+  resumeState?: GameStateSnapshot | null;
 }
 
 export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({ 
   onGameOver,
-  onWaveComplete
+  onWaveComplete,
+  resumeState,
 }, ref) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -17,7 +20,6 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
 
     const engine = new GameEngine(canvasRef.current);
 
-    // Expose real engine instance to parent (not a partial proxy)
     if (typeof ref === 'function') {
       ref(engine);
     } else if (ref) {
@@ -27,7 +29,12 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
     engine.onGameOver = onGameOver;
     engine.onWaveComplete = onWaveComplete;
 
-    engine.start();
+    if (resumeState) {
+      engine.resumeFromSave(resumeState);
+      engine.resume();
+    } else {
+      engine.start();
+    }
 
     return () => {
       engine.destroy();

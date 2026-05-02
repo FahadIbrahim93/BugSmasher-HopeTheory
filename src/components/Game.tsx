@@ -9,16 +9,19 @@ import { GameEngine } from '../game/GameEngine';
 import { GameConfig } from '../game/GameConfig';
 import { achievementSystem } from '../game/AchievementSystem';
 import { useEffect } from 'react';
+import { cloudSaveManager } from '../game/database/CloudSaveManager';
+import type { GameStateSnapshot } from '../game/database/types';
 
-export function Game({ onMainMenu }: { onMainMenu: () => void }) {
+export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resumeState?: GameStateSnapshot | null }) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [finalWaves, setFinalWaves] = useState(1);
   const [finalKills, setFinalKills] = useState(0);
+  const [finalSessionXP, setFinalSessionXP] = useState(0);
+  const [finalSessionCrystals, setFinalSessionCrystals] = useState(0);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [gameId, setGameId] = useState(0);
   
-  // We strictly manage these here ONLY for the menus that need them when paused
   const [finalScore, setFinalScore] = useState(0);
   const [currentWave, setCurrentWave] = useState(1);
   const [upgradeLevels, setUpgradeLevels] = useState({
@@ -29,18 +32,20 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   
   const engineRef = useRef<GameEngine | null>(null);
 
-  const handleGameOver = useCallback((score: number, waves: number, kills: number) => {
+  const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number) => {
     setFinalScore(score);
     setFinalWaves(waves);
     setFinalKills(kills);
+    setFinalSessionXP(sessionXP);
+    setFinalSessionCrystals(sessionCrystals);
     setIsGameOver(true);
+    // Clear cloud save on death
+    cloudSaveManager.deleteSave();
   }, []);
 
   const handleWaveComplete = useCallback((completedWave: number) => {
     if (engineRef.current) {
-      // Track wave achievement using completed wave number
       achievementSystem.onWaveComplete(completedWave);
-      
       setFinalScore(engineRef.current.score);
       setCurrentWave(engineRef.current.wave);
     }
@@ -50,15 +55,9 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
   const handleUpgrade = (type: 'health' | 'radius' | 'turret', cost: number) => {
     const engine = engineRef.current;
     if (!engine) return;
-
-    // Defensive guard
     if (engine.score < cost) return;
-
-    // Deduct score
     engine.score -= cost;
     setFinalScore(engine.score);
-
-    // Apply upgrade
     if (type === 'health') {
       engine.maxHealth += GameConfig.upgrades.health.healAmount;
       engine.health = engine.maxHealth;
@@ -67,7 +66,6 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
     } else if (type === 'turret') {
       engine.autoTurretLevel += 1;
     }
-
     setUpgradeLevels((prev) => ({
       ...prev,
       [type]: prev[type] + 1,
@@ -91,6 +89,15 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
     }
   }, [isGameOver, isUpgrading]);
 
+  const handleSaveQuit = useCallback(() => {
+    const engine = engineRef.current;
+    if (engine) {
+      engine.saveAndQuit();
+    }
+    setIsPaused(false);
+    onMainMenu();
+  }, [onMainMenu]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -101,6 +108,15 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [togglePause]);
 
+  const handleRetry = () => {
+    setIsGameOver(false);
+    setIsUpgrading(false);
+    setFinalScore(0);
+    setCurrentWave(1);
+    setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
+    setGameId(id => id + 1);
+  };
+
   return (
     <div className="relative w-full h-full">
       <GameCanvas 
@@ -108,6 +124,7 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
         key={gameId}
         onGameOver={handleGameOver}
         onWaveComplete={handleWaveComplete}
+        resumeState={resumeState}
       />
       
       {!isGameOver && <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />}
@@ -116,6 +133,7 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
         <PauseMenu 
           onResume={togglePause}
           onMainMenu={onMainMenu}
+          onSaveQuit={handleSaveQuit}
         />
       )}
       
@@ -140,14 +158,9 @@ export function Game({ onMainMenu }: { onMainMenu: () => void }) {
           score={finalScore} 
           waves={finalWaves}
           kills={finalKills}
-          onRetry={() => {
-            setIsGameOver(false);
-            setIsUpgrading(false);
-            setFinalScore(0);
-            setCurrentWave(1);
-            setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
-            setGameId(id => id + 1);
-          }} 
+          sessionXP={finalSessionXP}
+          sessionCrystals={finalSessionCrystals}
+          onRetry={handleRetry}
           onMainMenu={onMainMenu} 
         />
       )}

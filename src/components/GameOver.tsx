@@ -1,31 +1,41 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Skull, RotateCcw, Home, Trophy, Target, Layers, Share2, Globe, Medal } from 'lucide-react';
+import { Skull, RotateCcw, Home, Trophy, Target, Layers, Share2, Globe, Medal, Diamond, Zap } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { leaderboard } from '../game/Leaderboard';
 import { saveManager } from '../game/SaveManager';
 import { dailyChallengeManager } from '../game/DailyChallenge';
 import { cloudLeaderboard } from '../game/CloudLeaderboard';
+import { authManager } from '../game/database/AuthManager';
 
 interface GameOverProps {
   score: number;
   waves: number;
   kills: number;
+  sessionXP?: number;
+  sessionCrystals?: number;
   onRetry: () => void;
   onMainMenu: () => void;
 }
 
-export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverProps) {
+export function GameOver({ score, waves, kills, sessionXP = 0, sessionCrystals = 0, onRetry, onMainMenu }: GameOverProps) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<'local' | 'global'>('local');
   const [isNewHighScore, setIsNewHighScore] = useState(false);
   const [globalRank, setGlobalRank] = useState(0);
   const [rank, setRank] = useState(0);
+  const [startLevel, setStartLevel] = useState(1);
+
+  const profile = authManager.getProfile();
+  const currentLevel = profile?.level ?? 1;
+  const levelsGained = Math.max(0, currentLevel - startLevel);
 
   useEffect(() => {
     const isHigh = leaderboard.isHighScore(score);
     setIsNewHighScore(isHigh);
     setRank(leaderboard.getRank(score));
     setGlobalRank(cloudLeaderboard.submitScore(score, waves, 'Player', 'neon_core'));
+    // Capture starting level for progression summary
+    setStartLevel(authManager.getProfile()?.level ?? 1);
     
     if (score > 0) {
       leaderboard.addEntry(score, waves, kills, 'Player');
@@ -90,7 +100,31 @@ export function GameOver({ score, waves, kills, onRetry, onMainMenu }: GameOverP
             {score.toString().padStart(6, '0')}
           </p>
           
-          {/* Stats */}
+          {/* Progression Summary */}
+        {(sessionXP > 0 || sessionCrystals > 0) && (
+          <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-cyan-500/20 shadow-2xl">
+            <p className="text-xs text-cyan-400 uppercase tracking-widest font-mono mb-3 text-center">Session Rewards</p>
+            <div className="flex justify-center gap-6">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-cyan-400" />
+                <span className="text-cyan-300 text-sm font-mono font-bold">+{sessionXP} XP</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Diamond className="w-4 h-4 text-cyan-400" />
+                <span className="text-cyan-300 text-sm font-mono font-bold">+{sessionCrystals} Crystals</span>
+              </div>
+            </div>
+            {levelsGained > 0 && (
+              <div className="flex justify-center mt-2">
+                <span className="text-xs text-cyan-400 font-mono">
+                  {startLevel} → {currentLevel} (Level {currentLevel})
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Stats */}
           <div className="flex justify-center gap-6 pt-2">
             <div className="flex items-center gap-2 text-zinc-400">
               <Layers className="w-4 h-4" />

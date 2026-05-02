@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { CloudSaveManager, cloudSaveManager } from './CloudSaveManager';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { cloudSaveManager } from './CloudSaveManager';
 import type { CloudSave, GameStateSnapshot } from './types';
 
 vi.mock('./AuthManager', () => ({
@@ -19,7 +19,13 @@ describe('CloudSaveManager', () => {
     score: 1000,
     wave: 5,
     health: 100,
-    bugsKilled: 50,
+    upgrades: { health: 1, radius: 1, turret: 0 },
+    unlocked_biomes: [],
+    equipped_cosmetics: { core: 'core_default', bug: '', trail: '', ui: '' },
+    prestige_level: 0,
+    achievement_unlocks: [],
+    daily_challenge_date: '',
+    daily_challenge_completed: false,
   };
 
   const mockCloudSave: CloudSave = {
@@ -63,7 +69,7 @@ describe('CloudSaveManager', () => {
 
     it('saves to localStorage when profile exists', async () => {
       const { authManager } = await import('./AuthManager');
-      vi.mocked(authManager.getProfile).mockReturnValueOnce({ id: 'test-profile', username: 'Test', avatar_id: 'default', level: 1 });
+      vi.mocked(authManager.getProfile).mockReturnValueOnce({ id: 'test-profile', username: 'Test', avatar_id: 'default', level: 1, xp: 0, crystals: 0, email: null, avatar_url: null, is_guest: true, created_at: '', updated_at: '' });
       
       cloudSaveManager.saveGame(mockGameState);
       
@@ -113,7 +119,7 @@ describe('CloudSaveManager', () => {
 
     it('returns timestamp after save', async () => {
       const { authManager } = await import('./AuthManager');
-      vi.mocked(authManager.getProfile).mockReturnValueOnce({ id: 'test-profile', username: 'Test', avatar_id: 'default', level: 1 });
+      vi.mocked(authManager.getProfile).mockReturnValueOnce({ id: 'test-profile', username: 'Test', avatar_id: 'default', level: 1, xp: 0, crystals: 0, email: null, avatar_url: null, is_guest: true, created_at: '', updated_at: '' });
       
       cloudSaveManager.saveGame(mockGameState);
       const lastSave = cloudSaveManager.getLastSaveTime();

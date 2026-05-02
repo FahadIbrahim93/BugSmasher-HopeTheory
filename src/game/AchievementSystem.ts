@@ -26,6 +26,7 @@ export interface Achievement {
   title: string;
   description: string;
   icon: string;
+  xp_reward: number;
   unlocked: boolean;
   unlockedAt?: string; // ISO date
 }
@@ -41,23 +42,23 @@ export interface AchievementProgress {
 }
 
 const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt'>> = {
-  first_blood:        { title: 'First Blood',        description: 'Smash your first bug', icon: '🪲' },
-  combo_5:           { title: 'Combo Hunter',      description: 'Reach 5x combo', icon: '🔥' },
-  combo_10:          { title: 'Blazing Fast',      description: 'Reach 10x combo', icon: '⚡' },
-  combo_25:          { title: 'Unstoppable',       description: 'Reach 25x combo', icon: '🌟' },
-  wave_3:            { title: 'Wave Rider',       description: 'Survive wave 3', icon: '🌊' },
-  wave_5:            { title: 'Veteran',         description: 'Survive wave 5', icon: '🎖️' },
-  wave_10:           { title: 'Legend',          description: 'Survive wave 10', icon: '👑' },
-  score_1000:        { title: 'Getting Started',   description: 'Score 1,000 points', icon: '📊' },
-  score_5000:        { title: 'Score Master',   description: 'Score 5,000 points', icon: '💯' },
-  score_10000:       { title: 'Elite',          description: 'Score 10,000 points', icon: '🏆' },
-  bugs_100:          { title: 'Exterminator',    description: 'Smash 100 bugs', icon: '🔫' },
-  bugs_500:         { title: 'Pest Control',   description: 'Smash 500 bugs', icon: '💥' },
-  bugs_1000:        { title: 'Annihilator',     description: 'Smash 1,000 bugs', icon: '💣' },
-  survivor:          { title: 'Survivor',        description: 'Complete a wave', icon: '🛡️' },
-  streak_3:          { title: 'Dedicated',       description: '3 day streak', icon: '📅' },
-  streak_7:          { title: 'Committed',      description: '7 day streak', icon: '💎' },
-  perfectionist:       { title: 'Perfectionist',  description: 'No misses in a game', icon: '🎯' },
+  first_blood:        { title: 'First Blood',        description: 'Smash your first bug', icon: '🪲', xp_reward: 10 },
+  combo_5:           { title: 'Combo Hunter',      description: 'Reach 5x combo', icon: '🔥', xp_reward: 25 },
+  combo_10:          { title: 'Blazing Fast',      description: 'Reach 10x combo', icon: '⚡', xp_reward: 50 },
+  combo_25:          { title: 'Unstoppable',       description: 'Reach 25x combo', icon: '🌟', xp_reward: 100 },
+  wave_3:            { title: 'Wave Rider',       description: 'Survive wave 3', icon: '🌊', xp_reward: 30 },
+  wave_5:            { title: 'Veteran',         description: 'Survive wave 5', icon: '🎖️', xp_reward: 75 },
+  wave_10:           { title: 'Legend',          description: 'Survive wave 10', icon: '👑', xp_reward: 150 },
+  score_1000:        { title: 'Getting Started',   description: 'Score 1,000 points', icon: '📊', xp_reward: 20 },
+  score_5000:        { title: 'Score Master',   description: 'Score 5,000 points', icon: '💯', xp_reward: 50 },
+  score_10000:       { title: 'Elite',          description: 'Score 10,000 points', icon: '🏆', xp_reward: 100 },
+  bugs_100:          { title: 'Exterminator',    description: 'Smash 100 bugs', icon: '🔫', xp_reward: 25 },
+  bugs_500:         { title: 'Pest Control',   description: 'Smash 500 bugs', icon: '💥', xp_reward: 75 },
+  bugs_1000:        { title: 'Annihilator',     description: 'Smash 1,000 bugs', icon: '💣', xp_reward: 150 },
+  survivor:          { title: 'Survivor',        description: 'Complete a wave', icon: '🛡️', xp_reward: 20 },
+  streak_3:          { title: 'Dedicated',       description: '3 day streak', icon: '📅', xp_reward: 30 },
+  streak_7:          { title: 'Committed',      description: '7 day streak', icon: '💎', xp_reward: 75 },
+  perfectionist:       { title: 'Perfectionist',  description: 'No misses in a game', icon: '🎯', xp_reward: 50 },
 };
 
 const STORAGE_KEY = 'bugsmasher_achievements';
@@ -67,12 +68,17 @@ export class AchievementSystem {
   private achievements: Map<AchievementId, Achievement> = new Map();
   private progress: AchievementProgress;
   private onUnlock?: (achievement: Achievement) => void;
+  private onXPUnlock?: (xpAmount: number) => void;
 
   constructor(onUnlock?: (achievement: Achievement) => void) {
     this.onUnlock = onUnlock;
     this.progress = this.loadProgress();
     this.achievements = this.loadAchievements();
     this.checkDailyStreak();
+  }
+
+  setOnXPUnlock(cb: (xpAmount: number) => void): void {
+    this.onXPUnlock = cb;
   }
 
   private loadProgress(): AchievementProgress {
@@ -121,6 +127,7 @@ export class AchievementSystem {
           title: data.title,
           description: data.description,
           icon: data.icon,
+          xp_reward: data.xp_reward,
           unlocked: false,
         });
       }
@@ -223,6 +230,7 @@ export class AchievementSystem {
       achievement.unlocked = true;
       achievement.unlockedAt = new Date().toISOString();
       this.onUnlock?.(achievement);
+      this.onXPUnlock?.(achievement.xp_reward);
       this.saveAchievements();
       return true;
     }
