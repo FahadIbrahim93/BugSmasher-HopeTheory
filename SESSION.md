@@ -273,3 +273,19 @@ npm run build    # production
 ---
 
 *Updated: 2026-04-29 | Version 1.4.2 | Quality Gates Verified*
+
+---
+
+## v1.6.0 — Phase 1 Retention (2026-05-03)
+
+### P1-1: Persistent Upgrade System ✅ DONE
+- **Files:** `UpgradeSystem.ts`, `UpgradeSystem.test.ts`, `UpgradeMenu.tsx`, `MainMenu.tsx`
+- **8 upgrades:** Click Power (+dmg), Crit Chance (% + magenta shockwave on crit ×2 score),
+  Crystal Finder (+% payout), Shield Start (free shield each run), Extra Life (+HP),
+  XP Boost (+% XP), Combo Master (+% decay time), Turret Power (+turret dmg)
+- Exponential cost scaling with localStorage persistence
+- UI: dark-themed UpgradeMenu with level progress bars, live cost previews, crystal balance
+- MainMenu: ⚡ Upgrades button → modal (shown to logged-in players below prestige/daily badges)
+- GameEngine wired: applyUpgradeBonuses() on construct + start(),
+  crit in processClick(), XP boost in awardXP(), crystal multiplier at game-over payout
+- 73/73 tests pass, build clean

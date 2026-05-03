@@ -4,6 +4,22 @@ Wave-based arcade clicker defense game built with React, TypeScript, Vite, Tailw
 
 Live demo: https://bugsmasher-ten.vercel.app
 
+## v1.6.0 — Persistent Upgrades (2026-05-03)
+
+**8 Crystal-Gated Persistent Upgrades** (survive between runs):
+- 💥 **Click Power** — +1 base click damage per level
+- ⚡ **Critical Hit** — +5% crit chance per level (crits deal ×3 damage + magenta shockwave + ×2 score)
+- 💎 **Crystal Finder** — +10% crystals earned per level
+- 🛡️ **Shield Start** — Start each run with shield active
+- ❤️ **Extra Life** — Start with +1 max life per level
+- 📈 **XP Boost** — +15% XP earned per level
+- 🔥 **Combo Master** — +10% combo decay time per level
+- 🔫 **Turret Power** — +1 auto-turret damage per level
+
+**UI:** Dark-themed UpgradeMenu with level progress bars, live cost previews, crystal balance display. Accessed via ⚡ Upgrades button on MainMenu (shown to logged-in players).
+
+**Technical:** Exponential cost scaling, localStorage persistence via UpgradeSystem singleton. GameEngine wired: applyUpgradeBonuses() on construct + start(), crit damage with visual feedback, XP boost multiplier, crystal multiplier at game-over payout.
+
 ## v1.5.1 — Bug Fixes + Prestige/Biomes/Daily (2026-05-03)
 
 **Bug Fixes:**

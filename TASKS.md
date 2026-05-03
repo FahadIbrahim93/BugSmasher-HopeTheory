@@ -65,17 +65,36 @@
 
 ## 📋 Backlog (v1.6.0+)
 
-|| Priority | Task | Notes |
-||----------|------|-------|
-|| P1 | Discord OAuth | Ready to test |
-|| P2 | Vercel rebuild | Auto-deploy from main branch |
-|| P2 | Profile sync | More data to cloud |
-|| P3 | Apple OAuth | Optional |
-|| P3 | Loading spinner | Better UX |
-|| ~~P3~~ | ~~Prestige system~~ | ✅ Done (v1.5.1) |
-|| ~~P3~~ | ~~Multiple biomes~~ | ✅ Done (v1.5.1) |
-|| ~~P3~~ | ~~Daily challenges~~ | ✅ Done (v1.5.1) |
-|| ~~P3~~ | ~~Cloud leaderboard~~ | ✅ Done (v1.5.1) |
+||| Priority | Task | Notes |
+|||----------|------|-------|
+| | P1 | **Persistent upgrades** | ✅ Done — 8 upgrades, UpgradeMenu, GameEngine wired |
+| | P1 | **Mechanically different biomes** | Each biome changes bug types, powerup rates, difficulty |
+| | P1 | **Shareable death cards** | Post-run stats overlay + share button |
+| | P2 | **Discord OAuth** | Ready to test |
+| | P2 | **AdMob integration** | Banner + interstitial + rewarded video ads |
+| | P2 | **Crystal IAP** | Remove Ads purchase |
+| | P2 | **Vercel rebuild** | Auto-deploy from main branch |
+| | P2 | **Profile sync** | More data to cloud |
+| | P3 | **Apple OAuth** | Optional |
+| | P3 | **Loading spinner** | Better UX |
+| | ~~P3~~ | ~~Prestige system~~ | ✅ Done (v1.5.1) |
+| | ~~P3~~ | ~~Multiple biomes~~ | ✅ Done (v1.5.1) |
+| | ~~P3~~ | ~~Daily challenges~~ | ✅ Done (v1.5.1) |
+| | ~~P3~~ | ~~Cloud leaderboard~~ | ✅ Done (v1.5.1) |
+
+---
+
+## Quality Gates — v1.6.0
+
+|| Gate | Result |
+||------|--------|
+|| Typecheck | ✅ Clean |
+|| Tests | ✅ 73/73 pass |
+|| Build | ✅ Clean |
+
+---
+
+*Updated: 2026-05-03 | Version 1.6.0 | Quality Gates: 73/73 tests, build clean*
 
 ---
 
