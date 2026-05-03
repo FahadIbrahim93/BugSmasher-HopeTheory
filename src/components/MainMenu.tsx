@@ -7,11 +7,13 @@ import { authManager } from '../game/database/AuthManager';
 import { AccountScreen } from './AccountScreen';
 import { cloudSaveManager } from '../game/database/CloudSaveManager';
 import { PrestigeDisplay, DailyChallengeBadge } from './PrestigeDisplay';
+import { UpgradeMenu } from './UpgradeMenu';
 import type { Profile, GameStateSnapshot } from '../game/database/types';
 
 export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapshot) => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showAccount, setShowAccount] = useState(false);
+  const [showUpgrades, setShowUpgrades] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [savedGame, setSavedGame] = useState<{ wave: number; score: number; timestamp: string } | null>(null);
 
@@ -66,6 +68,7 @@ export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapsho
       <MatrixRain />
       {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} />}
       {showAccount && <AccountScreen onClose={() => setShowAccount(false)} />}
+      {showUpgrades && <UpgradeMenu onClose={() => setShowUpgrades(false)} />}
       <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
         <div className="text-center space-y-6">
           <div className="flex items-center justify-center mb-6 mt-8 sm:mt-12">
@@ -98,6 +101,14 @@ export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapsho
                 <PrestigeDisplay />
                 <DailyChallengeBadge />
               </div>
+
+              {/* Upgrades CTA */}
+              <button
+                onClick={() => { soundManager.uiClick(); setShowUpgrades(true); }}
+                className="group flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-cyan-500/20 to-purple-500/20 hover:from-cyan-500/30 hover:to-purple-500/30 border border-cyan-500/30 hover:border-cyan-500/50 text-cyan-400 hover:text-cyan-300 rounded-full font-bold text-sm transition-all hover:scale-105 active:scale-95"
+              >
+                ⚡ Upgrades
+              </button>
 
               {/* Continue / New Game buttons */}
               {savedGame ? (

@@ -11,6 +11,7 @@ import { authManager } from './database/AuthManager';
 import { cloudSaveManager } from './database/CloudSaveManager';
 import { leaderboardManager } from './database/LeaderboardManager';
 import { cosmeticsManager } from './CosmeticsManager';
+import { upgradeSystem } from './UpgradeSystem';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -50,6 +51,11 @@ export class GameEngine {
   // Upgrades
   clickRadiusMultiplier: number = 1;
   autoTurretLevel: number = 0;
+
+  // Persistent upgrade bonuses (applied from UpgradeSystem)
+  clickDamageBonus: number = 0;
+  critChanceBonus: number = 0;
+  turretDamageBonus: number = 0;
   
   // Active Powerups
   shieldTimer: number = 0;
@@ -97,6 +103,7 @@ export class GameEngine {
     this.saveManager = new SaveManager();
     this.highScore = this.saveManager.getHighScore();
     this.applyPrestigeBonus();
+    this.applyUpgradeBonuses();
     
     this.handlePointerDown = this.handlePointerDown.bind(this);
     this.handlePointerMove = this.handlePointerMove.bind(this);
@@ -115,6 +122,13 @@ export class GameEngine {
     this.maxHealth = Math.floor(GameConfig.player.maxHealth * multiplier);
     this.health = this.maxHealth;
     this.clickRadiusMultiplier = multiplier;
+  }
+
+  applyUpgradeBonuses(): void {
+    const prestigeMult = this.saveManager.getPrestigeMultiplier();
+    this.clickDamageBonus = upgradeSystem.getClickDamage(prestigeMult) - GameConfig.player.hitDamage;
+    this.critChanceBonus = upgradeSystem.getCritChance();
+    this.turretDamageBonus = upgradeSystem.getTurretDamage(prestigeMult) - 5;
   }
   
   handleResize() {
@@ -148,9 +162,18 @@ export class GameEngine {
     this.lastTime = performance.now();
     this.globalTime = 0;
     this.score = 0;
+    this.applyPrestigeBonus();
+    this.applyUpgradeBonuses();
     this.health = this.maxHealth;
+    // Extra lives from upgrades stack on top
+    this.health += upgradeSystem.getExtraLives() * 50;
+    this.maxHealth = this.health;
     this.wave = 1;
     this.resetEntities();
+
+    // Starting shield from upgrade
+    const shieldDuration = upgradeSystem.getShieldDuration();
+    if (shieldDuration > 0) this.shieldTimer = shieldDuration;
 
     // Reset session progression
     this.sessionXP = 0;
@@ -216,8 +239,9 @@ export class GameEngine {
     if (!profile) return;
 
     const prevLevel = profile.level;
-    this.sessionXP += amount;
-    authManager.addXP(amount);
+    const boostedAmount = Math.floor(amount * upgradeSystem.getXPBoost());
+    this.sessionXP += boostedAmount;
+    authManager.addXP(boostedAmount);
 
     const newProfile = authManager.getProfile();
     if (newProfile && newProfile.level > prevLevel) {
@@ -338,9 +362,12 @@ export class GameEngine {
       
       // Award XP and crystals based on performance (supplements in-game awards)
       const xpEarned = Math.floor(this.score / 50) + (this.wave * 5);
-      const crystalsEarned = Math.floor(this.score / 500) + (this.wave > 5 ? 5 : 0);
+      const rawCrystals = Math.floor(this.score / 500) + (this.wave > 5 ? 5 : 0);
+      const crystalsEarned = Math.floor(rawCrystals * upgradeSystem.getCrystalMultiplier());
       this.awardXP(xpEarned, 'game_over');
       authManager.addCrystals(crystalsEarned);
+      upgradeSystem.addCrystals(crystalsEarned);
+      this.saveManager.addCrystalsEarned(crystalsEarned);
       this.sessionCrystals += crystalsEarned;
       
       // Submit to leaderboard
@@ -460,11 +487,11 @@ export class GameEngine {
       } else {
         this.particleSystem.spawnLaser(cx, cy, closest.x, closest.y, '#00ffcc');
       }
-      this.damageBug(closest, 1);
+      this.damageBug(closest, 1 + this.turretDamageBonus);
     }
   }
   
-  damageBug(bug: Bug, amount: number) {
+  damageBug(bug: Bug, amount: number, isCrit = false) {
     bug.hp -= amount;
     if (bug.hp <= 0) {
       const idx = this.bugs.indexOf(bug);
@@ -493,11 +520,14 @@ export class GameEngine {
         }
         
         const mult = this.multiplierTimer > 0 ? 2 : 1;
-        const pointsEarned = bug.scoreValue * mult;
+        const pointsEarned = (isCrit ? 2 : 1) * bug.scoreValue * mult;
         this.score += pointsEarned;
 
-        // Spawn damage number popup
-        this.particleSystem.spawnDamageNumber(bug.x, bug.y - 20, pointsEarned, mult > 1 ? '#ff00ff' : '#ffff00');
+        // Spawn damage number popup — crits get larger text
+        this.particleSystem.spawnDamageNumber(bug.x, bug.y - 20, pointsEarned, isCrit ? '#ff00ff' : mult > 1 ? '#ff00ff' : '#ffff00');
+        if (isCrit) {
+          this.particleSystem.spawnShockwave(bug.x, bug.y, '#ff00ff', 200);
+        }
         
         // Trigger haptics
         if (this.chainCombo >= 3) {
@@ -594,7 +624,10 @@ export class GameEngine {
       
       if (dist < bug.size * GameConfig.player.baseClickRadiusMultiplier * this.clickRadiusMultiplier) {
         hit = true;
-        this.damageBug(bug, 1);
+        const isCrit = this.critChanceBonus > 0 && Math.random() * 100 < this.critChanceBonus;
+        const baseDamage = 1 + this.clickDamageBonus;
+        const damage = isCrit ? baseDamage * 3 : baseDamage;
+        this.damageBug(bug, damage, isCrit);
         break;
       }
     }

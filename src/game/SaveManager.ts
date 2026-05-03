@@ -16,6 +16,7 @@ interface GameSaveData {
   totalPrestigePointsEarned: number;
   highestWave: number;
   unlockedBiomes: string[];
+  totalCrystalsEarned: number;
 }
 
 const SAVE_KEY = 'bugsmasher_save';
@@ -33,7 +34,8 @@ const DEFAULT_SAVE: GameSaveData = {
   dailyChallengesCompleted: 0,
   totalPrestigePointsEarned: 0,
   highestWave: 0,
-  unlockedBiomes: ['neon_core']
+  unlockedBiomes: ['neon_core'],
+  totalCrystalsEarned: 0
 };
 
 export class SaveManager {
@@ -77,6 +79,7 @@ export class SaveManager {
   getTotalPrestigePointsEarned(): number { return this.data.totalPrestigePointsEarned; }
   getHighestWave(): number { return this.data.highestWave; }
   getUnlockedBiomes(): string[] { return this.data.unlockedBiomes; }
+  getTotalCrystalsEarned(): number { return this.data.totalCrystalsEarned; }
   setHighestWave(wave: number): void {
     if (wave > this.data.highestWave) {
       this.data.highestWave = wave;
@@ -102,6 +105,11 @@ export class SaveManager {
 
   addBugsSmashed(count: number): void {
     this.data.totalBugsSmashed += count;
+    this.save();
+  }
+
+  addCrystalsEarned(count: number): void {
+    this.data.totalCrystalsEarned += count;
     this.save();
   }
 

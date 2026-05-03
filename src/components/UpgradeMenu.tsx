@@ -1,188 +1,328 @@
-import { Zap, Crosshair, Heart } from 'lucide-react';
-import { motion, Variants } from 'motion/react';
-import { soundManager } from '../game/SoundManager';
-import { GameConfig } from '../game/GameConfig';
+// UpgradeMenu — Persistent upgrade shop
+// Spend crystals on upgrades that persist between runs
+import React, { useState, useCallback } from 'react';
+import { upgradeSystem, UPGRADE_DEFS, UpgradeId } from '../game/UpgradeSystem';
 
 interface UpgradeMenuProps {
-  score: number;
-  onUpgrade: (type: 'health' | 'radius' | 'turret', cost: number) => void;
-  onNextWave: () => void;
-  wave: number;
-  healthLevel: number;
-  radiusLevel: number;
-  turretLevel: number;
+  onClose: () => void;
 }
 
-export function UpgradeMenu({ score, onUpgrade, onNextWave, wave, healthLevel, radiusLevel, turretLevel }: UpgradeMenuProps) {
+export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose }) => {
+  const [crystals, setCrystals] = useState(upgradeSystem.getCrystals());
+  const [, forceRender] = useState(0);
 
-  const healthCost = GameConfig.upgrades.health.baseCost + healthLevel * GameConfig.upgrades.health.costMultiplier;
-  const radiusCost = GameConfig.upgrades.radius.baseCost + radiusLevel * GameConfig.upgrades.radius.costMultiplier;
-  const turretCost = GameConfig.upgrades.turret.baseCost + turretLevel * GameConfig.upgrades.turret.costMultiplier;
+  const refresh = useCallback(() => {
+    setCrystals(upgradeSystem.getCrystals());
+    forceRender(n => n + 1);
+  }, []);
 
-  const handleBuy = (type: 'health' | 'radius' | 'turret', cost: number) => {
-    soundManager.init();
-    if (score >= cost) {
-      soundManager.upgrade();
-      onUpgrade(type, cost);
-    } else {
-      soundManager.uiError();
+  const handlePurchase = (id: UpgradeId) => {
+    const def = UPGRADE_DEFS.find(d => d.id === id);
+    if (!def) return;
+
+    if (upgradeSystem.isMaxed(id)) return;
+
+    const cost = upgradeSystem.getUpgradeCost(id);
+    if (upgradeSystem.spendCrystals(cost)) {
+      refresh();
     }
   };
 
-  const handleNextWave = () => {
-    soundManager.init();
-    soundManager.uiClick();
-    onNextWave();
-  };
+  const upgrades = upgradeSystem.getAllUpgrades();
 
-  const handleHover = () => {
-    soundManager.init();
-    soundManager.uiHover();
-  };
-
-  const containerVariants: Variants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { duration: 0.3, ease: "easeOut", staggerChildren: 0.1 } 
+  const totalSpent = upgrades.reduce((sum, u) => {
+    // Cumulative cost = sum of costs for each level purchased
+    let spent = 0;
+    for (let l = 0; l < u.level; l++) {
+      spent += Math.floor(u.def.baseCost * Math.pow(u.def.costMultiplier, l));
     }
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } }
-  };
-
-  const cardVariants: Variants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { 
-      opacity: 1, 
-      y: 0, 
-      transition: { type: "spring", stiffness: 300, damping: 24 } 
-    }
-  };
+    return sum + spent;
+  }, 0);
 
   return (
-    <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center z-50 backdrop-blur-xl p-4 overflow-y-auto">
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="max-w-4xl w-full text-center my-auto relative"
-      >
-        <motion.div variants={itemVariants} className="mb-12">
-          <h2 className="text-3xl sm:text-4xl font-black text-white font-display mb-4 uppercase tracking-widest">
-            WAVE {wave - 1} CLEARED
-          </h2>
-          <div className="h-px w-24 bg-white/20 mx-auto mb-4" />
-          <p className="text-zinc-500 font-mono tracking-widest text-sm uppercase">Secure connection established. Accessing defensive upgrades...</p>
-        </motion.div>
-        
-        <motion.div variants={itemVariants} className="inline-flex items-center space-x-4 bg-black/40 backdrop-blur-md border-[0.5px] border-white/10 px-8 py-4 rounded-full mb-12 shadow-2xl">
-          <span className="text-zinc-500 font-medium uppercase text-xs tracking-[0.2em]">Credits Available</span>
-          <span className="text-2xl font-medium font-mono text-white tracking-widest">
-            {score.toString().padStart(6, '0')}
-          </span>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Health Upgrade */}
-          <motion.div variants={cardVariants} className="group relative bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-[0.5px] border-white/10 hover:border-white/30 transition-all duration-300 flex flex-col items-center">
-            <div className="absolute top-6 right-6 text-zinc-500 text-xs font-medium px-2 py-1 rounded font-mono border border-white/10">
-              Lv {healthLevel}
-            </div>
-            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:border-white/30">
-              <Heart className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
-            </div>
-            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">Core Structure</h3>
-            <p className="text-xs text-zinc-500 mb-8 text-center leading-relaxed flex-grow font-mono">
-              Increase structural integrity by <span className="text-white font-bold">{GameConfig.upgrades.health.healAmount}</span> units.
-            </p>
-            <button 
-              onClick={() => handleBuy('health', healthCost)}
-              onMouseEnter={handleHover}
-              aria-disabled={score < healthCost}
-              aria-label={`Buy Core Structure upgrade for ${healthCost} credits`}
-              className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-3 ${
-                score >= healthCost 
-                  ? 'bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-95' 
-                  : 'bg-transparent border-[0.5px] border-white/10 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <span>{score >= healthCost ? 'Initialize' : 'Insufficient'}</span>
-              <span className={`font-mono ${score >= healthCost ? 'text-zinc-500' : 'text-zinc-700'}`}>[{healthCost}]</span>
-            </button>
-          </motion.div>
-
-          {/* Radius Upgrade */}
-          <motion.div variants={cardVariants} className="group relative bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-[0.5px] border-white/10 hover:border-white/30 transition-all duration-300 flex flex-col items-center">
-            <div className="absolute top-6 right-6 text-zinc-500 text-xs font-medium px-2 py-1 rounded font-mono border border-white/10">
-              Lv {radiusLevel}
-            </div>
-            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:border-white/30">
-              <Crosshair className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
-            </div>
-            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">Blast Radius</h3>
-            <p className="text-xs text-zinc-500 mb-8 text-center leading-relaxed flex-grow font-mono">
-              Expand suppression wave coverage by <span className="text-white font-bold">{(GameConfig.upgrades.radius.radiusMultiplier - 1) * 100}%</span>.
-            </p>
-            <button 
-              onClick={() => handleBuy('radius', radiusCost)}
-              onMouseEnter={handleHover}
-              aria-disabled={score < radiusCost}
-              aria-label={`Buy Blast Radius upgrade for ${radiusCost} credits`}
-              className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-3 ${
-                score >= radiusCost 
-                  ? 'bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-95' 
-                  : 'bg-transparent border-[0.5px] border-white/10 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-              <span>{score >= radiusCost ? 'Initialize' : 'Insufficient'}</span>
-              <span className={`font-mono ${score >= radiusCost ? 'text-zinc-500' : 'text-zinc-700'}`}>[{radiusCost}]</span>
-            </button>
-          </motion.div>
-
-          {/* Turret Upgrade */}
-          <motion.div variants={cardVariants} className="group relative bg-black/40 backdrop-blur-md p-8 rounded-[2rem] border-[0.5px] border-white/10 hover:border-white/30 transition-all duration-300 flex flex-col items-center">
-            <div className="absolute top-6 right-6 text-zinc-500 text-xs font-medium px-2 py-1 rounded font-mono border border-white/10">
-              Lv {turretLevel}
-            </div>
-            <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:border-white/30">
-              <Zap className="w-6 h-6 text-zinc-300 group-hover:text-white transition-colors" />
-            </div>
-            <h3 className="font-bold text-lg font-display text-white mb-2 tracking-wide uppercase">Auto-Sentry</h3>
-            <p className="text-xs text-zinc-500 mb-8 text-center leading-relaxed flex-grow font-mono">
-              Decrease automated target acquisition latency by <span className="text-white font-bold">{GameConfig.upgrades.turret.fireRateReduction}s</span>.
-            </p>
-            <button 
-              onClick={() => handleBuy('turret', turretCost)}
-              onMouseEnter={handleHover}
-              aria-disabled={score < turretCost}
-              aria-label={`Buy Auto-Sentry upgrade for ${turretCost} credits`}
-              className={`w-full py-4 rounded-full font-bold text-xs uppercase tracking-widest transition-all duration-300 flex items-center justify-center space-x-3 ${
-                score >= turretCost 
-                  ? 'bg-white text-black hover:bg-zinc-200 hover:scale-[1.02] active:scale-95' 
-                  : 'bg-transparent border-[0.5px] border-white/10 text-zinc-600 cursor-not-allowed'
-              }`}
-            >
-             <span>{score >= turretCost ? 'Initialize' : 'Insufficient'}</span>
-             <span className={`font-mono ${score >= turretCost ? 'text-zinc-500' : 'text-zinc-700'}`}>[{turretCost}]</span>
-            </button>
-          </motion.div>
+    <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div style={styles.panel}>
+        {/* Header */}
+        <div style={styles.header}>
+          <div style={styles.title}>
+            <span style={styles.titleIcon}>⚡</span>
+            UPGRADES
+          </div>
+          <button style={styles.closeBtn} onClick={onClose}>✕</button>
         </div>
 
-        <motion.div variants={itemVariants} className="flex justify-center">
-          <button 
-            onClick={handleNextWave}
-            onMouseEnter={handleHover}
-            aria-label={`Start Wave ${wave}`}
-            className="group relative px-12 py-5 bg-transparent border-[0.5px] border-white/30 text-white font-bold text-sm hover:bg-white hover:text-black rounded-full hover:scale-105 active:scale-95 transition-all tracking-widest uppercase overflow-hidden"
-          >
-            <span className="relative z-10">Proceed to Wave {wave}</span>
-          </button>
-        </motion.div>
-      </motion.div>
+        {/* Crystal balance */}
+        <div style={styles.balanceBar}>
+          <span style={styles.balanceLabel}>💎 Crystals</span>
+          <span style={styles.balanceValue}>{crystals.toLocaleString()}</span>
+        </div>
+
+        {/* Upgrades grid */}
+        <div style={styles.grid}>
+          {upgrades.map(({ def, level, cost, totalBonus, isMaxed, canAfford }) => (
+            <div
+              key={def.id}
+              style={{
+                ...styles.card,
+                ...(isMaxed ? styles.cardMaxed : canAfford ? styles.cardAffordable : styles.cardLocked),
+              }}
+            >
+              <div style={styles.cardTop}>
+                <span style={styles.cardIcon}>{def.icon}</span>
+                <div style={styles.cardInfo}>
+                  <div style={styles.cardName}>{def.name}</div>
+                  <div style={styles.cardDesc}>{def.description}</div>
+                </div>
+              </div>
+
+              {/* Level bar */}
+              <div style={styles.levelBar}>
+                <div
+                  style={{
+                    ...styles.levelFill,
+                    width: `${(level / def.maxLevel) * 100}%`,
+                    background: isMaxed
+                      ? 'linear-gradient(90deg, #ffd700, #ff8c00)'
+                      : 'linear-gradient(90deg, #00ffcc, #00d4ff)',
+                  }}
+                />
+              </div>
+              <div style={styles.levelText}>
+                Lv {level} / {def.maxLevel}
+                {!isMaxed && (
+                  <span style={styles.bonusText}>
+                    → {def.effectPerLevel > 1 ? '+' : ''}{totalBonus}{def.unit}
+                  </span>
+                )}
+                {isMaxed && (
+                  <span style={{ color: '#ffd700' }}> ★ MAX</span>
+                )}
+              </div>
+
+              {/* Purchase button */}
+              {!isMaxed && (
+                <button
+                  style={{
+                    ...styles.buyBtn,
+                    ...(canAfford ? styles.buyBtnActive : styles.buyBtnDisabled),
+                  }}
+                  onClick={() => handlePurchase(def.id)}
+                  disabled={!canAfford}
+                >
+                  <span>💎 {cost.toLocaleString()}</span>
+                  {!canAfford && (
+                    <span style={styles.needMore}>
+                      {cost > crystals ? `Need ${(cost - crystals).toLocaleString()} more` : 'Max level'}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Stats footer */}
+        <div style={styles.footer}>
+          <span style={styles.footerStat}>
+            💎 {totalSpent.toLocaleString()} total invested
+          </span>
+          <span style={styles.footerStat}>
+            ⚡ {upgrades.filter(u => u.level > 0).length} / {upgrades.length} unlocked
+          </span>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.85)',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '16px',
+  },
+  panel: {
+    width: '100%',
+    maxWidth: '560px',
+    maxHeight: '90vh',
+    background: 'linear-gradient(145deg, #0a0f1e 0%, #111827 100%)',
+    border: '1px solid rgba(0,255,204,0.2)',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 0 40px rgba(0,255,204,0.15), 0 0 80px rgba(0,0,0,0.5)',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px 24px 16px',
+    borderBottom: '1px solid rgba(255,255,255,0.06)',
+  },
+  title: {
+    fontSize: '20px',
+    fontWeight: 900,
+    letterSpacing: '0.15em',
+    color: '#00ffcc',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '10px',
+    textShadow: '0 0 20px rgba(0,255,204,0.5)',
+  },
+  titleIcon: { fontSize: '22px' },
+  closeBtn: {
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '8px',
+    color: '#9ca3af',
+    fontSize: '14px',
+    width: '32px',
+    height: '32px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    transition: 'all 0.2s',
+  },
+  balanceBar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    margin: '16px 24px 8px',
+    padding: '10px 16px',
+    background: 'rgba(0,255,204,0.05)',
+    border: '1px solid rgba(0,255,204,0.15)',
+    borderRadius: '10px',
+  },
+  balanceLabel: { color: '#6b7280', fontSize: '13px', fontWeight: 600 },
+  balanceValue: {
+    color: '#00ffcc',
+    fontSize: '18px',
+    fontWeight: 900,
+    textShadow: '0 0 10px rgba(0,255,204,0.5)',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+    gap: '12px',
+    padding: '12px 24px 16px',
+    overflowY: 'auto',
+    flex: 1,
+  },
+  card: {
+    padding: '14px',
+    borderRadius: '12px',
+    border: '1px solid',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    transition: 'all 0.2s',
+  },
+  cardAffordable: {
+    background: 'rgba(0,255,204,0.05)',
+    borderColor: 'rgba(0,255,204,0.25)',
+  },
+  cardLocked: {
+    background: 'rgba(255,255,255,0.02)',
+    borderColor: 'rgba(255,255,255,0.06)',
+  },
+  cardMaxed: {
+    background: 'rgba(255,215,0,0.06)',
+    borderColor: 'rgba(255,215,0,0.3)',
+  },
+  cardTop: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '10px',
+  },
+  cardIcon: {
+    fontSize: '28px',
+    lineHeight: 1,
+    flexShrink: 0,
+  },
+  cardInfo: { flex: 1, minWidth: 0 },
+  cardName: {
+    fontSize: '13px',
+    fontWeight: 700,
+    color: '#f3f4f6',
+    letterSpacing: '0.02em',
+  },
+  cardDesc: {
+    fontSize: '11px',
+    color: '#6b7280',
+    marginTop: '2px',
+  },
+  levelBar: {
+    height: '4px',
+    background: 'rgba(255,255,255,0.08)',
+    borderRadius: '2px',
+    overflow: 'hidden',
+  },
+  levelFill: {
+    height: '100%',
+    borderRadius: '2px',
+    transition: 'width 0.3s ease',
+  },
+  levelText: {
+    fontSize: '11px',
+    color: '#9ca3af',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    flexWrap: 'wrap',
+  },
+  bonusText: {
+    color: '#00ffcc',
+    fontWeight: 600,
+  },
+  buyBtn: {
+    width: '100%',
+    padding: '8px',
+    borderRadius: '8px',
+    border: 'none',
+    fontSize: '13px',
+    fontWeight: 700,
+    cursor: 'pointer',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '2px',
+    transition: 'all 0.2s',
+  },
+  buyBtnActive: {
+    background: 'linear-gradient(135deg, #00ffcc, #00d4ff)',
+    color: '#0a0f1e',
+    boxShadow: '0 0 12px rgba(0,255,204,0.3)',
+  },
+  buyBtnDisabled: {
+    background: 'rgba(255,255,255,0.04)',
+    color: '#6b7280',
+    cursor: 'not-allowed',
+  },
+  needMore: {
+    fontSize: '10px',
+    fontWeight: 400,
+    opacity: 0.7,
+  },
+  footer: {
+    display: 'flex',
+    justifyContent: 'space-around',
+    padding: '12px 24px',
+    borderTop: '1px solid rgba(255,255,255,0.06)',
+    background: 'rgba(0,0,0,0.2)',
+  },
+  footerStat: {
+    fontSize: '12px',
+    color: '#6b7280',
+    fontWeight: 500,
+  },
+};
+
+export default UpgradeMenu;
