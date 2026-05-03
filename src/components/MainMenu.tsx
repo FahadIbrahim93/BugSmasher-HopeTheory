@@ -6,6 +6,7 @@ import { CustomBugLogo } from './CustomBugLogo';
 import { authManager } from '../game/database/AuthManager';
 import { AccountScreen } from './AccountScreen';
 import { cloudSaveManager } from '../game/database/CloudSaveManager';
+import { PrestigeDisplay, DailyChallengeBadge } from './PrestigeDisplay';
 import type { Profile, GameStateSnapshot } from '../game/database/types';
 
 export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapshot) => void }) {
@@ -90,6 +91,12 @@ export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapsho
                   <p className="text-white font-bold">{profile.username}</p>
                   <p className="text-zinc-500 text-sm">Level {profile.level} • {profile.crystals} crystals</p>
                 </div>
+              </div>
+
+              {/* Prestige + Daily Challenge badges */}
+              <div className="flex flex-col items-center gap-3 mb-2">
+                <PrestigeDisplay />
+                <DailyChallengeBadge />
               </div>
 
               {/* Continue / New Game buttons */}

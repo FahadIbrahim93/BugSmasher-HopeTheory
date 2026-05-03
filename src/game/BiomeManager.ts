@@ -1,8 +1,13 @@
 import { Biome, BIOMES } from './BiomeConfig';
+import { saveManager } from './SaveManager';
 
 export class BiomeManager {
-  private unlockedBiomes: Set<string> = new Set(['neon_core']);
+  private unlockedBiomes: Set<string>;
   private currentBiomeId: string = 'neon_core';
+
+  constructor() {
+    this.unlockedBiomes = new Set(saveManager.getUnlockedBiomes());
+  }
 
   getCurrentBiome(): Biome {
     return BIOMES.find(b => b.id === this.currentBiomeId) || BIOMES[0];
@@ -33,6 +38,7 @@ export class BiomeManager {
       return true;
     }
     this.unlockedBiomes.add(biomeId);
+    saveManager.unlockBiome(biomeId);
     return true;
   }
 
@@ -51,6 +57,7 @@ export class BiomeManager {
 
       if (canUnlock) {
         this.unlockedBiomes.add(biome.id);
+        saveManager.unlockBiome(biome.id);
         newlyUnlocked.push(biome.id);
       }
     }

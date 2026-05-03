@@ -1,16 +1,18 @@
 import { motion } from 'motion/react';
-import { Volume2, VolumeX, Home, Play, Settings2, Save } from 'lucide-react';
+import { Volume2, VolumeX, Home, Play, Settings2, Save, Globe } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { useEffect, useState } from 'react';
 
-export function PauseMenu({ 
-  onResume, 
+export function PauseMenu({
+  onResume,
   onMainMenu,
   onSaveQuit,
-}: { 
-  onResume: () => void, 
-  onMainMenu: () => void,
-  onSaveQuit?: () => void,
+  onBiomeSelect,
+}: {
+  onResume: () => void;
+  onMainMenu: () => void;
+  onSaveQuit?: () => void;
+  onBiomeSelect?: () => void;
 }) {
   const [volTracker, setVolTracker] = useState(soundManager.volume);
   const [muteTracker, setMuteTracker] = useState(soundManager.isMuted);
@@ -82,6 +84,16 @@ export function PauseMenu({
               Resume Operations
             </span>
           </button>
+
+          {onBiomeSelect && (
+            <button
+              onClick={() => { soundManager.uiClick(); onBiomeSelect(); }}
+              className="w-full py-4 bg-cyan-500/20 border border-cyan-500/40 hover:bg-cyan-500/30 text-cyan-300 rounded-full font-bold text-sm uppercase tracking-widest transition-all flex items-center justify-center"
+            >
+              <Globe className="w-4 h-4 mr-3" />
+              Biome Select
+            </button>
+          )}
 
           {onSaveQuit && (
             <button 

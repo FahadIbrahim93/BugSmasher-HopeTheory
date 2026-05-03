@@ -2,15 +2,20 @@ import { useState, useCallback, useRef } from 'react';
 import { GameCanvas } from './GameCanvas';
 import { HUD } from './HUD';
 import { GameOver } from './GameOver';
+import { PrestigeScreen } from './PrestigeScreen';
 import { UpgradeMenu } from './UpgradeMenu';
 import { PauseMenu } from './PauseMenu';
 import { TutorialOverlay } from './TutorialOverlay';
 import { GameEngine } from '../game/GameEngine';
 import { GameConfig } from '../game/GameConfig';
 import { achievementSystem } from '../game/AchievementSystem';
+import { biomeManager } from '../game/BiomeManager';
+import { saveManager } from '../game/SaveManager';
 import { useEffect } from 'react';
 import { cloudSaveManager } from '../game/database/CloudSaveManager';
 import type { GameStateSnapshot } from '../game/database/types';
+
+const PRESTIGE_THRESHOLD = 1000; // Minimum score to unlock prestige offer
 
 export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resumeState?: GameStateSnapshot | null }) {
   const [isGameOver, setIsGameOver] = useState(false);
@@ -18,10 +23,8 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
   const [finalKills, setFinalKills] = useState(0);
   const [finalSessionXP, setFinalSessionXP] = useState(0);
   const [finalSessionCrystals, setFinalSessionCrystals] = useState(0);
-  const [isUpgrading, setIsUpgrading] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
-  const [gameId, setGameId] = useState(0);
-  
+  const [finalMissCount, setFinalMissCount] = useState(0);
+  const [finalPlayTime, setFinalPlayTime] = useState(0);
   const [finalScore, setFinalScore] = useState(0);
   const [currentWave, setCurrentWave] = useState(1);
   const [upgradeLevels, setUpgradeLevels] = useState({
@@ -29,19 +32,58 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     radius: 0,
     turret: 0,
   });
-  
+  const [prestigePointsEarned, setPrestigePointsEarned] = useState(0);
+  const [showPrestige, setShowPrestige] = useState(false);
+  const [newBiomes, setNewBiomes] = useState<string[]>([]);
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [gameId, setGameId] = useState(0);
+
   const engineRef = useRef<GameEngine | null>(null);
 
-  const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number) => {
+  const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number) => {
+    const ptsEarned = Math.floor(score / 100);
+    const prestigeLevel = saveManager.getPrestigeLevel();
+    const nextLevelPoints = Math.floor(100 * Math.pow(1.5, prestigeLevel));
+
+    // Check for biome unlocks
+    const highScore = saveManager.getHighScore();
+    const highestWave = saveManager.getHighestWave();
+    const unlocked = biomeManager.checkUnlocks(highestWave, highScore, prestigeLevel);
+    if (unlocked.length > 0) {
+      setNewBiomes(unlocked);
+    }
+
     setFinalScore(score);
     setFinalWaves(waves);
     setFinalKills(kills);
     setFinalSessionXP(sessionXP);
     setFinalSessionCrystals(sessionCrystals);
+    setFinalMissCount(missCount);
+    setFinalPlayTime(playTimeSeconds);
+    setPrestigePointsEarned(ptsEarned);
+
+    // Offer prestige if player earned enough points and hasn't hit the threshold
+    if (ptsEarned >= PRESTIGE_THRESHOLD) {
+      setShowPrestige(true);
+    } else {
+      setShowPrestige(false);
+    }
+
     setIsGameOver(true);
-    // Clear cloud save on death
     cloudSaveManager.deleteSave();
   }, []);
+
+  const handlePrestigeComplete = useCallback(() => {
+    setShowPrestige(false);
+    setIsGameOver(false);
+    setIsUpgrading(false);
+    setFinalScore(0);
+    setCurrentWave(1);
+    setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
+    setGameId(id => id + 1);
+    onMainMenu();
+  }, [onMainMenu]);
 
   const handleWaveComplete = useCallback((completedWave: number) => {
     if (engineRef.current) {
@@ -109,6 +151,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
   }, [togglePause]);
 
   const handleRetry = () => {
+    setShowPrestige(false);
     setIsGameOver(false);
     setIsUpgrading(false);
     setFinalScore(0);
@@ -119,29 +162,30 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
 
   return (
     <div className="relative w-full h-full">
-      <GameCanvas 
+      <GameCanvas
         ref={engineRef}
         key={gameId}
         onGameOver={handleGameOver}
         onWaveComplete={handleWaveComplete}
         resumeState={resumeState}
       />
-      
+
       {!isGameOver && <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />}
-      
-      {isPaused && !isGameOver && !isUpgrading && (
-        <PauseMenu 
-          onResume={togglePause}
-          onMainMenu={onMainMenu}
-          onSaveQuit={handleSaveQuit}
+
+      {isPaused && !isUpgrading && !isGameOver && (
+        <PauseMenu
+          onResume={handleResume}
+          onMainMenu={handleMainMenu}
+          onSaveQuit={isLoggedIn ? handleSaveAndQuit : undefined}
+          onBiomeSelect={() => setShowBiomeSelect(true)}
         />
       )}
-      
+
       {isUpgrading && !isGameOver && (
-        <UpgradeMenu 
-          score={finalScore} 
-          onUpgrade={handleUpgrade} 
-          onNextWave={handleNextWave} 
+        <UpgradeMenu
+          score={finalScore}
+          onUpgrade={handleUpgrade}
+          onNextWave={handleNextWave}
           wave={currentWave}
           healthLevel={upgradeLevels.health}
           radiusLevel={upgradeLevels.radius}
@@ -152,16 +196,27 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
       {!isGameOver && !isUpgrading && (
         <TutorialOverlay engineRef={engineRef} />
       )}
-      
-      {isGameOver && (
-        <GameOver 
-          score={finalScore} 
+
+      {showPrestige && (
+        <PrestigeScreen
+          score={finalScore}
+          onPrestigeComplete={handlePrestigeComplete}
+          onCancel={() => setShowPrestige(false)}
+        />
+      )}
+
+      {isGameOver && !showPrestige && (
+        <GameOver
+          score={finalScore}
           waves={finalWaves}
           kills={finalKills}
+          missCount={finalMissCount}
+          playTimeSeconds={finalPlayTime}
           sessionXP={finalSessionXP}
           sessionCrystals={finalSessionCrystals}
           onRetry={handleRetry}
-          onMainMenu={onMainMenu} 
+          onMainMenu={onMainMenu}
+          newBiomes={newBiomes}
         />
       )}
     </div>
