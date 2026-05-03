@@ -4,10 +4,17 @@ import React, { useState, useCallback } from 'react';
 import { upgradeSystem, UPGRADE_DEFS, UpgradeId } from '../game/UpgradeSystem';
 
 interface UpgradeMenuProps {
-  onClose: () => void;
+  onClose?: () => void;
+  score?: number;
+  onUpgrade?: (type: "health" | "radius" | "turret", cost: number) => void;
+  onNextWave?: () => void;
+  wave?: number;
+  healthLevel?: number;
+  radiusLevel?: number;
+  turretLevel?: number;
 }
 
-export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose }) => {
+export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, onNextWave: _onNextWave, score, wave, healthLevel, radiusLevel, turretLevel }) => {
   const [crystals, setCrystals] = useState(upgradeSystem.getCrystals());
   const [, forceRender] = useState(0);
 
@@ -25,6 +32,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose }) => {
     const cost = upgradeSystem.getUpgradeCost(id);
     if (upgradeSystem.spendCrystals(cost)) {
       refresh();
+      onUpgrade?.(id as "health" | "radius" | "turret", cost);
     }
   };
 
@@ -40,7 +48,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose }) => {
   }, 0);
 
   return (
-    <div style={styles.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
+    <div style={styles.overlay} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Escape" && onClose?.()} onClick={(e) => e.target === e.currentTarget && onClose?.()}>
       <div style={styles.panel}>
         {/* Header */}
         <div style={styles.header}>
@@ -48,7 +56,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose }) => {
             <span style={styles.titleIcon}>⚡</span>
             UPGRADES
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>✕</button>
+          <button style={styles.closeBtn} onClick={() => onClose?.()}>✕</button>
         </div>
 
         {/* Crystal balance */}
@@ -120,6 +128,8 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose }) => {
             </div>
           ))}
         </div>
+
+        {wave !== undefined && <div style={{ color: "#9ca3af", fontSize: 12, marginBottom: 8 }}>Wave {wave} • Score {score ?? 0} • H{healthLevel ?? 0}/R{radiusLevel ?? 0}/T{turretLevel ?? 0}</div>}
 
         {/* Stats footer */}
         <div style={styles.footer}>

@@ -13,6 +13,7 @@ import { biomeManager } from '../game/BiomeManager';
 import { saveManager } from '../game/SaveManager';
 import { useEffect } from 'react';
 import { cloudSaveManager } from '../game/database/CloudSaveManager';
+import { authManager } from '../game/database/AuthManager';
 import type { GameStateSnapshot } from '../game/database/types';
 
 const PRESTIGE_THRESHOLD = 1000; // Minimum score to unlock prestige offer
@@ -32,19 +33,35 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     radius: 0,
     turret: 0,
   });
-  const [prestigePointsEarned, setPrestigePointsEarned] = useState(0);
+  const [, setPrestigePointsEarned] = useState(0);
   const [showPrestige, setShowPrestige] = useState(false);
   const [newBiomes, setNewBiomes] = useState<string[]>([]);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [gameId, setGameId] = useState(0);
+  const [, setShowBiomeSelect] = useState(false);
+  const isLoggedIn = !!authManager.getUser();
+
+  const handleResume = () => {
+    const engine = engineRef.current;
+    if (engine) {
+      engine.isPaused = false;
+      engine.resume();
+    }
+    setIsPaused(false);
+  };
+
+  const handleMainMenu = () => {
+    setIsPaused(false);
+    onMainMenu();
+  };
 
   const engineRef = useRef<GameEngine | null>(null);
 
   const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number) => {
     const ptsEarned = Math.floor(score / 100);
     const prestigeLevel = saveManager.getPrestigeLevel();
-    const nextLevelPoints = Math.floor(100 * Math.pow(1.5, prestigeLevel));
+    Math.floor(100 * Math.pow(1.5, prestigeLevel));
 
     // Check for biome unlocks
     const highScore = saveManager.getHighScore();
@@ -98,6 +115,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     const engine = engineRef.current;
     if (!engine) return;
     if (engine.score < cost) return;
+    // eslint-disable-next-line react-hooks/immutability
     engine.score -= cost;
     setFinalScore(engine.score);
     if (type === 'health') {
@@ -126,12 +144,13 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     if (isGameOver || isUpgrading) return;
     const engine = engineRef.current;
     if (engine) {
+      // eslint-disable-next-line react-hooks/immutability
       engine.isPaused = !engine.isPaused;
       setIsPaused(engine.isPaused);
     }
   }, [isGameOver, isUpgrading]);
 
-  const handleSaveQuit = useCallback(() => {
+  const handleSaveAndQuit = useCallback(() => {
     const engine = engineRef.current;
     if (engine) {
       engine.saveAndQuit();

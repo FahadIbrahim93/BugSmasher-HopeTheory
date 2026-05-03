@@ -93,7 +93,7 @@ export function BiomeSelectButton({ onSelect, onClose }: BiomeSelectButtonProps)
 
                 {/* Difficulty */}
                 <div className="flex-shrink-0 text-right">
-                  <span className="text-xs font-mono text-zinc-600">x{biome.difficulty.toFixed(1)}</span>
+                  <span className="text-xs font-mono text-zinc-600">x{biome.gameplay.difficultyMultiplier.toFixed(1)}</span>
                 </div>
               </button>
             );
