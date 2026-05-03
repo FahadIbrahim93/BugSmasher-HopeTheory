@@ -67,7 +67,7 @@ export class BiomeManager {
 
   getDifficulty(biomeId?: string): number {
     const biome = BIOMES.find(b => b.id === (biomeId || this.currentBiomeId));
-    return biome?.difficulty || 1;
+    return biome?.gameplay?.difficultyMultiplier ?? 1;
   }
 
   getUnlockedCount(): number {

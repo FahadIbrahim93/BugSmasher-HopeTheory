@@ -12,6 +12,7 @@ import { cloudSaveManager } from './database/CloudSaveManager';
 import { leaderboardManager } from './database/LeaderboardManager';
 import { cosmeticsManager } from './CosmeticsManager';
 import { upgradeSystem } from './UpgradeSystem';
+import { biomeManager } from './BiomeManager';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -56,6 +57,9 @@ export class GameEngine {
   clickDamageBonus: number = 0;
   critChanceBonus: number = 0;
   turretDamageBonus: number = 0;
+
+  // Current biome (set from biomeManager on start)
+  currentBiome: import('./BiomeConfig').Biome | null = null;
   
   // Active Powerups
   shieldTimer: number = 0;
@@ -164,6 +168,8 @@ export class GameEngine {
     this.score = 0;
     this.applyPrestigeBonus();
     this.applyUpgradeBonuses();
+    // Set current biome from biomeManager
+    this.currentBiome = biomeManager.getCurrentBiome();
     this.health = this.maxHealth;
     // Extra lives from upgrades stack on top
     this.health += upgradeSystem.getExtraLives() * 50;
@@ -317,7 +323,10 @@ export class GameEngine {
   }
   
   spawnPowerup(x: number, y: number, force: boolean = false) {
-    if (!force && Math.random() > GameConfig.powerups.dropChance) return;
+    // Apply biome-specific drop chance multiplier
+    const biomeDropMult = this.currentBiome?.gameplay.powerups.dropChanceMultiplier ?? 1;
+    const baseChance = GameConfig.powerups.dropChance * biomeDropMult;
+    if (!force && Math.random() > baseChance) return;
 
     const types = GameConfig.powerups.types;
 
@@ -554,7 +563,10 @@ export class GameEngine {
         } else {
            this.spawnPowerup(bug.x, bug.y);
         }
-        
+
+        // Handle biome special effects (e.g. golden split)
+        this.waveManager.onBugDeath(bug);
+
         this.bugs.splice(idx, 1);
         
         // Award XP for kill

@@ -41,11 +41,16 @@ export function BiomeSelector({ onSelectBiome, currentBiomeId }: BiomeSelectorPr
               </div>
               <div className="text-[10px] text-zinc-600 mt-0.5">
                 {isUnlocked ? (
-                  <span style={{ color: biome.theme.coreColor }}>x{biome.difficulty} EXP</span>
+                  <span style={{ color: biome.theme.coreColor }}>
+                    x{biome.gameplay.difficultyMultiplier.toFixed(1)} difficulty
+                    {biome.gameplay.specialEffect !== 'none' && (
+                      <span className="block mt-0.5 text-[9px] opacity-75">{biome.gameplay.specialDesc}</span>
+                    )}
+                  </span>
                 ) : (
                   <span>
                     {req.wavesCompleted && `W${req.wavesCompleted}`}
-                    {req.scoreRequired && ` ${req.scoreRequired / 1000}k`}
+                    {req.scoreRequired && ` ${(req.scoreRequired / 1000).toFixed(0)}k`}
                     {req.prestigeLevel && ` P${req.prestigeLevel}`}
                   </span>
                 )}
