@@ -1,5 +1,28 @@
 # BugSmasher Tasks & Issues
 
+## v1.6.1 Status: ✅ COMPLETE (2026-05-06)
+
+### Visual Overhaul Complete
+- **New Fonts** — Orbitron, JetBrains Mono, Inter ✅
+- **Glass Panel System** — backdrop-filter blur ✅
+- **Neon Text Glow** — biome accent colors ✅
+- **Animations** — logo-pulse, slide-up, shimmer, border-pulse ✅
+- **Button System** — btn-primary/secondary/share/ghost ✅
+- **HUD/Menu Refresh** — score display, wave banner, combo ✅
+- **Death Cards** — biome-themed with watermark ✅
+- **Mobile Responsive** — typography scaling ✅
+
+### Documentation Added
+- docs/ARCHITECTURE.md
+- docs/QUALITY_GATES.md
+- docs/TEST_STRATEGY.md
+- docs/ULTIMATE_10_10_PLAN.md
+- docs/LOGBOOK.md
+- docs/PRODUCTION_HARDENING_CHECKLIST.md
+- docs/AGENTS_AND_TASKBOARD.md
+
+---
+
 ## v1.6.0 Status: ✅ COMPLETE (2026-05-05)
 
 ### Features Shipped
@@ -94,16 +117,17 @@
 
 ---
 
-## Quality Gates — v1.6.0
+## Quality Gates — v1.6.1
 
-|| Gate | Result |
-||------|--------|
-|| Tests | ✅ 92/92 pass |
-|| Build | ✅ Clean |
+| Gate | Result |
+|------|--------|
+| Tests | ✅ 92/92 pass |
+| Build | ✅ Clean |
+| Lint | ✅ Pass |
 
 ---
 
-*Updated: 2026-05-05 | Version 1.6.0 | Quality Gates: 92/92 tests, build clean*
+*Updated: 2026-05-06 | Version 1.6.1 | Visual Overhaul Complete*
 
 ---
 

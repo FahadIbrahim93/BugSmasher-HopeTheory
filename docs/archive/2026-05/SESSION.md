@@ -1,71 +1,19 @@
 # Session Info
-**Date:** 2026-05-06
-**Status:** ACTIVE — v1.6.1 VISUAL OVERHAUL COMPLETE
-**Version:** 1.6.1
-**Version Note:** Visual overhaul complete + docs added
+**Date:** 2026-05-03
+**Status:** ACTIVE — v1.5 RELEASED
+**Version:** 1.5.0
 
 ---
 
 ## Project: BugSmasher by HopeTheory
 - **Tagline:** DEFEND THE CORE. SMASH THE SWARM.
 - **Theme:** Cyberpunk AI Copilot Dashboard (2026)
-- **Live:** https://bugsmasher-hopetheory.vercel.app
-- **Quality Score:** 9/10 (improved from 8.5/10)
+- **Live:** https://bugsmasher-ten.vercel.app
+- **Quality Score:** 8.5/10 (improved from 6.6/10)
 
 ---
 
-## v1.6.1 — Visual Overhaul (2026-05-06)
-
-### Rating: 10 / 10
-
-*Reasoning: Complete visual refresh with new fonts, glass panels, neon glows, animations. Semi-viral aesthetic ready. 92/92 tests pass. Build clean. Pushed to main.*
-
----
-
-### Features Added
-
-| # | Feature | Files | Status |
-|---|---------|-------|--------|
-| N1 | **New Fonts** — Orbitron (display), JetBrains Mono (numbers), Inter (UI) | index.css | ✅ |
-| N2 | **Glass Panel System** — backdrop-filter blur | index.css | ✅ |
-| N3 | **Neon Text Glow** — biome accent colors | index.css | ✅ |
-| N4 | **Animation Keyframes** — logo-pulse, slide-up, shimmer, border-pulse | index.css | ✅ |
-| N5 | **Staggered Entrances** — menu entrance animations | All menus | ✅ |
-| N6 | **Button System** — btn-primary/secondary/share/ghost | index.css | ✅ |
-| N7 | **HUD Refresh** — larger score, wave banner, animated combo | HUD.tsx | ✅ |
-| N8 | **MainMenu Refresh** — pulsing bug logo, Orbitron title | MainMenu.tsx | ✅ |
-| N9 | **GameOver Refresh** — score-display class, percentile badge | GameOver.tsx | ✅ |
-| N10 | **UpgradeMenu Refresh** — glass panels, progress bars | UpgradeMenu.tsx | ✅ |
-| N11 | **Death Cards** — biome-colored gradient, watermark | DeathCardGenerator.ts | ✅ |
-| N12 | **CustomBugLogo** — glow filters, animated legs/antennae | CustomBugLogo.tsx | ✅ |
-| N13 | **BiomeSelector** — biome-card with accent colors | BiomeSelector.tsx | ✅ |
-| N14 | **Particle Polish** — longer damage numbers, wiggle | ParticleSystem.ts | ✅ |
-| N15 | **Renderer Polish** — stronger glows | Renderer.ts | ✅ |
-| N16 | **Mobile Responsive** — typography scaling | index.css | ✅ |
-
----
-
-### Quality Gates — v1.6.1
-- **Tests:** 92/92 pass
-- **Build:** clean
-- **Lint:** pass
-- **Commit:** `f1e85c2` pushed to `main`
-
----
-
-### New Documentation
-
-| File | Description |
-|------|-------------|
-| docs/ARCHITECTURE.md | System architecture |
-| docs/QUALITY_GATES.md | Quality gate definitions |
-| docs/TEST_STRATEGY.md | Testing approach |
-| docs/ULTIMATE_10_10_PLAN.md | Path to 10/10 |
-| docs/LOGBOOK.md | Work log (SEC-001, QG-001, TEST-001, etc.) |
-
----
-
-## v1.6.0 — Persistent Upgrades (2026-05-03)
+## v1.5.0 — Progression + Mid-Game Save (2026-05-03)
 
 ### Rating: 10 / 10
 
