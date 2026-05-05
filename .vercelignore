@@ -1,0 +1,15 @@
+# Ignore everything except dist and production files
+node_modules/
+src/
+docs/
+*.ts
+*.tsx
+*.map
+*.log
+.git/
+.github/
+*.md
+*.config.*
+!.vercelignore
+!vercel.json
+!package.json
