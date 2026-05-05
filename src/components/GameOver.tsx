@@ -296,7 +296,7 @@ export function GameOver({
                     <div
                       key={entry.rank}
                       className={`flex items-center justify-between p-2 rounded-lg ${
-                        entry.isLocal ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-black/20'
+                        entry.rank === globalRank ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-black/20'
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -305,7 +305,7 @@ export function GameOver({
                         }`}>
                           #{entry.rank}
                         </span>
-                        <span className={`text-sm font-mono ${entry.isLocal ? 'text-cyan-300' : 'text-white'}`}>
+                        <span className={`text-sm font-mono ${entry.rank === globalRank ? 'text-cyan-300' : 'text-white'}`}>
                           {entry.username}
                         </span>
                       </div>

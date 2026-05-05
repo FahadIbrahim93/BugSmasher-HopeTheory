@@ -240,7 +240,7 @@ export class GameEngine {
     this.startLevel = authManager.getProfile()?.level ?? 1;
   }
 
-  awardXP(amount: number, reason: string = ''): void {
+  awardXP(amount: number, _reason: string = ''): void {
     const profile = authManager.getProfile();
     if (!profile) return;
 

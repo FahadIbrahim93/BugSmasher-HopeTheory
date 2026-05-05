@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { upgradeSystem, UPGRADE_DEFS, UpgradeId } from './UpgradeSystem';
+import { upgradeSystem } from './UpgradeSystem';
 
 describe('UpgradeSystem', () => {
   beforeEach(() => {
@@ -56,8 +56,7 @@ describe('UpgradeSystem', () => {
   });
 
   it('calculates cost correctly (exponential scaling)', () => {
-    const def = UPGRADE_DEFS.find(d => d.id === 'click_power')!;
-    // level 0 → baseCost
+        // level 0 → baseCost
     expect(sys.getUpgradeCost('click_power')).toBe(50);
     // After 1 purchase (level 1), cost = baseCost * mult^1
     sys.setCrystals(100000);

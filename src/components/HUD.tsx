@@ -38,8 +38,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
     let lastHealth = -1;
     let lastMaxHealth = -1;
     let lastCombo = -1;
-    let lastXP = -1;
-    let lastLevel = -1;
+        let lastLevel = -1;
 
     const updateHUD = () => {
       const engine = engineRef.current;
@@ -150,7 +149,6 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           }
         }
         lastLevel = level;
-        lastXP = xp;
       }
 
       animationFrameId = requestAnimationFrame(updateHUD);
