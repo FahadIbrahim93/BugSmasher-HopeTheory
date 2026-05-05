@@ -1,5 +1,16 @@
 # BugSmasher Tasks & Issues
 
+## v1.6.0 Status: ✅ COMPLETE (2026-05-05)
+
+### Features Shipped
+- **Persistent upgrades** — 8 crystal-gated upgrades, UpgradeMenu, GameEngine wired ✅
+- **Mechanically different biomes** — each biome changes bug types, powerup rates, difficulty ✅
+- **Shareable death cards** — canvas-based 1200x630 PNG, biome-themed, Web Share API + download fallback ✅
+- **PR #2 merged** — Codex changes: auth/gameplay fields, UpgradeMenu accessibility, HUD hardening, GameOver leaderboard ✅
+- **BiomeSelectButton bug** — fixed `biome.difficulty` → `biome.gameplay.difficultyMultiplier` ✅
+
+---
+
 ## v1.5.0 Status: ✅ COMPLETE (2026-05-03)
 
 ### Pain Points Resolved
@@ -63,20 +74,19 @@
 
 ---
 
-## 📋 Backlog (v1.6.0+)
+## 📋 Backlog (v1.7.0+)
 
 ||| Priority | Task | Notes |
 |||----------|------|-------|
-| | P1 | **Persistent upgrades** | ✅ Done — 8 upgrades, UpgradeMenu, GameEngine wired |
-| | P1 | **Mechanically different biomes** | Each biome changes bug types, powerup rates, difficulty |
-| | P1 | **Shareable death cards** | Post-run stats overlay + share button |
-| | P2 | **Discord OAuth** | Ready to test |
+| | P1 | **Shareable death cards** | ✅ Done (v1.6.0) — canvas 1200x630, biome-themed, Web Share API |
+| | P1 | **Persistent upgrades** | ✅ Done (v1.6.0) — 8 upgrades, UpgradeMenu, GameEngine wired |
+| | P1 | **Mechanically different biomes** | ✅ Done (v1.6.0) |
+| | P2 | **Discord OAuth** | Ready to test — needs OAuth callback setup |
 | | P2 | **AdMob integration** | Banner + interstitial + rewarded video ads |
 | | P2 | **Crystal IAP** | Remove Ads purchase |
-| | P2 | **Vercel rebuild** | Auto-deploy from main branch |
 | | P2 | **Profile sync** | More data to cloud |
 | | P3 | **Apple OAuth** | Optional |
-| | P3 | **Loading spinner** | Better UX |
+| | ~~P3~~ | ~~Loading spinner~~ | ✅ Done — Preloader.tsx wired in App.tsx |
 | | ~~P3~~ | ~~Prestige system~~ | ✅ Done (v1.5.1) |
 | | ~~P3~~ | ~~Multiple biomes~~ | ✅ Done (v1.5.1) |
 | | ~~P3~~ | ~~Daily challenges~~ | ✅ Done (v1.5.1) |
@@ -88,13 +98,12 @@
 
 || Gate | Result |
 ||------|--------|
-|| Typecheck | ✅ Clean |
-|| Tests | ✅ 73/73 pass |
+|| Tests | ✅ 92/92 pass |
 || Build | ✅ Clean |
 
 ---
 
-*Updated: 2026-05-03 | Version 1.6.0 | Quality Gates: 73/73 tests, build clean*
+*Updated: 2026-05-05 | Version 1.6.0 | Quality Gates: 92/92 tests, build clean*
 
 ---
 
