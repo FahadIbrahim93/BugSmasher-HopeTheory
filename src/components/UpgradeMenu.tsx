@@ -14,9 +14,10 @@ interface UpgradeMenuProps {
   turretLevel?: number;
 }
 
-export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, onNextWave: _onNextWave, score, wave, healthLevel, radiusLevel, turretLevel }) => {
+export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, onNextWave, score, wave, healthLevel, radiusLevel, turretLevel, ..._rest }: UpgradeMenuProps) => { void(_rest); void(healthLevel); void(radiusLevel); void(turretLevel); void(score); void(wave);
   const [crystals, setCrystals] = useState(upgradeSystem.getCrystals());
   const [, forceRender] = useState(0);
+  const handleDismiss = onNextWave ?? onClose;
 
   const refresh = useCallback(() => {
     setCrystals(upgradeSystem.getCrystals());
@@ -48,28 +49,29 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
   }, 0);
 
   return (
-    <div style={styles.overlay} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Escape" && onClose?.()} onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div style={styles.panel}>
+    <div className="glass-panel" role="button" tabIndex={0} onKeyDown={(e) => e.key === "Escape" && handleDismiss?.()} onClick={(e) => e.target === e.currentTarget && handleDismiss?.()}>
+      <div className="glass-panel rounded-2xl">
         {/* Header */}
         <div style={styles.header}>
-          <div style={styles.title}>
-            <span style={styles.titleIcon}>⚡</span>
+          <div style={styles.title} className="font-display">
+            <span style={styles.titleIcon}>💎</span>
             UPGRADES
           </div>
-          <button style={styles.closeBtn} onClick={() => onClose?.()}>✕</button>
+          <button style={styles.closeBtn} onClick={() => handleDismiss?.()}>✕</button>
         </div>
 
         {/* Crystal balance */}
         <div style={styles.balanceBar}>
           <span style={styles.balanceLabel}>💎 Crystals</span>
-          <span style={styles.balanceValue}>{crystals.toLocaleString()}</span>
+          <span style={styles.balanceValue} className="font-mono">{crystals.toLocaleString()}</span>
         </div>
 
         {/* Upgrades grid */}
-        <div style={styles.grid}>
+        <div className="stagger-enter animate-slide-up" style={styles.grid}>
           {upgrades.map(({ def, level, cost, totalBonus, isMaxed, canAfford }) => (
             <div
               key={def.id}
+              className="upgrade-card"
               style={{
                 ...styles.card,
                 ...(isMaxed ? styles.cardMaxed : canAfford ? styles.cardAffordable : styles.cardLocked),
@@ -86,6 +88,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
               {/* Level bar */}
               <div style={styles.levelBar}>
                 <div
+                  className="bar-fill"
                   style={{
                     ...styles.levelFill,
                     width: `${(level / def.maxLevel) * 100}%`,
@@ -95,7 +98,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
                   }}
                 />
               </div>
-              <div style={styles.levelText}>
+              <div style={styles.levelText} className="font-mono">
                 Lv {level} / {def.maxLevel}
                 {!isMaxed && (
                   <span style={styles.bonusText}>
@@ -117,9 +120,9 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
                   onClick={() => handlePurchase(def.id)}
                   disabled={!canAfford}
                 >
-                  <span>💎 {cost.toLocaleString()}</span>
+                  <span className="font-mono">💎 {cost.toLocaleString()}</span>
                   {!canAfford && (
-                    <span style={styles.needMore}>
+                    <span style={styles.needMore} className="font-mono">
                       {cost > crystals ? `Need ${(cost - crystals).toLocaleString()} more` : 'Max level'}
                     </span>
                   )}
@@ -129,11 +132,19 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
           ))}
         </div>
 
-        {wave !== undefined && <div style={{ color: "#9ca3af", fontSize: 12, marginBottom: 8 }}>Wave {wave} • Score {score ?? 0} • H{healthLevel ?? 0}/R{radiusLevel ?? 0}/T{turretLevel ?? 0}</div>}
+        {wave !== undefined && <div style={{ color: "#9ca3af", fontSize: 12, marginBottom: 8 }} className="font-mono">Wave {wave} • Score {score ?? 0} • H{healthLevel ?? 0}/R{radiusLevel ?? 0}/T{turretLevel ?? 0}</div>}
+
+        {onNextWave && (
+          <div style={styles.actionBar}>
+            <button style={styles.continueBtn} onClick={() => onNextWave()}>
+              Start Wave {wave ?? ''}
+            </button>
+          </div>
+        )}
 
         {/* Stats footer */}
         <div style={styles.footer}>
-          <span style={styles.footerStat}>
+          <span style={styles.footerStat} className="font-mono">
             💎 {totalSpent.toLocaleString()} total invested
           </span>
           <span style={styles.footerStat}>
@@ -186,7 +197,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '10px',
     textShadow: '0 0 20px rgba(0,255,204,0.5)',
   },
-  titleIcon: { fontSize: '22px' },
+  titleIcon: { fontSize: '22px', textShadow: '0 0 15px rgba(0,255,204,0.6)' },
   closeBtn: {
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.1)',
@@ -256,6 +267,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '28px',
     lineHeight: 1,
     flexShrink: 0,
+    textShadow: '0 0 12px rgba(0,255,204,0.4)',
   },
   cardInfo: { flex: 1, minWidth: 0 },
   cardName: {
@@ -320,6 +332,22 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '10px',
     fontWeight: 400,
     opacity: 0.7,
+  },
+  actionBar: {
+    padding: '0 24px 16px',
+  },
+  continueBtn: {
+    width: '100%',
+    padding: '12px 16px',
+    borderRadius: '10px',
+    border: '1px solid rgba(0,255,204,0.2)',
+    background: 'linear-gradient(135deg, rgba(0,255,204,0.2), rgba(0,212,255,0.2))',
+    color: '#e5fffb',
+    fontSize: '14px',
+    fontWeight: 800,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
   },
   footer: {
     display: 'flex',

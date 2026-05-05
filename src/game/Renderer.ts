@@ -64,7 +64,7 @@ export class Renderer {
       ctx.translate(width / 2, height / 2);
       ctx.scale(comboScale, comboScale);
       ctx.fillStyle = '#00ffcc';
-      ctx.font = 'bold 28px "JetBrains Mono", monospace';
+      ctx.font = 'bold 32px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
       ctx.shadowColor = '#00ffcc';
       ctx.shadowBlur = 20;
@@ -153,8 +153,8 @@ export class Renderer {
       }
     }
     
-    // Draw lines with a very faint, technical grey
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+    // Draw lines with a very faint, technical grey (brighter: 0.05 instead of 0.04)
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.stroke();
   }
 
@@ -192,10 +192,10 @@ export class Renderer {
     ctx.arc(0, 0, 20, 0, Math.PI * 2);
     ctx.fillStyle = '#ffffff';
     if (!this.engine.isMobile) {
-      // Glow shifts to red if critically damaged, otherwise stark white/cyan
+      // Glow shifts to red if critically damaged, otherwise stark white/cyan (stronger: shadowBlur = 30)
       const isCritical = (this.engine.health / this.engine.maxHealth) < 0.3;
       ctx.shadowColor = isCritical ? '#ff3333' : '#ffffff';
-      ctx.shadowBlur = 25;
+      ctx.shadowBlur = 30;
     }
     ctx.fill();
     
@@ -226,7 +226,7 @@ export class Renderer {
     
     if (!this.engine.isMobile) {
       ctx.shadowColor = bug.color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 12; // Slight glow on body
     }
     
     for (let i = 0; i < 3; i++) {
@@ -261,9 +261,10 @@ export class Renderer {
     ctx.fill();
     ctx.stroke();
     
+    // More prominent bug eyes (larger)
     ctx.fillStyle = '#050505'; // Dark inner core for bugs
-    ctx.beginPath(); ctx.arc(-3, -22, 2, 0, Math.PI * 2); ctx.fill();
-    ctx.beginPath(); ctx.arc(3, -22, 2, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(-4, -22, 3, 0, Math.PI * 2); ctx.fill(); // Larger: 3 instead of 2
+    ctx.beginPath(); ctx.arc(4, -22, 3, 0, Math.PI * 2); ctx.fill();  // Larger: 3 instead of 2
     
     ctx.restore();
     
@@ -583,15 +584,16 @@ export class Renderer {
     ctx.save();
     const alpha = dn.life / dn.maxLife;
     ctx.globalAlpha = alpha;
-    const scale = 1 + (1 - alpha) * 0.3;
+    // Slight scale effect based on remaining life
+    const scale = 1 + (1 - alpha) * 0.5;
     ctx.translate(dn.x, dn.y);
     ctx.scale(scale, scale);
     ctx.fillStyle = dn.color;
-    ctx.font = 'bold 24px "JetBrains Mono", monospace';
+    ctx.font = 'bold 18px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
     if (!this.engine.isMobile) {
       ctx.shadowColor = dn.color;
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 18;
     }
     ctx.fillText(`+${dn.value}`, 0, 0);
     ctx.restore();

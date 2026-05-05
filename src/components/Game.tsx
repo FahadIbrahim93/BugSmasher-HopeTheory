@@ -207,6 +207,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
         <UpgradeMenu
           score={finalScore}
           onUpgrade={handleUpgrade}
+          onClose={handleNextWave}
           onNextWave={handleNextWave}
           wave={currentWave}
           healthLevel={upgradeLevels.health}

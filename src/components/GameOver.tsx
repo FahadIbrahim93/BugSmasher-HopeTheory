@@ -128,27 +128,45 @@ export function GameOver({
 
   return (
     <div className="absolute inset-0 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center z-50 p-4">
-      <div className="max-w-md w-full text-center space-y-8">
+      <div className="max-w-md w-full text-center space-y-8 animate-slide-scale">
         {/* Header */}
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20">
+          <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center border border-red-500/20 animate-pulse">
             <Skull className="w-7 h-7 text-red-500 opacity-90" />
           </div>
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white font-display tracking-tight mb-1">
+            <h2 
+              className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1" 
+              style={{ fontFamily: '"Orbitron", sans-serif' }}
+            >
               {isNewHighScore && rank === 1 ? 'NEW HIGH SCORE!' : 'SYSTEM BREACH'}
             </h2>
             <div className="h-px w-12 bg-red-500/50 mx-auto my-3" />
-            <p className="text-zinc-500 text-xs font-mono tracking-widest uppercase">Defense Array Destroyed</p>
+            <p 
+              className="text-zinc-400 text-sm font-bold tracking-widest uppercase" 
+              style={{ fontFamily: '"Orbitron", sans-serif' }}
+            >
+              Defense Array Destroyed
+            </p>
           </div>
         </div>
 
         {/* Score Display */}
         <div className="bg-black/40 backdrop-blur-md rounded-2xl p-6 border border-white/5 shadow-2xl space-y-4">
           <p className="text-xs text-zinc-500 uppercase tracking-widest font-mono">Final Score</p>
-          <p className={`text-4xl sm:text-5xl font-mono font-bold tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] ${isNewHighScore ? 'text-yellow-400' : 'text-white'}`}>
+          <p className="score-display text-5xl sm:text-6xl">
             {score.toString().padStart(6, '0')}
           </p>
+
+          {/* Percentile Badge */}
+          {globalRank > 0 && (
+            <div className="flex items-center justify-center gap-2 text-cyan-400 animate-pulse">
+              <Medal className="w-4 h-4" />
+              <span className="text-xs font-bold uppercase tracking-widest">
+                Top {percentileText} Worldwide
+              </span>
+            </div>
+          )}
 
           {/* Progression Summary */}
           {(sessionXP > 0 || sessionCrystals > 0) && (
@@ -203,7 +221,7 @@ export function GameOver({
             onClick={() => { soundManager.init(); soundManager.uiClick(); onRetry(); }}
             onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
             aria-label="Play Again"
-            className="group relative w-full py-4 bg-white text-black hover:bg-zinc-200 rounded-full font-bold text-sm uppercase tracking-widest flex items-center justify-center transition-all overflow-hidden"
+            className="btn-primary group relative w-full py-4 rounded-full font-bold text-sm uppercase tracking-widest flex items-center justify-center transition-all overflow-hidden"
           >
             <span className="relative z-10 flex items-center">
               <RotateCcw className="w-4 h-4 mr-3" />
@@ -215,7 +233,7 @@ export function GameOver({
           <div className="flex gap-3">
             <button
               onClick={() => { soundManager.uiClick(); setShowLeaderboard(!showLeaderboard); }}
-              className="flex-1 py-3 bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-zinc-300 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
+              className="btn-secondary flex-1 py-3 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
             >
               <Trophy className="w-4 h-4 mr-2" />
               Leaderboard
@@ -223,7 +241,7 @@ export function GameOver({
 
             <button
               onClick={handleShare}
-              className="flex-1 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
+              className="btn-share flex-1 py-3 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Share Card
@@ -231,7 +249,7 @@ export function GameOver({
 
             <button
               onClick={() => { soundManager.uiClick(); onMainMenu(); }}
-              className="flex-1 py-3 bg-transparent border border-white/10 hover:bg-white/5 text-zinc-400 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
+              className="btn-ghost flex-1 py-3 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
             >
               <Home className="w-4 h-4 mr-2" />
               Menu

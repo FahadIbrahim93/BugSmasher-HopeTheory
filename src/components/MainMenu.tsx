@@ -69,21 +69,27 @@ export function MainMenu({ onStart }: { onStart: (resumeState?: GameStateSnapsho
       {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} />}
       {showAccount && <AccountScreen onClose={() => setShowAccount(false)} />}
       {showUpgrades && <UpgradeMenu onClose={() => setShowUpgrades(false)} />}
-      <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg">
-        <div className="text-center space-y-6">
+      <div className="z-10 flex flex-col items-center space-y-12 sm:space-y-16 w-full max-w-lg animate-slide-up">
+        <div className="text-center space-y-6 animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div className="flex items-center justify-center mb-6 mt-8 sm:mt-12">
-             <CustomBugLogo className="w-16 h-16 sm:w-24 sm:h-24" />
+             <CustomBugLogo className="w-16 h-16 sm:w-24 sm:h-24 animate-logo-pulse" />
            </div>
-          <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-tighter text-white font-display">
+          <h1 
+            className="text-glow-cyan animate-pulse-glow text-5xl sm:text-7xl md:text-9xl font-black tracking-tighter text-white" 
+            style={{ fontFamily: '"Orbitron", sans-serif' }}
+          >
             BUGSMASHER
           </h1>
           <div className="h-px w-24 bg-white/20 mx-auto mt-4 mb-6" />
-          <p className="text-sm sm:text-base md:text-lg text-zinc-500 font-medium tracking-[0.2em] font-mono">
+          <p 
+            className="text-sm sm:text-base md:text-lg text-zinc-500 font-medium tracking-[0.2em]" 
+            style={{ fontFamily: '"Orbitron", sans-serif' }}
+          >
             DEFEND THE CORE. SMASH THE SWARM.
           </p>
         </div>
         
-        <div className="w-full flex flex-col items-center space-y-4 mt-4">
+        <div className="w-full flex flex-col items-center space-y-4 mt-4 animate-slide-up" style={{ animationDelay: '350ms' }}>
           {profile ? (
             <>
               <div className="flex items-center gap-3 mb-4">

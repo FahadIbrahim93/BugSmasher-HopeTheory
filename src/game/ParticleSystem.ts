@@ -83,7 +83,8 @@ shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active
         const dn = this.damageNumbers[i];
         if (!dn.active) continue;
         dn.life -= dt;
-        dn.y -= 60 * dt; // Float upward
+        dn.y -= 50 * dt; // Slower float (50 instead of 60)
+        dn.x += Math.sin(dn.life * 10) * 2; // Slight horizontal drift (wiggle)
         if (dn.life <= 0) dn.active = false;
       }
   }
@@ -198,8 +199,8 @@ shockwaves: Shockwave[] = Array.from({ length: MAX_SHOCKWAVES }, () => ({ active
     dn.y = y;
     dn.value = value;
     dn.color = color;
-    dn.life = 0.8;
-    dn.maxLife = 0.8;
+    dn.life = 1.0; // Increased from 0.8 to 1.0
+    dn.maxLife = 1.0; // Increased from 0.8 to 1.0
     this.damageNumberIdx = (this.damageNumberIdx + 1) % MAX_DAMAGE_NUMBERS;
   }
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Shield, Target, Zap, Pause, Play, Flame, Diamond, Globe } from 'lucide-react';
+import { Shield, Target, Zap, Pause, Play, Flame, Diamond, Globe, Trophy } from 'lucide-react';
 import { soundManager } from '../game/SoundManager';
 import { authManager } from '../game/database/AuthManager';
 import { PrestigeDisplay, DailyChallengeBadge } from './PrestigeDisplay';
@@ -21,6 +21,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
   const levelUpRef = useRef<HTMLDivElement>(null);
   const levelUpTimerRef = useRef<number | null>(null);
   const [showBiomeSelect, setShowBiomeSelect] = useState(false);
+  const [showMetaPanel, setShowMetaPanel] = useState(false);
 
   // Subscribe to auth profile changes for XP/level/crystals
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -71,8 +72,8 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           const healthPercent = Math.max(0, Math.min(100, (engine.health / engine.maxHealth) * 100));
           healthTextRef.current.textContent = Math.ceil(engine.health).toString();
           healthBarRef.current.style.width = `${healthPercent}%`;
-          healthBarRef.current.className = `h-full transition-all duration-300 ${healthPercent > 50 ? 'bg-white' : healthPercent > 20 ? 'bg-yellow-400' : 'bg-red-500'}`;
-          shieldIconRef.current.setAttribute('class', `lucide lucide-shield w-3.5 h-3.5 sm:w-4 sm:h-4 ${healthPercent > 50 ? 'text-zinc-400' : healthPercent > 20 ? 'text-yellow-400' : 'text-red-500 animate-pulse'}`);
+          healthBarRef.current.className = `h-full transition-all duration-300 ${healthPercent > 50 ? 'bg-gradient-to-r from-cyan-400 to-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.5)]' : healthPercent > 20 ? 'bg-gradient-to-r from-yellow-400 to-orange-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]' : 'bg-gradient-to-r from-red-500 to-red-400 shadow-[0_0_10px_rgba(239,68,68,0.5)] animate-pulse'}`;
+          shieldIconRef.current.setAttribute('class', `lucide lucide-shield w-3.5 h-3.5 sm:w-4 sm:h-4 ${healthPercent > 50 ? 'text-cyan-400' : healthPercent > 20 ? 'text-yellow-400' : 'text-red-500 animate-pulse'}`);
           lastHealth = engine.health;
           lastMaxHealth = engine.maxHealth;
         }
@@ -88,11 +89,15 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
               comboRef.current.style.transform = 'scale(1.15)';
               if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
               comboTimerRef.current = window.setTimeout(() => {
-                if (comboRef.current) comboRef.current.style.transform = 'scale(1)';
+                if (comboRef.current) {
+                  comboRef.current.style.transform = 'scale(1)';
+                  comboRef.current.classList.add('animate-pulse-combo');
+                }
               }, 100);
             } else {
               comboRef.current.style.opacity = '0';
               comboRef.current.style.transform = 'scale(0.9)';
+              comboRef.current.classList.remove('animate-pulse-combo');
             }
           }
         }
@@ -170,13 +175,13 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           onClose={() => setShowBiomeSelect(false)}
         />
       )}
-      <div className="absolute top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none z-10">
+      <div className="absolute top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-start pointer-events-none z-10 animate-slide-up" style={{ animationDelay: '100ms' }}>
         {/* Left column */}
         <div className="flex flex-col space-y-2 sm:space-y-3 pointer-events-none">
           <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none">
             <Target className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
             <span className="text-zinc-500 font-medium text-xs sm:text-sm tracking-wider uppercase">Score</span>
-            <span ref={scoreRef} className="text-lg sm:text-xl font-bold font-mono text-white tracking-widest pl-1 pointer-events-none">000000</span>
+            <span ref={scoreRef} className="hud-score pl-1 pointer-events-none">000000</span>
             <Diamond className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 ml-2" />
             <span ref={crystalTextRef} className="text-sm sm:text-base font-bold font-mono text-cyan-300 pointer-events-none">
               {profile?.crystals ?? 0}
@@ -185,7 +190,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
 
           <div className="flex items-center space-x-2 sm:space-x-3 bg-black/20 backdrop-blur-xl px-4 py-2 sm:px-5 sm:py-2.5 rounded-full border-[0.5px] border-white/10 shadow-[0_4_20px_rgba(0,0,0,0.5)] pointer-events-none">
             <Zap className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-400" />
-            <span ref={waveRef} className="text-sm sm:text-base font-medium font-mono text-white uppercase tracking-widest pointer-events-none">WAVE 1</span>
+            <span ref={waveRef} className="wave-banner text-glow-sm text-sm sm:text-base font-medium font-mono text-white uppercase tracking-widest pointer-events-none">WAVE 1</span>
           </div>
 
           {/* XP Bar */}
@@ -221,7 +226,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
           {/* Combo */}
           <div
             ref={comboRef}
-            className="flex items-center space-x-2 bg-black/20 backdrop-blur-xl px-4 py-1.5 rounded-full border-[0.5px] border-cyan-500/30 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all duration-200 pointer-events-none"
+            className="flex items-center space-x-2 bg-black/20 backdrop-blur-xl px-4 py-1.5 rounded-full border-[0.5px] border-cyan-500/30 shadow-[0_4_20px_rgba(0,0,0,0.5)] transition-all duration-200 pointer-events-none animate-pulse-combo"
             style={{ opacity: 0 }}
           >
             <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400 animate-pulse" />
@@ -230,10 +235,25 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
             </span>
           </div>
 
-          {/* Prestige + Daily Challenge — always visible below combo */}
-          <div className="flex flex-col space-y-2 pointer-events-auto">
-            <PrestigeDisplay />
-            <DailyChallengeBadge />
+          <div className="pointer-events-auto self-start">
+            <button
+              onClick={() => {
+                soundManager.uiClick();
+                setShowMetaPanel((prev) => !prev);
+              }}
+              className="flex items-center gap-2 rounded-full border border-cyan-500/20 bg-black/15 px-3 py-1.5 text-[11px] font-mono uppercase tracking-[0.2em] text-cyan-200 backdrop-blur-md transition-all hover:bg-cyan-500/10"
+              aria-label={showMetaPanel ? 'Hide meta info' : 'Show meta info'}
+            >
+              <Trophy className="h-3.5 w-3.5 text-cyan-300" />
+              Meta
+            </button>
+
+            {showMetaPanel && (
+              <div className="mt-2 flex max-w-[260px] flex-col space-y-2 rounded-2xl border border-white/10 bg-black/25 p-2 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.35)]">
+                <PrestigeDisplay />
+                <DailyChallengeBadge />
+              </div>
+            )}
           </div>
         </div>
 
@@ -265,7 +285,7 @@ export function HUD({ engineRef, onPauseToggle, isPaused = false }: { engineRef:
             <div className="w-20 sm:w-32 h-1.5 sm:h-2 bg-zinc-900 rounded-full overflow-hidden pointer-events-none">
               <div
                 ref={healthBarRef}
-                className="h-full transition-all duration-300 bg-white"
+                className="h-full transition-all duration-300 bg-gradient-to-r from-cyan-400 to-cyan-300 shadow-[0_0_10px_rgba(34,211,238,0.5)]"
                 style={{ width: '100%' }}
               />
             </div>
