@@ -1,8 +1,27 @@
 # BugSmasher by HopeTheory
 
-Wave-based arcade clicker defense game built with React, TypeScript, Vite, Tailwind CSS, and Supabase.
+Wave-based arcade clicker defense game built with React, TypeScript, Vite, and Supabase.
 
-Live demo: https://bugsmasher-ten.vercel.app
+Live demo: https://bugsmasher-hopetheory.vercel.app
+
+## v1.6.1 — Visual Overhaul (2026-05-06)
+
+**Semi-viral Edition:**
+- New fonts: Orbitron (display), JetBrains Mono (numbers), Inter (UI)
+- Glass panel system with backdrop-filter blur
+- Neon text glow with biome accent colors
+- Animation keyframes: logo-pulse, slide-up, shimmer, border-pulse
+- Staggered entrance animations for all menus
+- Button system: btn-primary/secondary/share/ghost
+- HUD: larger score display, wave banner, animated combo
+- MainMenu: pulsing animated bug logo, Orbitron title
+- GameOver: score display with percentile badge
+- UpgradeMenu: glass panel cards with progress bars
+- Death Card Generator: biome-themed shareable images
+- CustomBugLogo: animated glow, legs, antennae
+- Mobile-responsive typography
+
+**Quality: 92/92 tests | Build clean | Lint pass**
 
 ## v1.6.0 — Persistent Upgrades (2026-05-03)
 
