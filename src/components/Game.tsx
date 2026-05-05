@@ -38,6 +38,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
   const [newBiomes, setNewBiomes] = useState<string[]>([]);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [finalBiomeId, setFinalBiomeId] = useState('neon_core');
   const [gameId, setGameId] = useState(0);
   const [, setShowBiomeSelect] = useState(false);
   const isLoggedIn = !!authManager.getUser();
@@ -58,7 +59,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
 
   const engineRef = useRef<GameEngine | null>(null);
 
-  const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number) => {
+  const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number, biomeId: string) => {
     const ptsEarned = Math.floor(score / 100);
     const prestigeLevel = saveManager.getPrestigeLevel();
     Math.floor(100 * Math.pow(1.5, prestigeLevel));
@@ -78,6 +79,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     setFinalSessionCrystals(sessionCrystals);
     setFinalMissCount(missCount);
     setFinalPlayTime(playTimeSeconds);
+    setFinalBiomeId(biomeId);
     setPrestigePointsEarned(ptsEarned);
 
     // Offer prestige if player earned enough points and hasn't hit the threshold
@@ -176,6 +178,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     setFinalScore(0);
     setCurrentWave(1);
     setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
+    setFinalBiomeId('neon_core');
     setGameId(id => id + 1);
   };
 
@@ -233,6 +236,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
           playTimeSeconds={finalPlayTime}
           sessionXP={finalSessionXP}
           sessionCrystals={finalSessionCrystals}
+          biomeId={finalBiomeId}
           onRetry={handleRetry}
           onMainMenu={onMainMenu}
           newBiomes={newBiomes}

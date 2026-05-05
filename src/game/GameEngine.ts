@@ -88,7 +88,7 @@ export class GameEngine {
   
   renderer: Renderer;
   
-  onGameOver?: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number) => void;
+  onGameOver?: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number, biomeId: string) => void;
   onWaveComplete?: (completedWave: number) => void;
   onLevelUp?: (newLevel: number, crystalReward: number) => void;
 
@@ -385,7 +385,7 @@ export class GameEngine {
       // Auto-save cloud state
       this.saveCloudState();
       
-      this.onGameOver?.(this.score, this.wave, this.totalKills, this.sessionXP, this.sessionCrystals, this.missCount, Math.floor(this.globalTime));
+      this.onGameOver?.(this.score, this.wave, this.totalKills, this.sessionXP, this.sessionCrystals, this.missCount, Math.floor(this.globalTime), this.currentBiome?.id ?? 'neon_core');
       return;
     }
     

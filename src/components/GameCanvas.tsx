@@ -3,7 +3,7 @@ import { GameEngine } from '../game/GameEngine';
 import type { GameStateSnapshot } from '../game/database/types';
 
 interface GameCanvasProps {
-  onGameOver: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number) => void;
+  onGameOver: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number, biomeId: string) => void;
   onWaveComplete: (completedWave: number) => void;
   resumeState?: GameStateSnapshot | null;
 }

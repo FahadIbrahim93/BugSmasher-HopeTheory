@@ -7,6 +7,7 @@ import { dailyChallengeManager } from '../game/DailyChallenge';
 import { biomeManager } from '../game/BiomeManager';
 import { soundManager } from '../game/SoundManager';
 import { authManager } from '../game/database/AuthManager';
+import { shareDeathCard } from '../game/DeathCardGenerator';
 import type { LeaderboardEntry } from '../game/database/types';
 
 interface GameOverProps {
@@ -21,6 +22,8 @@ interface GameOverProps {
   onMainMenu: () => void;
   /** Newly unlocked biome IDs from this run */
   newBiomes?: string[];
+  /** Biome ID used in this run — drives death card theming */
+  biomeId?: string;
 }
 
 export function GameOver({
@@ -33,6 +36,7 @@ export function GameOver({
   sessionCrystals = 0,
   onRetry,
   onMainMenu,
+  biomeId = 'neon_core',
 }: GameOverProps) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<'local' | 'global'>('local');
@@ -93,30 +97,32 @@ export function GameOver({
   }, [leaderboardTab, showLeaderboard]);
 
   const handleShare = useCallback(async () => {
-    const text = `🎮 I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by HopeTheory!\n🐛 ${kills} bugs smashed\n#BugSmasher #HighScore`;
-
-    // Try native share first
+    // Play click sound
+    soundManager.uiClick();
+    // Try to share the death card image
     try {
-      if (navigator.share) {
-        await navigator.share({ text });
-        return;
+      await shareDeathCard({
+        score,
+        waves,
+        kills,
+        playTimeSeconds,
+        biomeId,
+        rank: rank > 0 ? rank : undefined,
+      });
+    } catch {
+      // Fallback: text only
+      const text = `I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by HopeTheory!\n${kills} bugs smashed\n#BugSmasher #HighScore`;
+      try {
+        if (navigator.share) {
+          await navigator.share({ text });
+        } else {
+          await navigator.clipboard.writeText(text);
+        }
+      } catch {
+        // silent fail
       }
-    } catch {
-      // ignore and fallback to clipboard
     }
-
-    // Clipboard fallback
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-  }, [score, waves, kills]);
+  }, [score, waves, kills, playTimeSeconds, biomeId, rank]);
 
   const percentileText = globalRank > 0 ? leaderboardManager.getPercentile(globalRank) : null;
 
@@ -216,11 +222,11 @@ export function GameOver({
             </button>
 
             <button
-              onClick={() => { soundManager.uiClick(); handleShare(); }}
+              onClick={handleShare}
               className="flex-1 py-3 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/30 text-blue-400 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
             >
               <Share2 className="w-4 h-4 mr-2" />
-              Share
+              Share Card
             </button>
 
             <button
