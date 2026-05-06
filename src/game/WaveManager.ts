@@ -58,7 +58,6 @@ export class WaveManager {
       }
 
       this.engine.wave++;
-      this.engine.stop();
 
       // Award XP for completing wave (scaled by biome difficulty)
       const difficultyMult = biomeManager.getDifficulty(this.engine.currentBiome?.id);
@@ -66,6 +65,7 @@ export class WaveManager {
       this.engine.awardXP(waveXP, 'wave_complete');
 
       this.engine.onWaveComplete?.(completedWave);
+      this.engine.stop();
     }
   }
 

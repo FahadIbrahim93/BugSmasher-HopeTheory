@@ -245,6 +245,10 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
           newBiomes={newBiomes}
         />
       )}
+
+      {/* CRT Scanline Overlay - gives retro feel */}
+      <div className="crt-overlay" />
+      <div className="crt-chromatic" />
     </div>
   );
 }
