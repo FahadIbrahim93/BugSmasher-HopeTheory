@@ -10,6 +10,14 @@ Use this together with:
 - `docs/FEATURE_TRUTH_MATRIX.md` for which capabilities are partial or demo-only
 - `docs/ULTIMATE_10_10_PLAN.md` for roadmap sequencing
 
+## Current Test Coverage Status (Audit 2026-05-06)
+
+**Overall Coverage: 41% statements, 33% branches, 62% functions, 42% lines**
+- **Critical Gaps**: Renderer.ts (0.2%), AuthManager.ts (20%), GameEngine.ts (44%)
+- **Total Tests**: 809 tests across 89 files
+- **Test Types**: Mostly unit tests, minimal integration/E2E
+- **Status**: 2/10 - Requires immediate attention
+
 ## Testing philosophy
 
 BugSmasher should not chase coverage as a vanity metric.
@@ -25,6 +33,13 @@ A true 10/10 state requires testing the places where users can lose trust:
 ## Current testing reality
 
 The repo already has automated tests, mainly concentrated in game and manager modules.
+
+**Audit Findings:**
+- 809 tests pass but don't cover critical paths
+- Renderer (0% coverage) handles all visual output
+- AuthManager (20% coverage) manages user sessions
+- No E2E tests for user flows
+- No performance/load testing
 
 What is still missing at 10/10 level:
 - broader auth-path coverage

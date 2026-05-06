@@ -23,9 +23,9 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({
   onNextWave, 
   onClose, 
   wave = 1,
-  healthLevel = 0,
-  radiusLevel = 0,
-  turretLevel = 0
+  healthLevel: _healthLevel = 0,
+  radiusLevel: _radiusLevel = 0,
+  turretLevel: _turretLevel = 0
 }) => {
   const [crystals, setCrystals] = useState(upgradeSystem.getCrystals());
   const [, forceRender] = useState(0);
@@ -35,8 +35,6 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({
     soundManager.uiClick();
     onClose();
   };
-
-  const handleWaveContinue = onNextWave ?? onClose;
 
   const refresh = useCallback(() => {
     setCrystals(upgradeSystem.getCrystals());

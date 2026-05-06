@@ -4,6 +4,8 @@
 import { createClient, SupabaseClient, User as SupabaseUser } from '@supabase/supabase-js';
 import type { Profile, UserStats, UserSettings } from './types';
 import { supabaseConfig } from './supabaseConfig';
+import { parseJSON, stringifyJSON } from '../../lib/safe-json';
+import { logger } from '../../lib/logger';
 
 export type AuthProvider = 'guest' | 'email' | 'google' | 'discord' | 'apple';
 
@@ -102,36 +104,39 @@ export class AuthManager {
   }
 
   private load(): void {
-    try {
-      const authData = localStorage.getItem(AUTH_KEY);
-      if (authData) {
-        this.user = JSON.parse(authData);
-      }
+    const authData = localStorage.getItem(AUTH_KEY);
+    this.user = parseJSON<AuthUser | null>(authData, null, 'AuthManager.auth');
 
-      const profileData = localStorage.getItem(PROFILE_KEY);
-      if (profileData) {
-        this.profile = JSON.parse(profileData);
-      }
-    } catch (e) {
-      console.warn('Failed to load auth data:', e);
-    }
+    const profileData = localStorage.getItem(PROFILE_KEY);
+    this.profile = parseJSON<Profile | null>(profileData, null, 'AuthManager.profile');
+
+    logger.info('AuthManager', 'Loaded auth data', {
+      hasUser: !!this.user,
+      hasProfile: !!this.profile
+    });
   }
 
   save(): void {
     try {
       if (this.user) {
-        localStorage.setItem(AUTH_KEY, JSON.stringify(this.user));
+        const json = stringifyJSON(this.user, 'AuthManager.auth');
+        localStorage.setItem(AUTH_KEY, json);
       } else {
         localStorage.removeItem(AUTH_KEY);
       }
 
       if (this.profile) {
-        localStorage.setItem(PROFILE_KEY, JSON.stringify(this.profile));
+        const json = stringifyJSON(this.profile, 'AuthManager.profile');
+        localStorage.setItem(PROFILE_KEY, json);
       } else {
         localStorage.removeItem(PROFILE_KEY);
       }
+
+      logger.debug('AuthManager', 'Saved auth data');
     } catch (e) {
-      console.warn('Failed to save auth data:', e);
+      logger.error('AuthManager', 'Failed to save auth data', {
+        error: e instanceof Error ? e.message : String(e)
+      });
     }
 
     this.notify();

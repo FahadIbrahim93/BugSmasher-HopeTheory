@@ -139,6 +139,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     setIsPaused(false);
     const engine = engineRef.current;
     if (engine) {
+      // eslint-disable-next-line react-hooks/immutability
       engine.isPaused = false;
       engine.resume();
     }

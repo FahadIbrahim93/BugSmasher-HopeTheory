@@ -1,6 +1,9 @@
 // SaveManager - Handles persistent game data using localStorage
 // High scores, settings, and statistics
 
+import { parseJSON, stringifyJSON } from '../lib/safe-json';
+import { logger } from '../lib/logger';
+
 interface GameSaveData {
   highScore: number;
   totalBugsSmashed: number;
@@ -46,22 +49,21 @@ export class SaveManager {
   }
 
   private load(): GameSaveData {
-    try {
-      const stored = localStorage.getItem(SAVE_KEY);
-      if (stored) {
-        return { ...DEFAULT_SAVE, ...JSON.parse(stored) };
-      }
-    } catch (e) {
-      console.warn('Failed to load save data:', e);
-    }
-    return { ...DEFAULT_SAVE };
+    const stored = localStorage.getItem(SAVE_KEY);
+    const parsed = parseJSON<GameSaveData>(stored, DEFAULT_SAVE, 'SaveManager.load');
+    logger.info('SaveManager', 'Loaded save data', { hasStored: !!stored });
+    return { ...DEFAULT_SAVE, ...parsed };
   }
 
   private save(): void {
+    const json = stringifyJSON(this.data, 'SaveManager.save');
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify(this.data));
+      localStorage.setItem(SAVE_KEY, json);
+      logger.debug('SaveManager', 'Saved game data');
     } catch (e) {
-      console.warn('Failed to save:', e);
+      logger.error('SaveManager', 'Failed to save to localStorage', {
+        error: e instanceof Error ? e.message : String(e)
+      });
     }
   }
 

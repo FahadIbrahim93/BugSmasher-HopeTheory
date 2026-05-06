@@ -44,7 +44,7 @@ export const GameCanvas = forwardRef<GameEngine | null, GameCanvasProps>(({
         ref.current = null;
       }
     };
-  }, [onGameOver, onWaveComplete, ref]);
+  }, [onGameOver, onWaveComplete, ref, resumeState]);
 
   return (
     <canvas 

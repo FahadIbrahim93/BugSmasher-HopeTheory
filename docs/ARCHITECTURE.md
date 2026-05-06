@@ -10,6 +10,21 @@ Use this together with:
 - `docs/FEATURE_TRUTH_MATRIX.md` for product truth
 - `docs/OPERATIONS_RUNBOOK.md` for deploy and failure-response expectations
 
+## Current Architecture Health Assessment (Audit 2026-05-06)
+
+| Dimension | Score | Status |
+|-----------|-------|--------|
+| Code quality & structure | 4/10 | Poor - God objects, unused variables, explicit any types |
+| Readability & maintainability | 5/10 | Fair - TypeScript helps, but complex interdependencies |
+| Performance & scalability | 3/10 | Poor - No benchmarks, unoptimized rendering |
+| Security & compliance | 7/10 | Good - No vulnerabilities, secure auth |
+| Test coverage & reliability | 2/10 | Critical - 41% coverage, 0% on Renderer |
+| Architecture & modularity | 4/10 | Poor - GameEngine violates single responsibility |
+| Observability & error handling | 6/10 | Fair - Error boundary exists, inconsistent logging |
+| Operational readiness | 5/10 | Fair - Simple deployment, build currently broken |
+
+**Overall Health: 4.5/10** - Requires immediate attention on testing and architecture.
+
 ## High-level shape
 
 BugSmasher currently has three major runtime layers:
@@ -98,27 +113,21 @@ This separation is workable, but it is not yet a clean 10/10 boundary.
 
 ## Current coupling concerns
 
-These are the most important architecture gaps to understand honestly.
+These are the most important architecture gaps identified in the 2026-05-06 audit:
 
-### 1. React and engine are tightly coupled in critical flows
+### 1. GameEngine God Object (Critical Priority)
+- **Issue**: GameEngine.ts (700+ lines) handles rendering, game logic, persistence, audio, and 15+ manager imports
+- **Impact**: Impossible to test in isolation, changes risk breaking multiple systems
+- **Evidence**: 44% test coverage, imports authManager, statsManager, leaderboardManager directly
+
+### 2. React and engine tightly coupled in critical flows
 Examples include:
 - gameplay overlays in `Game.tsx` directly coordinating engine pause/resume and upgrade behavior
-- UI components relying on direct engine refs and mutation patterns
+- UI components relying on direct engine refs and mutation patterns (eslint-disable required)
 - HUD state being updated through imperative loops rather than a clean state boundary
 
-### 2. Game engine still knows too much about persistence-side concerns
-`GameEngine.ts` currently imports and interacts with:
-- auth manager
-- stats manager
-- cloud save manager
-- leaderboard manager
-- upgrade system
-- biome manager
-
-That means simulation, progression, and persistence concerns are not fully separated.
-
-### 3. Database initialization and runtime state are not yet governed by a clean application service layer
-`src/game/database/index.ts` and `src/App.tsx` currently coordinate startup in a way that makes boot behavior easy to drift and harder to test as a single policy.
+### 3. Database initialization and runtime state not properly abstracted
+`src/App.tsx` currently orchestrates startup in a way that makes boot behavior easy to drift and harder to test as a single policy.
 
 ## Current architecture strengths
 
@@ -142,6 +151,23 @@ The codebase should evolve toward these rules:
 ### Application/persistence layer
 - auth, saves, stats, and leaderboard should be coordinated through clearer service boundaries
 - cross-cutting concerns like telemetry and release diagnostics should not be hidden inside gameplay code
+
+## Remediation Roadmap (Post-Audit 2026-05-06)
+
+### Phase 1: Critical Fixes (Week 1)
+- Break GameEngine into GameLogic, RenderingService, PersistenceService
+- Fix build issues (Tailwind dependencies)
+- Add CI/CD pipeline with quality gates
+
+### Phase 2: Testing & Reliability (Week 2)
+- Achieve 90%+ coverage on core paths (Renderer, AuthManager, GameEngine)
+- Implement structured logging and error handling
+- Add integration tests for critical user flows
+
+### Phase 3: Architecture Cleanup (Week 3)
+- Implement service layer for database operations
+- Externalize all configs and add environment validation
+- Add performance monitoring and metrics
 
 ## Architectural evidence needed for 10/10
 

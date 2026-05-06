@@ -6,6 +6,8 @@ import type { UserStats, Achievement } from './types';
 import { ACHIEVEMENTS_LIST } from './types';
 import { authManager } from './AuthManager';
 import { getSupabaseUrl, getSupabaseAnonKey } from './supabaseConfig';
+import { parseJSON, stringifyJSON } from '../../lib/safe-json';
+import { logger } from '../../lib/logger';
 
 const STATS_KEY = 'bugsmasher_stats';
 const ACHIEVEMENTS_KEY = 'bugsmasher_achievements';
@@ -33,23 +35,25 @@ export class StatsManager {
   }
 
   private load(): void {
-    try {
-      const statsData = localStorage.getItem(STATS_KEY);
-      if (statsData) {
-        this.stats = JSON.parse(statsData);
-      }
+    const statsData = localStorage.getItem(STATS_KEY);
+    this.stats = parseJSON<UserStats | null>(statsData, null, 'StatsManager.stats');
 
-      const achievementsData = localStorage.getItem(ACHIEVEMENTS_KEY);
-      if (achievementsData) {
-        const saved = JSON.parse(achievementsData);
-        this.achievements = ACHIEVEMENTS_LIST.map(a => {
-          const savedAch = saved.find((s: Achievement) => s.id === a.id);
-          return savedAch || a;
-        });
-      }
-    } catch (e) {
-      console.warn('Failed to load stats:', e);
-    }
+    const achievementsData = localStorage.getItem(ACHIEVEMENTS_KEY);
+    const saved = parseJSON<Achievement[]>(
+      achievementsData,
+      [],
+      'StatsManager.achievements'
+    );
+    
+    this.achievements = ACHIEVEMENTS_LIST.map(a => {
+      const savedAch = saved.find((s: Achievement) => s.id === a.id);
+      return savedAch || a;
+    });
+
+    logger.info('StatsManager', 'Loaded stats', {
+      hasStats: !!this.stats,
+      achieveCount: this.achievements.length
+    });
   }
 
   private save(): void {

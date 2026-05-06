@@ -10,19 +10,29 @@ Use this together with:
 - `docs/TEST_STRATEGY.md` for test depth expectations
 - `.github/workflows/ci.yml` for the currently implemented CI workflow
 
+## Current Quality Status (Audit 2026-05-06)
+
+**Overall Health: 4.5/10**
+- **Build Status**: ❌ Failing (Tailwind dependency issues)
+- **Tests**: ✅ 809 tests pass
+- **Lint**: ⚠️ 541 errors (mostly temp files)
+- **Coverage**: ⚠️ 41% (critical gaps in Renderer 0.2%, AuthManager 20%)
+- **Security**: ✅ 0 vulnerabilities
+- **Type Check**: ✅ Passes
+
 ## Canonical local commands
 
 These commands are the authoritative local quality commands as defined in `package.json`.
 
-| Command | Purpose |
-| --- | --- |
-| `npm run lint` | ESLint across the repository |
-| `npm run typecheck` | TypeScript typecheck |
-| `npm test -- --run` | Automated test suite |
-| `npm run test:coverage` | Test suite with coverage |
-| `npm run build` | Production build |
-| `npm audit --omit=dev` | Dependency vulnerability audit |
-| `npm run quality` | Combined local quality pipeline |
+| Command | Purpose | Current Status |
+| --- | --- | --- |
+| `npm run lint` | ESLint across the repository | ⚠️ 541 errors |
+| `npm run typecheck` | TypeScript typecheck | ✅ Passes |
+| `npm test -- --run` | Automated test suite | ✅ 809 tests pass |
+| `npm run test:coverage` | Test suite with coverage | ⚠️ 41% coverage |
+| `npm run build` | Production build | ❌ Failing |
+| `npm audit --omit=dev` | Dependency vulnerability audit | ✅ 0 vulnerabilities |
+| `npm run quality` | Combined local quality pipeline | ❌ Failing |
 
 ## Current CI reality
 
@@ -32,7 +42,7 @@ As of this update, `.github/workflows/ci.yml` runs:
 - `npm test -- --run`
 - `npm run build`
 
-That means the following are still target-state requirements rather than current CI truth:
+**Audit Finding**: CI will fail due to current build issues. The following are still target-state requirements rather than current CI truth:
 - `npm run typecheck`
 - `npm run test:coverage`
 - `npm audit --omit=dev`

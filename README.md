@@ -4,6 +4,29 @@ Wave-based arcade clicker defense game built with React, TypeScript, Vite, and S
 
 Live demo: https://bugsmasher-hopetheory.vercel.app
 
+## ⚠️ Codebase Audit Status (2026-05-06)
+
+**Overall Health: 4.5/10** - Requires immediate attention
+
+| Dimension | Score | Critical Issues |
+|-----------|-------|-----------------|
+| Code Quality | 4/10 | God objects, unused variables, explicit any types |
+| Testing | 2/10 | 41% coverage, 0% on Renderer, no E2E tests |
+| Architecture | 4/10 | GameEngine violates single responsibility |
+| Operations | 5/10 | Build currently failing, no monitoring |
+| Security | 7/10 | No vulnerabilities, secure auth |
+| Performance | 3/10 | No benchmarks, unoptimized rendering |
+
+**Immediate Actions Required:**
+1. Fix build issues (Tailwind dependencies)
+2. Break down GameEngine into services
+3. Achieve 90%+ coverage on core paths
+4. Implement proper logging and error handling
+
+See `docs/ARCHITECTURE.md` for detailed remediation roadmap.
+
+---
+
 ## v1.6.1 — Visual Overhaul (2026-05-06)
 
 **Semi-viral Edition:**
