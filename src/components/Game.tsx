@@ -136,8 +136,10 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
 
   const handleNextWave = () => {
     setIsUpgrading(false);
+    setIsPaused(false);
     const engine = engineRef.current;
     if (engine) {
+      engine.isPaused = false;
       engine.resume();
     }
   };
@@ -192,7 +194,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
         resumeState={resumeState}
       />
 
-      {!isGameOver && <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />}
+      {!isGameOver && !isUpgrading && <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />}
 
       {isPaused && !isUpgrading && !isGameOver && (
         <PauseMenu

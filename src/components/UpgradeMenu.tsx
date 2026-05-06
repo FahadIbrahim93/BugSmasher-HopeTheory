@@ -1,23 +1,42 @@
 // UpgradeMenu — Persistent upgrade shop
 // Spend crystals on upgrades that persist between runs
 import React, { useState, useCallback } from 'react';
+import { X } from 'lucide-react';
+import { motion, Variants } from 'motion/react';
+import { soundManager } from '../game/SoundManager';
 import { upgradeSystem, UPGRADE_DEFS, UpgradeId } from '../game/UpgradeSystem';
 
 interface UpgradeMenuProps {
-  onClose?: () => void;
   score?: number;
-  onUpgrade?: (type: "health" | "radius" | "turret", cost: number) => void;
+  onUpgrade?: (type: 'health' | 'radius' | 'turret', cost: number) => void;
   onNextWave?: () => void;
+  onClose: () => void;
   wave?: number;
   healthLevel?: number;
   radiusLevel?: number;
   turretLevel?: number;
 }
 
-export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, onNextWave, score, wave, healthLevel, radiusLevel, turretLevel, ..._rest }: UpgradeMenuProps) => { void(_rest); void(healthLevel); void(radiusLevel); void(turretLevel); void(score); void(wave);
+export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ 
+  score = 0, 
+  onUpgrade = () => {}, 
+  onNextWave, 
+  onClose, 
+  wave = 1,
+  healthLevel = 0,
+  radiusLevel = 0,
+  turretLevel = 0
+}) => {
   const [crystals, setCrystals] = useState(upgradeSystem.getCrystals());
   const [, forceRender] = useState(0);
-  const handleDismiss = onNextWave ?? onClose;
+
+  const handleClose = () => {
+    soundManager.init();
+    soundManager.uiClick();
+    onClose();
+  };
+
+  const handleWaveContinue = onNextWave ?? onClose;
 
   const refresh = useCallback(() => {
     setCrystals(upgradeSystem.getCrystals());
@@ -33,14 +52,13 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
     const cost = upgradeSystem.getUpgradeCost(id);
     if (upgradeSystem.spendCrystals(cost)) {
       refresh();
-      onUpgrade?.(id as "health" | "radius" | "turret", cost);
+      onUpgrade(id as 'health' | 'radius' | 'turret', cost);
     }
   };
 
   const upgrades = upgradeSystem.getAllUpgrades();
 
   const totalSpent = upgrades.reduce((sum, u) => {
-    // Cumulative cost = sum of costs for each level purchased
     let spent = 0;
     for (let l = 0; l < u.level; l++) {
       spent += Math.floor(u.def.baseCost * Math.pow(u.def.costMultiplier, l));
@@ -48,23 +66,65 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
     return sum + spent;
   }, 0);
 
-  return (
-    <div className="glass-panel" role="button" tabIndex={0} onKeyDown={(e) => e.key === "Escape" && handleDismiss?.()} onClick={(e) => e.target === e.currentTarget && handleDismiss?.()}>
-      <div className="glass-panel rounded-2xl">
-        {/* Header */}
-        <div style={styles.header}>
-          <div style={styles.title} className="font-display">
-            <span style={styles.titleIcon}>💎</span>
-            UPGRADES
-          </div>
-          <button style={styles.closeBtn} onClick={() => handleDismiss?.()}>✕</button>
-        </div>
+  const containerVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
 
-        {/* Crystal balance */}
-        <div style={styles.balanceBar}>
-          <span style={styles.balanceLabel}>💎 Crystals</span>
-          <span style={styles.balanceValue} className="font-mono">{crystals.toLocaleString()}</span>
-        </div>
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  const handleHover = () => {
+    soundManager.init();
+    soundManager.uiHover();
+  };
+
+  const isWaveUpgrade = onNextWave !== undefined;
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl flex flex-col items-center justify-center z-[70] p-4">
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="max-w-4xl w-full text-center my-auto relative"
+      >
+        <button
+          onClick={handleClose}
+          aria-label={isWaveUpgrade ? "Close upgrades and continue to next wave" : "Close upgrades"}
+          className="absolute top-0 right-0 -mt-2 sm:-mt-4 bg-black/40 hover:bg-white/10 border border-white/15 rounded-full p-2.5 transition-colors"
+        >
+          <X className="w-4 h-4 text-zinc-300" />
+        </button>
+        
+        {isWaveUpgrade ? (
+          <motion.div variants={itemVariants} className="mb-12">
+            <h2 className="text-3xl sm:text-4xl font-black text-white font-display mb-4 uppercase tracking-widest">
+              WAVE {wave - 1} CLEARED
+            </h2>
+            <p className="text-zinc-400 font-mono">
+              Score: {score.toLocaleString()} • Crystals: {crystals.toLocaleString()}
+            </p>
+          </motion.div>
+        ) : (
+          <motion.div variants={itemVariants} className="mb-12">
+            <h2 className="text-3xl sm:text-4xl font-black text-white font-display mb-4 uppercase tracking-widest">
+              UPGRADES
+            </h2>
+            <p className="text-zinc-400 font-mono">
+              💎 {crystals.toLocaleString()} crystals available
+            </p>
+          </motion.div>
+        )}
 
         {/* Upgrades grid */}
         <div className="stagger-enter animate-slide-up" style={styles.grid}>
@@ -85,7 +145,6 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
                 </div>
               </div>
 
-              {/* Level bar */}
               <div style={styles.levelBar}>
                 <div
                   className="bar-fill"
@@ -110,7 +169,6 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
                 )}
               </div>
 
-              {/* Purchase button */}
               {!isMaxed && (
                 <button
                   style={{
@@ -132,13 +190,26 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
           ))}
         </div>
 
-        {wave !== undefined && <div style={{ color: "#9ca3af", fontSize: 12, marginBottom: 8 }} className="font-mono">Wave {wave} • Score {score ?? 0} • H{healthLevel ?? 0}/R{radiusLevel ?? 0}/T{turretLevel ?? 0}</div>}
-
-        {onNextWave && (
+        {isWaveUpgrade && onNextWave && (
           <div style={styles.actionBar}>
-            <button style={styles.continueBtn} onClick={() => onNextWave()}>
-              Start Wave {wave ?? ''}
-            </button>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <button
+                onClick={handleClose}
+                onMouseEnter={handleHover}
+                aria-label={`Close upgrades and start Wave ${wave}`}
+                className="group relative px-8 py-4 bg-transparent border-[0.5px] border-white/20 text-zinc-300 font-bold text-xs hover:bg-white/10 hover:text-white rounded-full hover:scale-105 active:scale-95 transition-all tracking-widest uppercase overflow-hidden"
+              >
+                <span className="relative z-10">Skip Upgrades</span>
+              </button>
+              <button
+                onClick={onNextWave}
+                onMouseEnter={handleHover}
+                aria-label={`Start Wave ${wave}`}
+                className="group relative px-12 py-5 bg-transparent border-[0.5px] border-white/30 text-white font-bold text-sm hover:bg-white hover:text-black rounded-full hover:scale-105 active:scale-95 transition-all tracking-widest uppercase overflow-hidden"
+              >
+                <span className="relative z-10">Proceed to Wave {wave}</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -151,7 +222,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ onClose, onUpgrade, on
             ⚡ {upgrades.filter(u => u.level > 0).length} / {upgrades.length} unlocked
           </span>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -167,67 +238,6 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: 'center',
     zIndex: 1000,
     padding: '16px',
-  },
-  panel: {
-    width: '100%',
-    maxWidth: '560px',
-    maxHeight: '90vh',
-    background: 'linear-gradient(145deg, #0a0f1e 0%, #111827 100%)',
-    border: '1px solid rgba(0,255,204,0.2)',
-    borderRadius: '16px',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    boxShadow: '0 0 40px rgba(0,255,204,0.15), 0 0 80px rgba(0,0,0,0.5)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '20px 24px 16px',
-    borderBottom: '1px solid rgba(255,255,255,0.06)',
-  },
-  title: {
-    fontSize: '20px',
-    fontWeight: 900,
-    letterSpacing: '0.15em',
-    color: '#00ffcc',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    textShadow: '0 0 20px rgba(0,255,204,0.5)',
-  },
-  titleIcon: { fontSize: '22px', textShadow: '0 0 15px rgba(0,255,204,0.6)' },
-  closeBtn: {
-    background: 'rgba(255,255,255,0.06)',
-    border: '1px solid rgba(255,255,255,0.1)',
-    borderRadius: '8px',
-    color: '#9ca3af',
-    fontSize: '14px',
-    width: '32px',
-    height: '32px',
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s',
-  },
-  balanceBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    margin: '16px 24px 8px',
-    padding: '10px 16px',
-    background: 'rgba(0,255,204,0.05)',
-    border: '1px solid rgba(0,255,204,0.15)',
-    borderRadius: '10px',
-  },
-  balanceLabel: { color: '#6b7280', fontSize: '13px', fontWeight: 600 },
-  balanceValue: {
-    color: '#00ffcc',
-    fontSize: '18px',
-    fontWeight: 900,
-    textShadow: '0 0 10px rgba(0,255,204,0.5)',
   },
   grid: {
     display: 'grid',
@@ -334,20 +344,7 @@ const styles: Record<string, React.CSSProperties> = {
     opacity: 0.7,
   },
   actionBar: {
-    padding: '0 24px 16px',
-  },
-  continueBtn: {
-    width: '100%',
-    padding: '12px 16px',
-    borderRadius: '10px',
-    border: '1px solid rgba(0,255,204,0.2)',
-    background: 'linear-gradient(135deg, rgba(0,255,204,0.2), rgba(0,212,255,0.2))',
-    color: '#e5fffb',
-    fontSize: '14px',
-    fontWeight: 800,
-    letterSpacing: '0.08em',
-    textTransform: 'uppercase',
-    cursor: 'pointer',
+    padding: '24px 24px 16px',
   },
   footer: {
     display: 'flex',

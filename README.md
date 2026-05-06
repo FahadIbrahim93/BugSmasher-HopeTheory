@@ -4,7 +4,22 @@ Wave-based arcade clicker defense game built with React, TypeScript, Vite, Tailw
 
 Live demo: https://bugsmasher-ten.vercel.app
 
-## v1.6.0 — Persistent Upgrades (2026-05-03)
+## v1.6.1 — Vercel Deployment + Wave Flow Fix (2026-05-06)
+
+**Production-Ready Release Wave Fix & Deployment Standards:**
+- Fixed wave upgrade UX: explicit Skip/Proceed controls, HUD hidden during upgrades
+- Engine flow: clear paused state before resume, prevent overlay conflicts
+- Added Vercel deployment runbook and gameplay standards documentation
+- Cleaned up unused imports/vars across UI components
+- Enhanced test coverage for wave/upgrade/resume lifecycle
+
+## Vercel Configuration
+- **`vercel.json`** defines the Vite build command (`npm run build`), output directory (`dist`), and SPA fallback rewrites
+- **Deployment runbook:** See `docs/DEPLOYMENT_2026-05-06.md` for environment variables and release verification steps
+- **Gameplay standards:** See `docs/GAMEPLAY_STANDARDS_2026-05-06.md` for wave-loop contracts and reliability requirements
+
+## Required Environment Variables
+Set these in Vercel Project Settings → Environment Variables (or local `.env`):
 
 **8 Crystal-Gated Persistent Upgrades** (survive between runs):
 - 💥 **Click Power** — +1 base click damage per level

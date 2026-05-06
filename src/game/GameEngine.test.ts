@@ -69,6 +69,7 @@ describe('GameEngine', () => {
   });
 
   afterEach(() => {
+    engine.destroy();
     vi.restoreAllMocks();
   });
 
@@ -172,5 +173,21 @@ describe('GameEngine', () => {
     
     expect(engine.bugs.length).toBe(0); // Bug should be destroyed
     expect(engine.health).toBe(initialHealth); // Health should not decrease
+  });
+
+  it('should complete a cleared wave, expose upgrade state, and resume the next wave', () => {
+    const onWaveComplete = vi.fn();
+    engine.onWaveComplete = onWaveComplete;
+    engine.isRunning = true;
+    engine.wave = 1;
+    engine.startWave();
+
+    engine.waveManager.bugsToSpawn = 0;
+    engine.bugs = [];
+    engine.waveManager.update(0.016);
+
+    expect(onWaveComplete).toHaveBeenCalledWith(1);
+    expect(engine.wave).toBe(2);
+    expect(engine.isRunning).toBe(false);
   });
 });

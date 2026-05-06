@@ -9,6 +9,7 @@ dotenv.config();
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '', '');
   return {
+    framework: 'vite',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
