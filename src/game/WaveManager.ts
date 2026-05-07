@@ -184,6 +184,10 @@ export class WaveManager {
       } else {
         type = biome.gameplay.bugs.extraTypes[Math.floor(Math.random() * biome.gameplay.bugs.extraTypes.length)];
       }
+    } else if (this.engine.wave >= 20 && Math.random() < 0.15) {
+      // Boss/Elite bug types from visual design system - 15% spawn rate from wave 20+
+      const eliteTypes = ['armored_beetle', 'shadow_moth', 'crystal_stag', 'venom_widow', 'thunder_hornet'];
+      type = eliteTypes[Math.floor(Math.random() * eliteTypes.length)];
     } else if (r < g.basicWeight) {
       type = 'basic';
     } else if (r < g.basicWeight + g.scoutWeight) {
@@ -260,6 +264,42 @@ export class WaveManager {
         speed = stats.basic.speed * 0.8; // Slow
         scoreValue = Math.ceil(stats.tank.score * 1.2); // 1.2× tank score
         hp = Math.ceil(stats.basic.hp * 2); // Medium HP
+        break;
+      // NEW: Elite boss types from visual design system
+      case 'armored_beetle':
+        color = '#ff4444';
+        size = 55;
+        speed = stats.tank.speed * 0.8; // Slow but tough
+        scoreValue = Math.ceil(stats.tank.score * 5); // 5× score
+        hp = Math.ceil(stats.tank.hp * 3); // Triple HP
+        break;
+      case 'shadow_moth':
+        color = '#aa44ff';
+        size = 50;
+        speed = stats.scout.speed * 1.2; // Fast and evasive
+        scoreValue = Math.ceil(stats.scout.score * 4);
+        hp = Math.ceil(stats.scout.hp * 2);
+        break;
+      case 'crystal_stag':
+        color = '#0ea5e9';
+        size = 48;
+        speed = stats.tank.speed * 0.9;
+        scoreValue = Math.ceil(stats.tank.score * 4);
+        hp = Math.ceil(stats.tank.hp * 2.5);
+        break;
+      case 'venom_widow':
+        color = '#32cd32';
+        size = 46;
+        speed = stats.basic.speed * 0.7;
+        scoreValue = Math.ceil(stats.basic.score * 3);
+        hp = Math.ceil(stats.basic.hp * 2);
+        break;
+      case 'thunder_hornet':
+        color = '#facc15';
+        size = 44;
+        speed = stats.scout.speed * 1.3; // Very fast
+        scoreValue = Math.ceil(stats.scout.score * 3.5);
+        hp = Math.ceil(stats.scout.hp * 1.5);
         break;
       default:
         color = biome.bugs.baseColor;
