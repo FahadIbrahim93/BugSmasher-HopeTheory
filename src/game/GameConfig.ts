@@ -51,7 +51,8 @@ export const GameConfig = {
       { type: 'slow_mo', color: '#9966ff', icon: 'SM', collection: 'hover', weight: 16 },
       { type: 'freeze', color: '#66ccff', icon: 'FR', collection: 'hover', weight: 12 },
       { type: 'spike_burst', color: '#ff00ff', icon: 'SB', collection: 'click', weight: 10 },
-      { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click', weight: 6 }
+      { type: 'nuke', color: '#ff3333', icon: 'X', collection: 'click', weight: 6 },
+      { type: 'magnet', color: '#ff6b6b', icon: 'M', collection: 'hover', weight: 8 }, // Auto-collect powerups
     ]
   },
   waves: {

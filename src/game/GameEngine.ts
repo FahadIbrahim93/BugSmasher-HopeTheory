@@ -68,6 +68,7 @@ export class GameEngine {
   freezeTimer: number = 0;
   slowMoTimer: number = 0;
   autoTurretTimer: number = 0;
+  magnetTimer: number = 0;
 
   // Session tracking
   missCount: number = 0;
@@ -399,6 +400,7 @@ export class GameEngine {
     if (this.rapidFireTimer > 0) this.rapidFireTimer -= dt;
     if (this.freezeTimer > 0) this.freezeTimer -= dt;
     if (this.slowMoTimer > 0) this.slowMoTimer -= dt;
+    if (this.magnetTimer > 0) this.magnetTimer -= dt;
     
     this.waveManager.update(dt);
     
@@ -465,10 +467,32 @@ export class GameEngine {
       bug.walkCycle += bug.speed * dt * 0.2;
     }
     
-    for (let i = this.powerups.length - 1; i >= 0; i--) {
-      const p = this.powerups[i];
-      p.life -= dt;
-      if (p.life <= 0) this.powerups.splice(i, 1);
+    // Magnet powerup attraction effect
+    if (this.magnetTimer > 0) {
+      const centerX = this.width / 2;
+      const centerY = this.height / 2;
+      for (let i = this.powerups.length - 1; i >= 0; i--) {
+        const p = this.powerups[i];
+        const dx = centerX - p.x;
+        const dy = centerY - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > 0) {
+          const pullSpeed = 200; // pixels per second
+          p.x += (dx / dist) * pullSpeed * dt;
+          p.y += (dy / dist) * pullSpeed * dt;
+          // Auto-collect when close to center
+          if (dist < 30) {
+            this.activatePowerup(p.type);
+            this.powerups.splice(i, 1);
+          }
+        }
+      }
+    } else {
+      for (let i = this.powerups.length - 1; i >= 0; i--) {
+        const p = this.powerups[i];
+        p.life -= dt;
+        if (p.life <= 0) this.powerups.splice(i, 1);
+      }
     }
     
     this.particleSystem.update(dt);
@@ -691,6 +715,9 @@ export class GameEngine {
       } else if (type === 'slow_mo') {
         this.slowMoTimer = GameConfig.powerups.slowMoDuration;
         this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#9966ff', 500);
+      } else if (type === 'magnet') {
+        this.magnetTimer = GameConfig.powerups.duration;
+        this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#ff6b6b', 400);
       }
     }
   }

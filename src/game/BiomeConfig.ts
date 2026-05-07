@@ -272,7 +272,87 @@ export const BIOMES: Biome[] = [
     },
     unlockRequirement: { prestigeLevel: 1 },
   },
+,
+  // ── VOID ABYSS (Kim's Addition) ───────────────────────────────────────────────
+  {
+    id: 'void_abyss',
+    name: 'Void Abyss',
+    description: 'The bugs have broken containment',
+    tagline: 'Containment Breach Protocol',
+    theme: {
+      background: '#020108',
+      gridColor: 'rgba(168, 85, 212, 0.15)', // Purple void
+      gridColorSecondary: 'rgba(168, 85, 212, 0.05)',
+      coreColor: '#a855f7',
+      coreGlow: 'rgba(168, 85, 212, 0.4)',
+      fogColor: 'rgba(168, 85, 212, 0.04)',
+    },
+    bugs: {
+      baseColor: '#e9d5ff',
+      scoutColor: '#c084fc',
+      tankColor: '#f472b6',
+      eliteColor: '#d946ef',
+    },
+    particles: {
+      splatter: '#a855f7',
+      glow: '#a855f7',
+    },
+    gameplay: {
+      bugs: {
+        basicWeight: 0.40, scoutWeight: 0.25, tankWeight: 0.20,
+        speedMultiplier: 1.15, hpMultiplier: 1.2, scoreMultiplier: 1.3,
+        extraTypes: ['phase', 'swarmer'],
+      },
+      powerups: {
+        dropChanceMultiplier: 1.4, preferredTypes: ['nuke', 'spike_burst'], rareBoost: 2,
+      },
+      specialEffect: 'teleport',
+      specialDesc: 'Void phase — bugs teleport unpredictably',
+      difficultyMultiplier: 1.8,
+    },
+    unlockRequirement: { wavesCompleted: 20, scoreRequired: 25000 },
+  },
+  // ── GOLDEN SPIRE (Kim's Addition - Endgame) ─────────────────────────────────
+  {
+    id: 'golden_spire',
+    name: 'Golden Spire',
+    description: 'Ultimate challenge',
+    tagline: 'Apex Protocol',
+    theme: {
+      background: '#110c05',
+      gridColor: 'rgba(250, 204, 21, 0.2)', // Brighter gold
+      gridColorSecondary: 'rgba(250, 204, 21, 0.08)',
+      coreColor: '#facc15',
+      coreGlow: 'rgba(252, 211, 77, 0.6)',
+      fogColor: 'rgba(250, 204, 21, 0.05)',
+    },
+    bugs: {
+      baseColor: '#fef08a',
+      scoutColor: '#fde047',
+      tankColor: '#f59e0b',
+      eliteColor: '#fbbf24',
+    },
+    particles: {
+      splatter: '#facc15',
+      glow: '#facc15',
+    },
+    gameplay: {
+      bugs: {
+        basicWeight: 0.35, scoutWeight: 0.25, tankWeight: 0.20,
+        speedMultiplier: 1.3, hpMultiplier: 1.4, scoreMultiplier: 1.8,
+        extraTypes: ['golden', 'healer', 'swarmer'],
+      },
+      powerups: {
+        dropChanceMultiplier: 2.5, preferredTypes: ['nuke', 'spike_burst', 'multiplier'], rareBoost: 4,
+      },
+      specialEffect: 'regen',
+      specialDesc: 'Regenerating elites — relentless pressure',
+      difficultyMultiplier: 2.5,
+    },
+    unlockRequirement: { prestigeLevel: 3, scoreRequired: 100000 },
+  },
 ];
+
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
