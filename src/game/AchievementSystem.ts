@@ -65,6 +65,11 @@ const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'id' | 'unlocked
   perfectionist:     { title: 'Perfectionist',   description: 'No misses in a game', icon: '🎯', xp_reward: 50 },
   swarmer_slayer:    { title: 'Swarm Breaker',    description: 'Kill 10 swarmers', icon: '🐝', xp_reward: 40 },
   healer_hunter:     { title: 'Plague Doctor',    description: 'Kill 5 healers', icon: '💚', xp_reward: 45 },
+  boss_queen:    { title: 'Bug Queen Slayer', description: 'Defeat the Queen Bug boss', icon: '🐝', xp_reward: 200 },
+  boss_spider:   { title: 'Web Master',       description: 'Defeat the Spider Bug boss', icon: '🕷️', xp_reward: 250 },
+  boss_rhino:    { title: 'Beetle Crusher',   description: 'Defeat the Rhino Beetle boss', icon: '🪲', xp_reward: 300 },
+  boss_mantis:   { title: 'Blade Dancer',     description: 'Defeat the Mantis Bug boss', icon: '🗡️', xp_reward: 350 },
+  boss_centipede: { title: 'Segmented',       description: 'Defeat the Centipede boss', icon: '🐛', xp_reward: 400 },
 };
 
 const STORAGE_KEY = 'bugsmasher_achievements';
@@ -166,10 +171,36 @@ export class AchievementSystem {
   }
 
   // Called when player kills a bug
-  onKill(): void {
+  onKill(bugType?: string): void {
     this.progress.totalKills++;
     this.checkAchievements();
     this.saveProgress();
+  }
+
+  // Record swarmer/healer kills for achievements
+  recordSwarmerKill(): void {
+    this.progress.swarmerKills = (this.progress.swarmerKills ?? 0) + 1;
+    if (this.progress.swarmerKills >= 10) this.unlock('swarmer_slayer');
+    this.saveProgress();
+  }
+
+  recordHealerKill(): void {
+    this.progress.healerKills = (this.progress.healerKills ?? 0) + 1;
+    if (this.progress.healerKills >= 5) this.unlock('healer_hunter');
+    this.saveProgress();
+  }
+
+  // Boss defeat tracking
+  recordBossDefeat(bossId: string): void {
+    const bossAchievements: Record<string, string> = {
+      'queen_bug': 'boss_queen',
+      'spider_bug': 'boss_spider',
+      'rhino_beetle': 'boss_rhino',
+      'mantis_bug': 'boss_mantis',
+      'centipede': 'boss_centipede',
+    };
+    const achievementId = bossAchievements[bossId];
+    if (achievementId) this.unlock(achievementId as any);
   }
 
   // Called when player completes a wave
