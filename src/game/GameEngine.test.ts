@@ -22,7 +22,7 @@ vi.mock('./SoundManager', () => ({
     uiHover: vi.fn(),
     uiError: vi.fn(),
     scoreTick: vi.fn(),
-  }
+  },
 }));
 
 describe('GameEngine', () => {
@@ -30,37 +30,41 @@ describe('GameEngine', () => {
   let engine: GameEngine;
 
   beforeEach(() => {
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(() => ({
-      scale: vi.fn(),
-      setTransform: vi.fn(),
-      save: vi.fn(),
-      restore: vi.fn(),
-      translate: vi.fn(),
-      rotate: vi.fn(),
-      fillRect: vi.fn(),
-      beginPath: vi.fn(),
-      arc: vi.fn(),
-      fill: vi.fn(),
-      stroke: vi.fn(),
-      moveTo: vi.fn(),
-      lineTo: vi.fn(),
-      closePath: vi.fn(),
-      ellipse: vi.fn(),
-      fillText: vi.fn(),
-      createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
-      setLineDash: vi.fn(),
-      quadraticCurveTo: vi.fn(),
-      globalCompositeOperation: 'source-over',
-      fillStyle: '',
-      strokeStyle: '',
-      lineWidth: 1,
-      font: '',
-      textAlign: 'left',
-      textBaseline: 'alphabetic',
-      globalAlpha: 1,
-      shadowColor: '',
-      shadowBlur: 0,
-    }) as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
+      () =>
+        ({
+          scale: vi.fn(),
+          setTransform: vi.fn(),
+          save: vi.fn(),
+          restore: vi.fn(),
+          translate: vi.fn(),
+          rotate: vi.fn(),
+          fillRect: vi.fn(),
+          strokeRect: vi.fn(),
+          beginPath: vi.fn(),
+          arc: vi.fn(),
+          fill: vi.fn(),
+          stroke: vi.fn(),
+          moveTo: vi.fn(),
+          lineTo: vi.fn(),
+          closePath: vi.fn(),
+          ellipse: vi.fn(),
+          fillText: vi.fn(),
+          createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+          setLineDash: vi.fn(),
+          quadraticCurveTo: vi.fn(),
+          globalCompositeOperation: 'source-over',
+          fillStyle: '',
+          strokeStyle: '',
+          lineWidth: 1,
+          font: '',
+          textAlign: 'left',
+          textBaseline: 'alphabetic',
+          globalAlpha: 1,
+          shadowColor: '',
+          shadowBlur: 0,
+        }) as unknown as CanvasRenderingContext2D,
+    );
 
     canvas = document.createElement('canvas');
     canvas.width = 800;
@@ -82,12 +86,16 @@ describe('GameEngine', () => {
 
   it('should spawn bugs correctly', () => {
     engine.startWave();
-    expect(engine.waveManager.bugsToSpawn).toBe(GameConfig.waves.baseBugs + 1 * GameConfig.waves.bugsPerWave);
-    
+    expect(engine.waveManager.bugsToSpawn).toBe(
+      GameConfig.waves.baseBugs + 1 * GameConfig.waves.bugsPerWave,
+    );
+
     (engine.waveManager as any).spawnBug();
     expect(engine.bugs.length).toBe(1);
-    expect(engine.waveManager.bugsToSpawn).toBe(GameConfig.waves.baseBugs + 1 * GameConfig.waves.bugsPerWave - 1);
-    
+    expect(engine.waveManager.bugsToSpawn).toBe(
+      GameConfig.waves.baseBugs + 1 * GameConfig.waves.bugsPerWave - 1,
+    );
+
     const bug = engine.bugs[0];
     expect(bug.active).toBe(true);
     expect(['basic', 'scout', 'tank']).toContain(bug.type);
@@ -97,15 +105,15 @@ describe('GameEngine', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
     const bug = engine.bugs[0];
-    
+
     // Force bug type to basic for predictable HP
     bug.type = 'basic';
     bug.hp = 1;
     bug.maxHp = 1;
     bug.scoreValue = 10;
-    
+
     engine.damageBug(bug, 1);
-    
+
     expect(bug.hp).toBe(0);
     expect(engine.bugs.length).toBe(0);
     expect(engine.score).toBe(10);
@@ -126,16 +134,40 @@ describe('GameEngine', () => {
     expect(engine.rapidFireTimer).toBe(GameConfig.powerups.duration);
   });
 
+  it('magnet powerup pulls nearby powerups into the core and activates them', () => {
+    engine.isRunning = true;
+    engine.startWave();
+    engine.powerups.push({
+      active: true,
+      x: engine.width / 2 + 40,
+      y: engine.height / 2,
+      type: 'multiplier',
+      color: '#ffffff',
+      icon: '2X',
+      life: 8,
+      maxLife: 8,
+      size: 15,
+      collection: 'hover',
+    });
+
+    engine.activatePowerup('magnet');
+    engine.update(0.2);
+
+    expect(engine.magnetTimer).toBeGreaterThan(0);
+    expect(engine.powerups).toHaveLength(0);
+    expect(engine.multiplierTimer).toBeGreaterThan(0);
+  });
+
   it('should activate nuke powerup and clear bugs', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
     (engine.waveManager as any).spawnBug();
     (engine.waveManager as any).spawnBug();
-    
+
     expect(engine.bugs.length).toBe(3);
-    
+
     engine.activatePowerup('nuke');
-    
+
     expect(engine.bugs.length).toBe(0);
     expect(engine.score).toBeGreaterThan(0);
   });
@@ -143,17 +175,17 @@ describe('GameEngine', () => {
   it('should handle bug reaching the base', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
-    
+
     const bug = engine.bugs[0];
     // Move bug to center (base)
     bug.x = engine.width / 2;
     bug.y = engine.height / 2;
-    
+
     const initialHealth = engine.health;
-    
+
     // Trigger update to process collision
     engine.update(0.1);
-    
+
     expect(engine.bugs.length).toBe(0); // Bug should be destroyed
     expect(engine.health).toBe(initialHealth - GameConfig.player.hitDamage);
   });
@@ -161,16 +193,16 @@ describe('GameEngine', () => {
   it('should protect base when shield is active', () => {
     engine.startWave();
     (engine.waveManager as any).spawnBug();
-    
+
     const bug = engine.bugs[0];
     bug.x = engine.width / 2;
     bug.y = engine.height / 2;
-    
+
     engine.activatePowerup('shield');
     const initialHealth = engine.health;
-    
+
     engine.update(0.1);
-    
+
     expect(engine.bugs.length).toBe(0); // Bug should be destroyed
     expect(engine.health).toBe(initialHealth); // Health should not decrease
   });

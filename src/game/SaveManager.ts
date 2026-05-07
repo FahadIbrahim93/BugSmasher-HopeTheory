@@ -20,6 +20,8 @@ interface GameSaveData {
   highestWave: number;
   unlockedBiomes: string[];
   totalCrystalsEarned: number;
+  bossDefeats: Record<string, number>;
+  bossMaterials: Record<string, number>;
 }
 
 const SAVE_KEY = 'bugsmasher_save';
@@ -38,7 +40,9 @@ const DEFAULT_SAVE: GameSaveData = {
   totalPrestigePointsEarned: 0,
   highestWave: 0,
   unlockedBiomes: ['neon_core'],
-  totalCrystalsEarned: 0
+  totalCrystalsEarned: 0,
+  bossDefeats: {},
+  bossMaterials: {},
 };
 
 export class SaveManager {
@@ -62,26 +66,60 @@ export class SaveManager {
       logger.debug('SaveManager', 'Saved game data');
     } catch (e) {
       logger.error('SaveManager', 'Failed to save to localStorage', {
-        error: e instanceof Error ? e.message : String(e)
+        error: e instanceof Error ? e.message : String(e),
       });
     }
   }
 
   // Getters
-  getHighScore(): number { return this.data.highScore; }
-  getTotalBugsSmashed(): number { return this.data.totalBugsSmashed; }
-  getTotalPlayTime(): number { return this.data.totalPlayTime; }
-  isSoundEnabled(): boolean { return this.data.soundEnabled; }
-  isMusicEnabled(): boolean { return this.data.musicEnabled; }
-  getGamesPlayed(): number { return this.data.gamesPlayed; }
-  getPrestigeLevel(): number { return this.data.prestigeLevel; }
-  getPrestigePoints(): number { return this.data.prestigePoints; }
-  getDailyChallengeCompleted(): string { return this.data.dailyChallengeCompleted; }
-  getDailyChallengesCompleted(): number { return this.data.dailyChallengesCompleted; }
-  getTotalPrestigePointsEarned(): number { return this.data.totalPrestigePointsEarned; }
-  getHighestWave(): number { return this.data.highestWave; }
-  getUnlockedBiomes(): string[] { return this.data.unlockedBiomes; }
-  getTotalCrystalsEarned(): number { return this.data.totalCrystalsEarned; }
+  getHighScore(): number {
+    return this.data.highScore;
+  }
+  getTotalBugsSmashed(): number {
+    return this.data.totalBugsSmashed;
+  }
+  getTotalPlayTime(): number {
+    return this.data.totalPlayTime;
+  }
+  isSoundEnabled(): boolean {
+    return this.data.soundEnabled;
+  }
+  isMusicEnabled(): boolean {
+    return this.data.musicEnabled;
+  }
+  getGamesPlayed(): number {
+    return this.data.gamesPlayed;
+  }
+  getPrestigeLevel(): number {
+    return this.data.prestigeLevel;
+  }
+  getPrestigePoints(): number {
+    return this.data.prestigePoints;
+  }
+  getDailyChallengeCompleted(): string {
+    return this.data.dailyChallengeCompleted;
+  }
+  getDailyChallengesCompleted(): number {
+    return this.data.dailyChallengesCompleted;
+  }
+  getTotalPrestigePointsEarned(): number {
+    return this.data.totalPrestigePointsEarned;
+  }
+  getHighestWave(): number {
+    return this.data.highestWave;
+  }
+  getUnlockedBiomes(): string[] {
+    return this.data.unlockedBiomes;
+  }
+  getTotalCrystalsEarned(): number {
+    return this.data.totalCrystalsEarned;
+  }
+  getBossDefeats(): Record<string, number> {
+    return { ...this.data.bossDefeats };
+  }
+  getBossMaterials(): Record<string, number> {
+    return { ...this.data.bossMaterials };
+  }
   setHighestWave(wave: number): void {
     if (wave > this.data.highestWave) {
       this.data.highestWave = wave;
@@ -93,6 +131,13 @@ export class SaveManager {
       this.data.unlockedBiomes.push(biomeId);
       this.save();
     }
+  }
+
+  recordBossDefeat(bossId: string, materialId: string, materialAmount: number): void {
+    this.data.bossDefeats[bossId] = (this.data.bossDefeats[bossId] ?? 0) + 1;
+    this.data.bossMaterials[materialId] =
+      (this.data.bossMaterials[materialId] ?? 0) + materialAmount;
+    this.save();
   }
 
   // Update methods
@@ -154,7 +199,7 @@ export class SaveManager {
   }
 
   getPrestigeMultiplier(): number {
-    return 1 + (this.data.prestigeLevel * 0.1);
+    return 1 + this.data.prestigeLevel * 0.1;
   }
 
   hasCompletedDailyChallenge(): boolean {
@@ -180,9 +225,12 @@ export class SaveManager {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().split('T')[0];
-    
+
     if (this.data.dailyChallengeCompleted === yesterdayStr) {
-      return Math.floor((new Date().getTime() - new Date(this.data.dailyChallengeCompleted).getTime()) / (1000 * 60 * 60 * 24));
+      return Math.floor(
+        (new Date().getTime() - new Date(this.data.dailyChallengeCompleted).getTime()) /
+          (1000 * 60 * 60 * 24),
+      );
     }
     return 0;
   }

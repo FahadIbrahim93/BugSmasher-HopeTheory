@@ -14,6 +14,7 @@
  */
 
 import { BIOMES } from './BiomeConfig';
+import { getBossById } from './BossConfig';
 
 export interface DeathCardData {
   score: number;
@@ -22,6 +23,9 @@ export interface DeathCardData {
   playTimeSeconds: number;
   biomeId: string;
   rank?: number;
+  bossId?: string;
+  bossOutcome?: 'victory' | 'defeat';
+  bossTimeSeconds?: number;
 }
 
 interface BiomeTheme {
@@ -33,7 +37,7 @@ interface BiomeTheme {
 }
 
 function getBiomeTheme(biomeId: string): BiomeTheme {
-  const biome = BIOMES.find(b => b.id === biomeId) ?? BIOMES[0];
+  const biome = BIOMES.find((b) => b.id === biomeId) ?? BIOMES[0];
   const c = biome.theme.coreColor;
   const base = biome.theme.background;
   return {
@@ -59,6 +63,34 @@ function formatTime(seconds: number): string {
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 
+function getBossShareText(data: DeathCardData): string | null {
+  if (!data.bossId) return null;
+  const boss = getBossById(data.bossId);
+  if (!boss) return null;
+  const outcome = data.bossOutcome === 'defeat' ? 'BREACH BY' : 'BOSS DEFEATED';
+  return `${outcome}: ${boss.name.toUpperCase()}`;
+}
+
+function getBossSubtitle(data: DeathCardData): string | null {
+  if (!data.bossId) return null;
+  const boss = getBossById(data.bossId);
+  if (!boss) return null;
+  if (data.bossOutcome === 'defeat') return boss.loreIntro;
+  return boss.loreDefeat;
+}
+
+export function getDeathCardShareText(data: DeathCardData): string {
+  const boss = data.bossId ? getBossById(data.bossId) : null;
+  if (boss && data.bossOutcome === 'victory') {
+    const time = data.bossTimeSeconds ? ` in ${formatTime(data.bossTimeSeconds)}` : '';
+    return `I defeated ${boss.name}${time} and reached Wave ${data.waves} in BugSmasher by HopeTheory! #BugSmasher #BossDefeated`;
+  }
+  if (boss && data.bossOutcome === 'defeat') {
+    return `${boss.name} breached my core at Wave ${data.waves} after I scored ${data.score.toLocaleString()} in BugSmasher by HopeTheory. #BugSmasher #BossFight`;
+  }
+  return `I scored ${data.score.toLocaleString()} points and reached Wave ${data.waves} in BugSmasher by HopeTheory! #BugSmasher #HighScore`;
+}
+
 /**
  * Generate a shareable death card image blob.
  * Returns PNG blob — pass to navigator.share() or create object URL.
@@ -71,6 +103,8 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   canvas.height = H;
   const ctx = canvas.getContext('2d')!;
   const theme = getBiomeTheme(data.biomeId);
+  const bossBanner = getBossShareText(data);
+  const bossSubtitle = getBossSubtitle(data);
 
   // ── Stronger Radial Gradient Background ─────────────────────────────────────
   const radialGrad = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
@@ -108,7 +142,7 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   // ── Decorative Border Using Biome Accent Color ───────────────────────────────
   const borderWidth = 4;
   const borderInset = 16;
-  
+
   // Outer glow
   ctx.shadowColor = theme.primary;
   ctx.shadowBlur = 20;
@@ -121,7 +155,14 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   // Inner border
   ctx.strokeStyle = hexToRgba(theme.primary, 0.6);
   ctx.lineWidth = 2;
-  roundRect(ctx, borderInset + 6, borderInset + 6, W - (borderInset + 6) * 2, H - (borderInset + 6) * 2, 10);
+  roundRect(
+    ctx,
+    borderInset + 6,
+    borderInset + 6,
+    W - (borderInset + 6) * 2,
+    H - (borderInset + 6) * 2,
+    10,
+  );
   ctx.stroke();
 
   // ── Header bar ───────────────────────────────────────────────────────────────
@@ -142,7 +183,7 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   ctx.fillStyle = theme.accent;
   ctx.textAlign = 'right';
   ctx.fillText('by HopeTheory', W - 50, 48);
-  
+
   // Subtitle
   ctx.font = '11px "Courier New", monospace';
   ctx.fillStyle = hexToRgba(theme.primary, 0.7);
@@ -165,7 +206,7 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   ctx.textAlign = 'center';
   ctx.font = 'bold 14px "Courier New", monospace';
   ctx.fillStyle = hexToRgba(theme.primary, 0.8);
-  ctx.fillText('FINAL SCORE', W / 2, 135);
+  ctx.fillText(bossBanner ? bossBanner : 'FINAL SCORE', W / 2, 135);
 
   ctx.font = 'bold 96px "Courier New", monospace';
   ctx.fillStyle = theme.accent;
@@ -175,13 +216,19 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   ctx.fillText(data.score.toLocaleString(), W / 2, 230);
   ctx.shadowBlur = 0;
 
+  if (bossSubtitle) {
+    ctx.font = 'bold 15px "Courier New", monospace';
+    ctx.fillStyle = hexToRgba(theme.primary, 0.85);
+    ctx.fillText(bossSubtitle.toUpperCase().slice(0, 86), W / 2, 304);
+  }
+
   // ── Biome badge ──────────────────────────────────────────────────────────────
-  const biome = BIOMES.find(b => b.id === data.biomeId) ?? BIOMES[0];
+  const biome = BIOMES.find((b) => b.id === data.biomeId) ?? BIOMES[0];
   const badgeW = 220;
   const badgeH = 36;
   const badgeX = (W - badgeW) / 2;
-  const badgeY = 250;
-  
+  const badgeY = bossBanner ? 260 : 250;
+
   // Badge background with glow
   ctx.shadowColor = theme.primary;
   ctx.shadowBlur = 15;
@@ -189,12 +236,12 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 8);
   ctx.fill();
   ctx.shadowBlur = 0;
-  
+
   ctx.strokeStyle = theme.primary;
   ctx.lineWidth = 2;
   roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 8);
   ctx.stroke();
-  
+
   ctx.font = 'bold 14px "Courier New", monospace';
   ctx.fillStyle = theme.primary;
   ctx.textAlign = 'center';
@@ -204,7 +251,10 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   const stats = [
     { label: 'WAVE', value: String(data.waves) },
     { label: 'BUGS SMASHED', value: data.kills.toLocaleString() },
-    { label: 'TIME', value: formatTime(data.playTimeSeconds) },
+    {
+      label: data.bossTimeSeconds ? 'BOSS TIME' : 'TIME',
+      value: formatTime(data.bossTimeSeconds ?? data.playTimeSeconds),
+    },
     ...(data.rank ? [{ label: 'RANK', value: `#${data.rank}` }] : []),
   ];
 
@@ -216,23 +266,23 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   stats.forEach((stat, i) => {
     const x = colW * (i + 0.5);
     const boxX = x - statBoxW / 2;
-    
+
     // Stat box background
     ctx.fillStyle = hexToRgba(theme.primary, 0.1);
     roundRect(ctx, boxX, statY, statBoxW, statBoxH, 8);
     ctx.fill();
-    
+
     // Stat box border
     ctx.strokeStyle = hexToRgba(theme.primary, 0.3);
     ctx.lineWidth = 1;
     roundRect(ctx, boxX, statY, statBoxW, statBoxH, 8);
     ctx.stroke();
-    
+
     // Accent line at top of box
     ctx.fillStyle = theme.primary;
     roundRect(ctx, boxX + 20, statY, statBoxW - 40, 3, 2);
     ctx.fill();
-    
+
     ctx.textAlign = 'center';
     ctx.font = 'bold 12px "Courier New", monospace';
     ctx.fillStyle = hexToRgba(theme.primary, 0.8);
@@ -263,7 +313,11 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   ctx.fillStyle = hexToRgba(theme.primary, 0.6);
   ctx.textAlign = 'center';
   ctx.fillText('bugsmasher-ten.vercel.app', W / 2, H - 45);
-  ctx.fillText('#BugSmasher #HighScore', W / 2, H - 25);
+  ctx.fillText(
+    data.bossId ? '#BugSmasher #BossDefeated #HopeTheory' : '#BugSmasher #HighScore',
+    W / 2,
+    H - 25,
+  );
 
   // ── BugSmasher Watermark at bottom right ────────────────────────────────────
   ctx.save();
@@ -311,7 +365,7 @@ export async function generateDeathCardBlob(data: DeathCardData): Promise<Blob> 
   ctx.shadowBlur = 0;
 
   return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(blob => {
+    canvas.toBlob((blob) => {
       if (blob) resolve(blob);
       else reject(new Error('Failed to generate canvas blob'));
     }, 'image/png');
@@ -336,7 +390,7 @@ export async function shareDeathCard(data: DeathCardData): Promise<boolean> {
   const blob = await generateDeathCardBlob(data);
   const file = new File([blob], 'bugsmasher-death-card.png', { type: 'image/png' });
 
-  const text = `I scored ${data.score.toLocaleString()} points and reached Wave ${data.waves} in BugSmasher by HopeTheory! #BugSmasher #HighScore`;
+  const text = getDeathCardShareText(data);
 
   // Try native share with image
   if (navigator.canShare?.({ files: [file] })) {
@@ -366,9 +420,11 @@ export async function shareDeathCard(data: DeathCardData): Promise<boolean> {
 // Helper: rounded rectangle path
 function roundRect(
   ctx: CanvasRenderingContext2D,
-  x: number, y: number,
-  w: number, h: number,
-  r: number
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
 ): void {
   ctx.beginPath();
   ctx.moveTo(x + r, y);

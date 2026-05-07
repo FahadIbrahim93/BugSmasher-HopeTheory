@@ -1,25 +1,26 @@
 // AchievementSystem — Tracks player milestones and unlocks achievements
 // Stores in localStorage with SaveManager
 
-export type AchievementId = 
-  | 'first_blood'        // First bug smashed
-  | 'combo_5'           // 5x combo
-  | 'combo_10'          // 10x combo
-  | 'combo_25'          // 25x combo
-  | 'wave_3'           // Reach wave 3
-  | 'wave_5'            // Reach wave 5
-  | 'wave_10'           // Reach wave 10
-  | 'score_1000'        // 1,000 points
-  | 'score_5000'        // 5,000 points
-  | 'score_10000'       // 10,000 points
-  | 'bugs_100'          // 100 total bugs
-  | 'bugs_500'         // 500 total bugs
-  | 'bugs_1000'        // 1,000 total bugs
-  | 'survivor'         // Survive a full wave
-  | 'streak_3'         // 3 day streak
-  | 'streak_7'         // 7 day streak
-  | 'perfectionist'      // No misses in a game
-  ;
+export type AchievementId =
+  | 'first_blood' // First bug smashed
+  | 'combo_5' // 5x combo
+  | 'combo_10' // 10x combo
+  | 'combo_25' // 25x combo
+  | 'wave_3' // Reach wave 3
+  | 'wave_5' // Reach wave 5
+  | 'wave_10' // Reach wave 10
+  | 'score_1000' // 1,000 points
+  | 'score_5000' // 5,000 points
+  | 'score_10000' // 10,000 points
+  | 'bugs_100' // 100 total bugs
+  | 'bugs_500' // 500 total bugs
+  | 'bugs_1000' // 1,000 total bugs
+  | 'survivor' // Survive a full wave
+  | 'streak_3' // 3 day streak
+  | 'streak_7' // 7 day streak
+  | 'perfectionist' // No misses in a game
+  | 'first_boss' // Defeat the first boss
+  | 'queen_slayer'; // Defeat Motherboard Myrmex
 
 export interface Achievement {
   id: AchievementId;
@@ -41,24 +42,59 @@ export interface AchievementProgress {
   lastPlayedDate: string;
 }
 
-const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt'>> = {
-  first_blood:        { title: 'First Blood',        description: 'Smash your first bug', icon: '🪲', xp_reward: 10 },
-  combo_5:           { title: 'Combo Hunter',      description: 'Reach 5x combo', icon: '🔥', xp_reward: 25 },
-  combo_10:          { title: 'Blazing Fast',      description: 'Reach 10x combo', icon: '⚡', xp_reward: 50 },
-  combo_25:          { title: 'Unstoppable',       description: 'Reach 25x combo', icon: '🌟', xp_reward: 100 },
-  wave_3:            { title: 'Wave Rider',       description: 'Survive wave 3', icon: '🌊', xp_reward: 30 },
-  wave_5:            { title: 'Veteran',         description: 'Survive wave 5', icon: '🎖️', xp_reward: 75 },
-  wave_10:           { title: 'Legend',          description: 'Survive wave 10', icon: '👑', xp_reward: 150 },
-  score_1000:        { title: 'Getting Started',   description: 'Score 1,000 points', icon: '📊', xp_reward: 20 },
-  score_5000:        { title: 'Score Master',   description: 'Score 5,000 points', icon: '💯', xp_reward: 50 },
-  score_10000:       { title: 'Elite',          description: 'Score 10,000 points', icon: '🏆', xp_reward: 100 },
-  bugs_100:          { title: 'Exterminator',    description: 'Smash 100 bugs', icon: '🔫', xp_reward: 25 },
-  bugs_500:         { title: 'Pest Control',   description: 'Smash 500 bugs', icon: '💥', xp_reward: 75 },
-  bugs_1000:        { title: 'Annihilator',     description: 'Smash 1,000 bugs', icon: '💣', xp_reward: 150 },
-  survivor:          { title: 'Survivor',        description: 'Complete a wave', icon: '🛡️', xp_reward: 20 },
-  streak_3:          { title: 'Dedicated',       description: '3 day streak', icon: '📅', xp_reward: 30 },
-  streak_7:          { title: 'Committed',      description: '7 day streak', icon: '💎', xp_reward: 75 },
-  perfectionist:       { title: 'Perfectionist',  description: 'No misses in a game', icon: '🎯', xp_reward: 50 },
+const ACHIEVEMENT_DATA: Record<
+  AchievementId,
+  Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt'>
+> = {
+  first_blood: {
+    title: 'First Blood',
+    description: 'Smash your first bug',
+    icon: '🪲',
+    xp_reward: 10,
+  },
+  combo_5: { title: 'Combo Hunter', description: 'Reach 5x combo', icon: '🔥', xp_reward: 25 },
+  combo_10: { title: 'Blazing Fast', description: 'Reach 10x combo', icon: '⚡', xp_reward: 50 },
+  combo_25: { title: 'Unstoppable', description: 'Reach 25x combo', icon: '🌟', xp_reward: 100 },
+  wave_3: { title: 'Wave Rider', description: 'Survive wave 3', icon: '🌊', xp_reward: 30 },
+  wave_5: { title: 'Veteran', description: 'Survive wave 5', icon: '🎖️', xp_reward: 75 },
+  wave_10: { title: 'Legend', description: 'Survive wave 10', icon: '👑', xp_reward: 150 },
+  score_1000: {
+    title: 'Getting Started',
+    description: 'Score 1,000 points',
+    icon: '📊',
+    xp_reward: 20,
+  },
+  score_5000: {
+    title: 'Score Master',
+    description: 'Score 5,000 points',
+    icon: '💯',
+    xp_reward: 50,
+  },
+  score_10000: { title: 'Elite', description: 'Score 10,000 points', icon: '🏆', xp_reward: 100 },
+  bugs_100: { title: 'Exterminator', description: 'Smash 100 bugs', icon: '🔫', xp_reward: 25 },
+  bugs_500: { title: 'Pest Control', description: 'Smash 500 bugs', icon: '💥', xp_reward: 75 },
+  bugs_1000: { title: 'Annihilator', description: 'Smash 1,000 bugs', icon: '💣', xp_reward: 150 },
+  survivor: { title: 'Survivor', description: 'Complete a wave', icon: '🛡️', xp_reward: 20 },
+  streak_3: { title: 'Dedicated', description: '3 day streak', icon: '📅', xp_reward: 30 },
+  streak_7: { title: 'Committed', description: '7 day streak', icon: '💎', xp_reward: 75 },
+  perfectionist: {
+    title: 'Perfectionist',
+    description: 'No misses in a game',
+    icon: '🎯',
+    xp_reward: 50,
+  },
+  first_boss: {
+    title: 'Boss Breaker',
+    description: 'Defeat your first boss bug',
+    icon: '👾',
+    xp_reward: 125,
+  },
+  queen_slayer: {
+    title: 'Queen Slayer',
+    description: 'Defeat Motherboard Myrmex',
+    icon: '🐜',
+    xp_reward: 175,
+  },
 };
 
 const STORAGE_KEY = 'bugsmasher_achievements';
@@ -113,13 +149,13 @@ export class AchievementSystem {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const data: Achievement[] = JSON.parse(stored);
-        data.forEach(a => map.set(a.id, a));
+        data.forEach((a) => map.set(a.id, a));
       }
     } catch (e) {
       console.warn('Failed to load achievements:', e);
     }
     // Initialize missing achievements
-    Object.keys(ACHIEVEMENT_DATA).forEach(id => {
+    Object.keys(ACHIEVEMENT_DATA).forEach((id) => {
       if (!map.has(id as AchievementId)) {
         const data = ACHIEVEMENT_DATA[id as AchievementId];
         map.set(id as AchievementId, {
@@ -147,7 +183,7 @@ export class AchievementSystem {
   private checkDailyStreak(): void {
     const today = new Date().toDateString();
     const yesterday = new Date(Date.now() - 86400000).toDateString();
-    
+
     if (this.progress.lastPlayedDate === today) {
       // Already played today, do nothing
     } else if (this.progress.lastPlayedDate === yesterday) {
@@ -187,19 +223,25 @@ export class AchievementSystem {
     this.saveProgress();
   }
 
+  onBossDefeated(bossId: string): void {
+    this.unlock('first_boss');
+    if (bossId === 'motherboard_myrmex') this.unlock('queen_slayer');
+    this.saveAchievements();
+  }
+
   // Called on game over to record stats
   onGameEnd(score: number, misses: number): void {
     const today = new Date().toDateString();
-    
+
     // Update streak
     if (this.progress.lastPlayedDate !== today) {
       this.progress.currentStreak++;
       this.progress.lastPlayedDate = today;
-      
+
       if (this.progress.currentStreak >= 3) this.unlock('streak_3');
       if (this.progress.currentStreak >= 7) this.unlock('streak_7');
     }
-    
+
     // Check score achievements
     if (score >= 1000) this.unlock('score_1000');
     if (score >= 5000) this.unlock('score_5000');
@@ -207,19 +249,19 @@ export class AchievementSystem {
     if (score > this.progress.highScore) {
       this.progress.highScore = score;
     }
-    
+
     // Check kill achievements
     if (this.progress.totalKills >= 1) this.unlock('first_blood');
     if (this.progress.totalKills >= 100) this.unlock('bugs_100');
     if (this.progress.totalKills >= 500) this.unlock('bugs_500');
     if (this.progress.totalKills >= 1000) this.unlock('bugs_1000');
-    
+
     // Check perfect game (no misses)
     if (misses === 0 && score > 0) {
       this.progress.perfectGames++;
       this.unlock('perfectionist');
     }
-    
+
     this.saveProgress();
     this.saveAchievements();
   }
@@ -250,7 +292,7 @@ export class AchievementSystem {
   }
 
   getUnlockedCount(): number {
-    return Array.from(this.achievements.values()).filter(a => a.unlocked).length;
+    return Array.from(this.achievements.values()).filter((a) => a.unlocked).length;
   }
 
   getTotalCount(): number {
