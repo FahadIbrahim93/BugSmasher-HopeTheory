@@ -58,8 +58,8 @@ export const GameConfig = {
   waves: {
     baseBugs: 10,
     bugsPerWave: 5,
-    baseSpawnRate: 1.5,
-    spawnRateReduction: 0.1,
-    minSpawnRate: 0.1,
+    baseSpawnRate: 1500,
+    spawnRateReduction: 100,
+    minSpawnRate: 300,
   }
 };
