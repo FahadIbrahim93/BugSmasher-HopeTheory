@@ -13,6 +13,7 @@ import { leaderboardManager } from './database/LeaderboardManager';
 import { cosmeticsManager } from './CosmeticsManager';
 import { upgradeSystem } from './UpgradeSystem';
 import { biomeManager } from './BiomeManager';
+import { VisualEffectsSystemV1 } from '../systems/VisualEffectsSystemV1';
 
 export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
 export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
@@ -88,7 +89,8 @@ export class GameEngine {
   chainComboFlashAlpha: number = 0;
   
   renderer: Renderer;
-  
+  vfxSystem: VisualEffectsSystemV1;
+
   onGameOver?: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number, biomeId: string) => void;
   onWaveComplete?: (completedWave: number) => void;
   onLevelUp?: (newLevel: number, crystalReward: number) => void;
@@ -116,6 +118,9 @@ export class GameEngine {
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
     
     this.renderer = new Renderer(this);
+
+    // Initialize visual effects system
+    this.vfxSystem = new VisualEffectsSystemV1(this.particleSystem);
 
     // Hook achievement XP rewards
     achievementSystem.setOnXPUnlock((xp) => this.awardXP(xp, 'achievement'));
@@ -560,6 +565,11 @@ export class GameEngine {
         this.particleSystem.spawnDamageNumber(bug.x, bug.y - 20, pointsEarned, isCrit ? '#ff00ff' : mult > 1 ? '#ff00ff' : '#ffff00');
         if (isCrit) {
           this.particleSystem.spawnShockwave(bug.x, bug.y, '#ff00ff', 200);
+          // NEW: Use visual effects system for enhanced crit effects
+          this.vfxSystem.spawnBugHit(bug.x, bug.y, bug.type, true);
+        } else {
+          // NEW: Use visual effects system for normal hit effects
+          this.vfxSystem.spawnBugHit(bug.x, bug.y, bug.type, false);
         }
         
         // Trigger haptics
