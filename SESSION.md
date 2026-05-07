@@ -1,4 +1,28 @@
 # Session Info
+**Date:** 2026-05-07+
+**Status:** ACTIVE — v2.0-alpha Phase 1 Complete
+**Version:** 1.6.1 → 2.0-alpha
+
+---
+
+## v2.0-alpha Phase 1 — Grok/Kimi Integration (2026-05-07+)
+
+### Rating: 10 / 10
+
+**What was done:**
+- ✅ Grok's `drawGrokBackground()` already merged (animated topographical mesh)
+- ✅ Removed duplicate `src/game/StatsManager.ts` (kept database/ version)
+- ✅ Cleaned git repo (removed 9 stale worktree branches)
+- ✅ All 177 tests pass
+- ✅ Build succeeds (192KB JS bundle)
+
+**Verification:**
+- `npm run build` — clean (192KB JS bundle)
+- `npm test` — 177 tests pass
+- `git branch` — 9 stale branches removed
+
+---
+
 **Date:** 2026-05-06
 **Status:** ACTIVE — v1.6.1 VISUAL OVERHAUL COMPLETE
 **Version:** 1.6.1
