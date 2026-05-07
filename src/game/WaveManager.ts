@@ -82,6 +82,29 @@ export class WaveManager {
       }
     }
 
+    // Healer bug effect - heals nearby bugs every 3 seconds
+    this.specialCooldowns['healer'] = (this.specialCooldowns['healer'] ?? 0) - dt;
+    if (this.specialCooldowns['healer'] <= 0) {
+      this.specialCooldowns['healer'] = 3; // Heal every 3 seconds
+      for (const healer of this.engine.bugs) {
+        if (healer.active && healer.type === 'healer') {
+          // Find nearby bugs within 80px
+          for (const bug of this.engine.bugs) {
+            if (bug.active && bug.type !== 'healer') {
+              const dx = bug.x - healer.x;
+              const dy = bug.y - healer.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 80 && bug.hp < bug.maxHp) {
+                bug.hp = Math.min(bug.maxHp, bug.hp + 1);
+                // Spawn heal particles
+                this.engine.particleSystem.spawnShockwave(bug.x, bug.y, '#22c55e', 30);
+              }
+            }
+          }
+        }
+      }
+    }
+
     if (effect === 'teleport') {
       // Phase bugs randomly teleport
       this.specialCooldowns['teleport'] = (this.specialCooldowns['teleport'] ?? 0) - dt;
@@ -132,9 +155,35 @@ export class WaveManager {
 
     // Extra biome-specific bug types
     const extraRoll = Math.random();
-    if (biome.gameplay.bugs.extraTypes.length > 0 && extraRoll < 0.1) {
-      // 10% chance of extra type
-      type = biome.gameplay.bugs.extraTypes[Math.floor(Math.random() * biome.gameplay.bugs.extraTypes.length)];
+    let extraWeight = 0.1; // 10% base for extra types
+
+    // Adjust extra type spawn rate based on wave number
+    if (this.engine.wave >= 10) {
+      extraWeight = 0.15; // 15% from wave 10
+    }
+    if (this.engine.wave >= 20) {
+      extraWeight = 0.20; // 20% from wave 20
+    }
+
+    if (biome.gameplay.bugs.extraTypes.length > 0 && extraRoll < extraWeight) {
+      // Weighted extra type selection based on type
+      const weightedTypes = [];
+      for (const extraType of biome.gameplay.bugs.extraTypes) {
+        if (extraType === 'swarmer' || extraType === 'healer') {
+          // Swarmer and healer are rarer - 5-10% spawn rate
+          const weight = extraType === 'swarmer' ? 0.7 : 0.3;
+          if (this.engine.wave >= 10 && Math.random() < weight * 0.5) {
+            weightedTypes.push(extraType);
+          }
+        } else {
+          weightedTypes.push(extraType);
+        }
+      }
+      if (weightedTypes.length > 0) {
+        type = weightedTypes[Math.floor(Math.random() * weightedTypes.length)];
+      } else {
+        type = biome.gameplay.bugs.extraTypes[Math.floor(Math.random() * biome.gameplay.bugs.extraTypes.length)];
+      }
     } else if (r < g.basicWeight) {
       type = 'basic';
     } else if (r < g.basicWeight + g.scoutWeight) {
@@ -198,6 +247,20 @@ export class WaveManager {
         scoreValue = Math.ceil(stats.tank.score * 3.0); // 3× gold multiplier
         hp = Math.ceil(stats.tank.hp * 2.0);
         break;
+      case 'swarmer':
+        color = '#8a2be2';
+        size = GameConfig.bugs.swarmer.size;
+        speed = stats.basic.speed * 1.2; // Very fast
+        scoreValue = Math.ceil(stats.basic.score * 3); // 3× score value
+        hp = 1; // Low HP
+        break;
+      case 'healer':
+        color = '#22c55e';
+        size = GameConfig.bugs.healer.size;
+        speed = stats.basic.speed * 0.8; // Slow
+        scoreValue = Math.ceil(stats.tank.score * 1.2); // 1.2× tank score
+        hp = Math.ceil(stats.basic.hp * 2); // Medium HP
+        break;
       default:
         color = biome.bugs.baseColor;
         size = GameConfig.bugs.basic.size;
@@ -248,6 +311,32 @@ export class WaveManager {
       }
       this.engine.particleSystem.spawnShockwave(bug.x, bug.y, '#eab308', 120);
       this.engine.shake(0.3, 10);
+    }
+
+    // Swarmer death - spawns 2-3 mini-basic bugs
+    if (bug.type === 'swarmer') {
+      const miniCount = 2 + Math.floor(Math.random() * 2); // 2-3 mini bugs
+      for (let i = 0; i < miniCount; i++) {
+        const angle = (Math.PI * 2 / miniCount) * i + Math.random() * 0.5;
+        const dist = 20;
+        this.engine.bugs.push({
+          active: true,
+          x: bug.x + Math.cos(angle) * dist,
+          y: bug.y + Math.sin(angle) * dist,
+          type: 'mini_basic',
+          speed: GameConfig.bugs.basic.baseSpeed * 1.1,
+          color: '#a855f7',
+          size: 8,
+          scoreValue: 5,
+          hp: 1,
+          maxHp: 1,
+          walkCycle: Math.random() * Math.PI * 2,
+          rotation: 0,
+          offsetTime: Math.random() * 100,
+        });
+      }
+      this.engine.particleSystem.spawnShockwave(bug.x, bug.y, '#8a2be2', 100);
+      this.engine.shake(0.2, 5);
     }
   }
 }

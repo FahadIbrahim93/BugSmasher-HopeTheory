@@ -212,6 +212,14 @@ export class Renderer {
     const ctx = this.engine.ctx;
     ctx.save();
     ctx.translate(bug.x, bug.y);
+    
+    // Swarmer jitter effect - adds visual jitter for small fast bugs
+    if (bug.type === 'swarmer') {
+      const jitterX = Math.sin(this.engine.globalTime * 30 + bug.offsetTime) * 0.5;
+      const jitterY = Math.cos(this.engine.globalTime * 25 + bug.offsetTime) * 0.5;
+      ctx.translate(jitterX, jitterY);
+    }
+    
     ctx.rotate(bug.rotation);
     
     const legSwing = Math.sin(bug.walkCycle) * 0.8;
@@ -224,9 +232,27 @@ export class Renderer {
     const scale = bug.size / 15;
     ctx.scale(scale, scale);
     
+    // Healer pulsing aura
+    const isHealer = bug.type === 'healer';
+    const pulseIntensity = isHealer ? Math.sin(this.engine.globalTime * 3) * 0.3 + 0.7 : 1;
+    
+    if (isHealer && !this.engine.isMobile) {
+      // Draw healing aura circle behind healer
+      ctx.save();
+      ctx.scale(1.5 + Math.sin(this.engine.globalTime * 2) * 0.1, 1.5 + Math.sin(this.engine.globalTime * 2) * 0.1);
+      ctx.globalAlpha = 0.3 * pulseIntensity;
+      ctx.fillStyle = '#22c55e';
+      ctx.shadowColor = '#22c55e';
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(0, -5, 15, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    
     if (!this.engine.isMobile) {
       ctx.shadowColor = bug.color;
-      ctx.shadowBlur = 12; // Slight glow on body
+      ctx.shadowBlur = isHealer ? 15 : 12; // Healer has stronger glow
     }
     
     for (let i = 0; i < 3; i++) {

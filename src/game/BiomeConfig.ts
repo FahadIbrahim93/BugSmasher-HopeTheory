@@ -77,7 +77,7 @@ const NEON_CORE_POWERUPS: BiomePowerupConfig = {
 };
 
 const QUANTUM_VOID_BUGS: BiomeBugConfig = {
-  basicWeight: 0.40, scoutWeight: 0.45, tankWeight: 0.15,
+  basicWeight: 0.35, scoutWeight: 0.40, tankWeight: 0.15,
   speedMultiplier: 1.15, hpMultiplier: 0.85, scoreMultiplier: 1.1,
   extraTypes: ['phase'], // phase bugs phase in/out — harder to click
 };
@@ -95,18 +95,18 @@ const EMBER_DEPTHS_POWERUPS: BiomePowerupConfig = {
 };
 
 const FROSTBYTE_BUGS: BiomeBugConfig = {
-  basicWeight: 0.50, scoutWeight: 0.30, tankWeight: 0.20,
+  basicWeight: 0.40, scoutWeight: 0.20, tankWeight: 0.15,
   speedMultiplier: 0.85, hpMultiplier: 1.1, scoreMultiplier: 1.15,
-  extraTypes: ['frost'], // frost bugs slow the player
+  extraTypes: ['frost', 'swarmer'], // frost bugs slow the player, swarmer spawns mini-bugs
 };
 const FROSTBYTE_POWERUPS: BiomePowerupConfig = {
   dropChanceMultiplier: 1.2, preferredTypes: ['rapid_fire', 'multiplier'], rareBoost: 1,
 };
 
 const GOLDEN_CACHE_BUGS: BiomeBugConfig = {
-  basicWeight: 0.30, scoutWeight: 0.30, tankWeight: 0.40,
+  basicWeight: 0.25, scoutWeight: 0.25, tankWeight: 0.25,
   speedMultiplier: 1.25, hpMultiplier: 1.5, scoreMultiplier: 1.5,
-  extraTypes: ['golden'], // golden bugs are rare but worth 3× score
+  extraTypes: ['golden', 'swarmer', 'healer'], // golden bugs are rare but worth 3× score, swarmer spawns mini-bugs, healer heals nearby bugs
 };
 const GOLDEN_CACHE_POWERUPS: BiomePowerupConfig = {
   dropChanceMultiplier: 2.0, preferredTypes: ['nuke', 'spike_burst', 'multiplier'], rareBoost: 3,
@@ -285,21 +285,39 @@ export function getBiomeBugStats(
   const g = biome.gameplay;
   const b = g.bugs;
 
+  const getSwarmSpeed = (baseSpeed: number, speedPerWave: number, waveNum: number) => {
+    return (baseSpeed + waveNum * speedPerWave) * b.speedMultiplier * g.difficultyMultiplier;
+  };
+
+  const getHp = (baseHp: number, hpPerWave: number, waveNum: number) => {
+    return Math.ceil((baseHp + waveNum * hpPerWave) * b.hpMultiplier * g.difficultyMultiplier);
+  };
+
   return {
     basic: {
-      speed: (baseConfig.basic.baseSpeed + wave * baseConfig.basic.speedPerWave) * b.speedMultiplier * g.difficultyMultiplier,
-      hp: Math.ceil((baseConfig.basic.baseHp + wave * baseConfig.basic.hpPerWave) * b.hpMultiplier * g.difficultyMultiplier),
+      speed: getSwarmSpeed(baseConfig.basic.baseSpeed, baseConfig.basic.speedPerWave, wave),
+      hp: getHp(baseConfig.basic.baseHp, baseConfig.basic.hpPerWave, wave),
       score: Math.ceil(baseConfig.basic.score * b.scoreMultiplier),
     },
     scout: {
-      speed: (baseConfig.scout.baseSpeed + wave * baseConfig.scout.speedPerWave) * b.speedMultiplier * g.difficultyMultiplier,
-      hp: Math.ceil((baseConfig.scout.baseHp + wave * baseConfig.scout.hpPerWave) * b.hpMultiplier * g.difficultyMultiplier),
+      speed: getSwarmSpeed(baseConfig.scout.baseSpeed, baseConfig.scout.speedPerWave, wave),
+      hp: getHp(baseConfig.scout.baseHp, baseConfig.scout.hpPerWave, wave),
       score: Math.ceil(baseConfig.scout.score * b.scoreMultiplier),
     },
     tank: {
-      speed: (baseConfig.tank.baseSpeed + wave * baseConfig.tank.speedPerWave) * b.speedMultiplier * g.difficultyMultiplier,
-      hp: Math.ceil((baseConfig.tank.baseHp + wave * baseConfig.tank.hpPerWave) * b.hpMultiplier * g.difficultyMultiplier),
+      speed: getSwarmSpeed(baseConfig.tank.baseSpeed, baseConfig.tank.speedPerWave, wave),
+      hp: getHp(baseConfig.tank.baseHp, baseConfig.tank.hpPerWave, wave),
       score: Math.ceil(baseConfig.tank.score * b.scoreMultiplier),
+    },
+    swarmer: {
+      speed: getSwarmSpeed(baseConfig.swarmer.baseSpeed, baseConfig.swarmer.speedPerWave, wave),
+      hp: Math.max(1, getHp(baseConfig.swarmer.baseHp, baseConfig.swarmer.hpPerWave, wave)), // always at least 1 HP
+      score: Math.ceil(baseConfig.swarmer.score * b.scoreMultiplier),
+    },
+    healer: {
+      speed: getSwarmSpeed(baseConfig.healer.baseSpeed, baseConfig.healer.speedPerWave, wave),
+      hp: getHp(baseConfig.healer.baseHp, baseConfig.healer.hpPerWave, wave),
+      score: Math.ceil(baseConfig.healer.score * b.scoreMultiplier),
     },
   };
 }

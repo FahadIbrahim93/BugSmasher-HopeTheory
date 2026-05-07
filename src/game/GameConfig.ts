@@ -31,6 +31,10 @@ export const GameConfig = {
     basic: { color: '#ffffff', baseSpeed: 50, speedPerWave: 5, size: 15, score: 10, baseHp: 1, hpPerWave: 0 },
     scout: { color: '#00ffff', baseSpeed: 100, speedPerWave: 10, size: 12, score: 20, baseHp: 1, hpPerWave: 0 },
     tank:  { color: '#ff3333', baseSpeed: 30, speedPerWave: 3, size: 25, score: 50, baseHp: 3, hpPerWave: 0.33 },
+    // Swarmer: Small, fast, spawns mini-bugs on death
+    swarmer: { color: '#8a2be2', baseSpeed: 120, speedPerWave: 8, size: 10, score: 30, baseHp: 1, hpPerWave: 0 },
+    // Healer: Slow, heals nearby bugs periodically
+    healer:  { color: '#22c55e', baseSpeed: 40, speedPerWave: 2, size: 18, score: 60, baseHp: 2, hpPerWave: 0.2 },
   },
   powerups: {
     dropChance: 0.15,

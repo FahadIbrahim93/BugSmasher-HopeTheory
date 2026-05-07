@@ -19,6 +19,8 @@ export type AchievementId =
   | 'streak_3'         // 3 day streak
   | 'streak_7'         // 7 day streak
   | 'perfectionist'      // No misses in a game
+  | 'swarmer_slayer'     // Kill 10 swarmers
+  | 'healer_hunter'      // Kill 5 healers
   ;
 
 export interface Achievement {
@@ -39,6 +41,8 @@ export interface AchievementProgress {
   perfectGames: number;
   currentStreak: number;
   lastPlayedDate: string;
+  swarmerKills: number;
+  healerKills: number;
 }
 
 const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'id' | 'unlocked' | 'unlockedAt'>> = {
@@ -58,7 +62,9 @@ const ACHIEVEMENT_DATA: Record<AchievementId, Omit<Achievement, 'id' | 'unlocked
   survivor:          { title: 'Survivor',        description: 'Complete a wave', icon: '🛡️', xp_reward: 20 },
   streak_3:          { title: 'Dedicated',       description: '3 day streak', icon: '📅', xp_reward: 30 },
   streak_7:          { title: 'Committed',      description: '7 day streak', icon: '💎', xp_reward: 75 },
-  perfectionist:       { title: 'Perfectionist',  description: 'No misses in a game', icon: '🎯', xp_reward: 50 },
+  perfectionist:     { title: 'Perfectionist',   description: 'No misses in a game', icon: '🎯', xp_reward: 50 },
+  swarmer_slayer:    { title: 'Swarm Breaker',    description: 'Kill 10 swarmers', icon: '🐝', xp_reward: 40 },
+  healer_hunter:     { title: 'Plague Doctor',    description: 'Kill 5 healers', icon: '💚', xp_reward: 45 },
 };
 
 const STORAGE_KEY = 'bugsmasher_achievements';
