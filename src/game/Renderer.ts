@@ -1,4 +1,5 @@
 import { GameEngine, Bug, Powerup } from './GameEngine';
+import type { Boss } from './BossConfig';
 import { Splatter, Particle, Shockwave, Laser, ClickRipple, DamageNumber } from './ParticleSystem';
 
 export class Renderer {
@@ -14,42 +15,50 @@ export class Renderer {
     const height = this.engine.height;
 
     ctx.save();
-    
+
     if (this.engine.shakeTime > 0) {
       const dx = (Math.random() - 0.5) * this.engine.shakeMagnitude;
       const dy = (Math.random() - 0.5) * this.engine.shakeMagnitude;
       ctx.translate(dx, dy);
     }
-    
+
     // Fill with solid black first (since alpha is false)
     ctx.fillStyle = '#050505'; // Deep near-black
     ctx.fillRect(0, 0, width, height);
-    
+
     this.drawGrokBackground();
-    
+
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < this.engine.particleSystem.splatters.length; i++) {
-      if (this.engine.particleSystem.splatters[i].active) this.drawSplatter(this.engine.particleSystem.splatters[i]);
+      if (this.engine.particleSystem.splatters[i].active)
+        this.drawSplatter(this.engine.particleSystem.splatters[i]);
     }
     for (let i = 0; i < this.engine.particleSystem.shockwaves.length; i++) {
-      if (this.engine.particleSystem.shockwaves[i].active) this.drawShockwave(this.engine.particleSystem.shockwaves[i]);
+      if (this.engine.particleSystem.shockwaves[i].active)
+        this.drawShockwave(this.engine.particleSystem.shockwaves[i]);
     }
     for (let i = 0; i < this.engine.particleSystem.clickRipples.length; i++) {
-      if (this.engine.particleSystem.clickRipples[i].active) this.drawClickRipple(this.engine.particleSystem.clickRipples[i]);
+      if (this.engine.particleSystem.clickRipples[i].active)
+        this.drawClickRipple(this.engine.particleSystem.clickRipples[i]);
     }
     for (let i = 0; i < this.engine.particleSystem.damageNumbers.length; i++) {
-      if (this.engine.particleSystem.damageNumbers[i].active) this.drawDamageNumber(this.engine.particleSystem.damageNumbers[i]);
+      if (this.engine.particleSystem.damageNumbers[i].active)
+        this.drawDamageNumber(this.engine.particleSystem.damageNumbers[i]);
     }
     for (let i = 0; i < this.engine.particleSystem.particles.length; i++) {
-      if (this.engine.particleSystem.particles[i].active) this.drawParticle(this.engine.particleSystem.particles[i]);
+      if (this.engine.particleSystem.particles[i].active)
+        this.drawParticle(this.engine.particleSystem.particles[i]);
     }
     this.engine.particleSystem.lasers.forEach((l: Laser) => this.drawLaser(l));
     ctx.globalCompositeOperation = 'source-over';
-    
-    this.engine.powerups.forEach(p => this.drawPowerup(p));
+
+    this.engine.powerups.forEach((p) => this.drawPowerup(p));
     this.drawBase();
-    this.engine.bugs.forEach(b => this.drawBug(b));
-    
+    if (this.engine.boss) this.drawBoss(this.engine.boss);
+    this.engine.bugs.forEach((b) => this.drawBug(b));
+
+    if (this.engine.boss) this.drawBossHud(this.engine.boss);
+
     if (this.engine.multiplierTimer > 0) {
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 20px "JetBrains Mono", monospace';
@@ -85,7 +94,11 @@ export class Renderer {
       ctx.fillStyle = '#ffcc00';
       ctx.font = 'bold 20px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
-      ctx.fillText(`SYSTEM: OVERRIDE (${Math.ceil(this.engine.rapidFireTimer)}s)`, width / 2, this.engine.multiplierTimer > 0 ? 70 : 40);
+      ctx.fillText(
+        `SYSTEM: OVERRIDE (${Math.ceil(this.engine.rapidFireTimer)}s)`,
+        width / 2,
+        this.engine.multiplierTimer > 0 ? 70 : 40,
+      );
     }
 
     if (this.engine.freezeTimer > 0) {
@@ -99,7 +112,7 @@ export class Renderer {
       ctx.fillStyle = 'rgba(102, 204, 255, 0.08)';
       ctx.fillRect(0, 0, width, height);
     }
-    
+
     ctx.restore();
   }
 
@@ -108,7 +121,7 @@ export class Renderer {
     const t = this.engine.globalTime;
     const width = this.engine.width;
     const height = this.engine.height;
-    
+
     // Minimalist radial gradient (barely visible glow)
     const cx = width / 2;
     const cy = height / 2;
@@ -117,21 +130,21 @@ export class Renderer {
     gradient.addColorStop(1, 'transparent');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
-    
+
     // Simplify background on mobile to save fill rate
     if (this.engine.isMobile) return;
-    
+
     // Draw a subtle, slowly shifting topographical mesh
     ctx.lineWidth = 1;
     const gridSize = 80; // Large, spaced out grid
-    
+
     ctx.beginPath();
     for (let x = 0; x <= width; x += gridSize) {
       for (let y = 0; y <= height; y += 10) {
         // Create organic wave displacement using dual sine waves
-        const waveX = Math.sin((y * 0.005) + (t * 0.2)) * 20;
-        const waveY = Math.cos((x * 0.005) + (t * 0.15)) * 15;
-        
+        const waveX = Math.sin(y * 0.005 + t * 0.2) * 20;
+        const waveY = Math.cos(x * 0.005 + t * 0.15) * 15;
+
         if (y === 0) {
           ctx.moveTo(x + waveX, y + waveY);
         } else {
@@ -142,9 +155,9 @@ export class Renderer {
 
     for (let y = 0; y <= height; y += gridSize) {
       for (let x = 0; x <= width; x += 10) {
-        const waveX = Math.sin((y * 0.005) + (t * 0.2)) * 20;
-        const waveY = Math.cos((x * 0.005) + (t * 0.15)) * 15;
-        
+        const waveX = Math.sin(y * 0.005 + t * 0.2) * 20;
+        const waveY = Math.cos(x * 0.005 + t * 0.15) * 15;
+
         if (x === 0) {
           ctx.moveTo(x + waveX, y + waveY);
         } else {
@@ -152,22 +165,138 @@ export class Renderer {
         }
       }
     }
-    
+
     // Draw lines with a very faint, technical grey (brighter: 0.05 instead of 0.04)
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
     ctx.stroke();
+  }
+
+  drawBoss(boss: Boss) {
+    const ctx = this.engine.ctx;
+    ctx.save();
+    ctx.translate(boss.x, boss.y);
+
+    const phase = boss.config.phases[boss.phaseIndex];
+    const pulse = Math.sin(this.engine.globalTime * 6) * 4;
+    const legSwing = Math.sin(this.engine.globalTime * 10) * 8;
+
+    if (!this.engine.isMobile) {
+      ctx.shadowColor = boss.config.color;
+      ctx.shadowBlur = 28;
+    }
+
+    // Ant queen legs, readable even at small sizes.
+    ctx.strokeStyle = boss.config.color;
+    ctx.lineWidth = 4;
+    for (let i = -2; i <= 2; i++) {
+      const y = i * 14;
+      ctx.beginPath();
+      ctx.moveTo(-20, y);
+      ctx.lineTo(-boss.size * 0.9, y - 18 + legSwing * Math.sign(i || 1));
+      ctx.moveTo(20, y);
+      ctx.lineTo(boss.size * 0.9, y - 18 - legSwing * Math.sign(i || 1));
+      ctx.stroke();
+    }
+
+    // Abdomen and thorax.
+    ctx.fillStyle = 'rgba(0, 255, 204, 0.24)';
+    ctx.strokeStyle = boss.config.color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 18, boss.size * 0.7 + pulse, boss.size * 0.92, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(5, 5, 5, 0.95)';
+    ctx.beginPath();
+    ctx.ellipse(0, -20, boss.size * 0.52, boss.size * 0.46, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Crown mandibles.
+    ctx.strokeStyle = boss.config.accentColor;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(-14, -50);
+    ctx.lineTo(-34, -72);
+    ctx.moveTo(14, -50);
+    ctx.lineTo(34, -72);
+    ctx.stroke();
+
+    ctx.restore();
+
+    // Weak point in world space.
+    const weakPulse = Math.sin(boss.weakPoint.pulse * 8) * 5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(boss.weakPoint.x, boss.weakPoint.y, boss.weakPoint.radius + weakPulse, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255, 0, 255, 0.22)';
+    ctx.strokeStyle = boss.config.accentColor;
+    ctx.lineWidth = 2;
+    if (!this.engine.isMobile) {
+      ctx.shadowColor = boss.config.accentColor;
+      ctx.shadowBlur = 18;
+    }
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 11px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('CORE', boss.weakPoint.x, boss.weakPoint.y + 1);
+    ctx.restore();
+
+    // Phase name near boss for fast readability.
+    ctx.fillStyle = boss.config.accentColor;
+    ctx.font = 'bold 12px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(phase.name.toUpperCase(), boss.x, boss.y - boss.size - 34);
+  }
+
+  drawBossHud(boss: Boss) {
+    const ctx = this.engine.ctx;
+    const width = this.engine.width;
+    const barW = Math.min(520, width - 48);
+    const barH = 14;
+    const x = (width - barW) / 2;
+    const y = 18;
+    const hpRatio = Math.max(0, boss.hp / boss.maxHp);
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
+    ctx.fillRect(x - 10, y - 12, barW + 20, 54);
+    ctx.strokeStyle = boss.config.color;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 10, y - 12, barW + 20, 54);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+    ctx.fillRect(x, y + 18, barW, barH);
+    ctx.fillStyle = boss.config.color;
+    ctx.fillRect(x, y + 18, barW * hpRatio, barH);
+    ctx.strokeStyle = boss.config.accentColor;
+    ctx.strokeRect(x, y + 18, barW, barH);
+
+    ctx.fillStyle = boss.config.accentColor;
+    ctx.font = 'bold 14px "JetBrains Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      `${boss.config.name.toUpperCase()}  P${boss.phaseIndex + 1}/${boss.config.phases.length}`,
+      width / 2,
+      y + 8,
+    );
+    ctx.restore();
   }
 
   drawBase() {
     const ctx = this.engine.ctx;
     const cx = this.engine.width / 2;
     const cy = this.engine.height / 2;
-    
+
     ctx.save();
     ctx.translate(cx, cy);
-    
+
     const pulse = Math.sin(this.engine.globalTime * 5) * 5;
-    
+
     if (this.engine.shieldTimer > 0) {
       ctx.beginPath();
       ctx.arc(0, 0, 60 + pulse, 0, Math.PI * 2);
@@ -177,34 +306,34 @@ export class Renderer {
       ctx.fill();
       ctx.stroke();
     }
-    
+
     // Outer core container
     ctx.beginPath();
-    ctx.arc(0, 0, 40 + (pulse * 0.5), 0, Math.PI * 2);
+    ctx.arc(0, 0, 40 + pulse * 0.5, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0.05, (this.engine.health / this.engine.maxHealth) * 0.2)})`;
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
     ctx.lineWidth = 1;
     ctx.fill();
     ctx.stroke();
-    
+
     // Inner active core
     ctx.beginPath();
     ctx.arc(0, 0, 20, 0, Math.PI * 2);
     ctx.fillStyle = '#ffffff';
     if (!this.engine.isMobile) {
       // Glow shifts to red if critically damaged, otherwise stark white/cyan (stronger: shadowBlur = 30)
-      const isCritical = (this.engine.health / this.engine.maxHealth) < 0.3;
+      const isCritical = this.engine.health / this.engine.maxHealth < 0.3;
       ctx.shadowColor = isCritical ? '#ff3333' : '#ffffff';
       ctx.shadowBlur = 30;
     }
     ctx.fill();
-    
+
     ctx.fillStyle = '#050505'; // Dark text on white core
     ctx.font = '800 14px "JetBrains Mono", monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(`${Math.ceil(this.engine.health)}`, 0, 1);
-    
+
     ctx.restore();
   }
 
@@ -213,61 +342,65 @@ export class Renderer {
     ctx.save();
     ctx.translate(bug.x, bug.y);
     ctx.rotate(bug.rotation);
-    
+
     const legSwing = Math.sin(bug.walkCycle) * 0.8;
-    
+
     ctx.fillStyle = bug.color;
     // Remove the aggressive white outline for bugs to make them sleek flat vectors
     ctx.strokeStyle = bug.color;
     ctx.lineWidth = 1;
-    
+
     const scale = bug.size / 15;
     ctx.scale(scale, scale);
-    
+
     if (!this.engine.isMobile) {
       ctx.shadowColor = bug.color;
       ctx.shadowBlur = 12; // Slight glow on body
     }
-    
+
     for (let i = 0; i < 3; i++) {
       const yOffset = (i - 1) * 8;
       const swing = i % 2 === 0 ? legSwing : -legSwing;
-      
+
       ctx.beginPath();
       ctx.moveTo(0, yOffset);
       ctx.lineTo(-15, yOffset - 10 + swing * 10);
       ctx.lineTo(-25, yOffset + swing * 15);
       ctx.stroke();
-      
+
       ctx.beginPath();
       ctx.moveTo(0, yOffset);
       ctx.lineTo(15, yOffset - 10 - swing * 10);
       ctx.lineTo(25, yOffset - swing * 15);
       ctx.stroke();
     }
-    
+
     ctx.beginPath();
     ctx.ellipse(0, 5, 10, 15, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    
+
     ctx.beginPath();
     ctx.ellipse(0, -10, 8, 8, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    
+
     ctx.beginPath();
     ctx.arc(0, -20, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    
+
     // More prominent bug eyes (larger)
     ctx.fillStyle = '#050505'; // Dark inner core for bugs
-    ctx.beginPath(); ctx.arc(-4, -22, 3, 0, Math.PI * 2); ctx.fill(); // Larger: 3 instead of 2
-    ctx.beginPath(); ctx.arc(4, -22, 3, 0, Math.PI * 2); ctx.fill();  // Larger: 3 instead of 2
-    
+    ctx.beginPath();
+    ctx.arc(-4, -22, 3, 0, Math.PI * 2);
+    ctx.fill(); // Larger: 3 instead of 2
+    ctx.beginPath();
+    ctx.arc(4, -22, 3, 0, Math.PI * 2);
+    ctx.fill(); // Larger: 3 instead of 2
+
     ctx.restore();
-    
+
     if (bug.maxHp > 1) {
       ctx.fillStyle = '#f00';
       ctx.fillRect(bug.x - 15, bug.y - bug.size - 10, 30, 4);
@@ -280,16 +413,16 @@ export class Renderer {
     const ctx = this.engine.ctx;
     ctx.save();
     ctx.translate(p.x, p.y);
-    
+
     const pulse = Math.sin(this.engine.globalTime * 10) * 2;
     const glow = !this.engine.isMobile;
-    
+
     if (p.life < 2 && Math.floor(this.engine.globalTime * 10) % 2 === 0) {
       ctx.globalAlpha = 0.3;
     }
-    
+
     const size = p.size + pulse;
-    
+
     switch (p.type) {
       case 'shield':
         // Shield: Blue hexagon with shield icon
@@ -305,11 +438,14 @@ export class Renderer {
         ctx.fillStyle = 'rgba(0, 150, 255, 0.15)';
         ctx.strokeStyle = '#00ccff';
         ctx.lineWidth = 2;
-        if (glow) { ctx.shadowColor = '#00ccff'; ctx.shadowBlur = 15; }
+        if (glow) {
+          ctx.shadowColor = '#00ccff';
+          ctx.shadowBlur = 15;
+        }
         ctx.fill();
         ctx.stroke();
         break;
-        
+
       case 'multiplier':
         // Multiplier: White diamond with 2X
         ctx.rotate(this.engine.globalTime * 0.5);
@@ -322,12 +458,15 @@ export class Renderer {
         ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
-        if (glow) { ctx.shadowColor = '#ffffff'; ctx.shadowBlur = 15; }
+        if (glow) {
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 15;
+        }
         ctx.fill();
         ctx.stroke();
         ctx.rotate(-this.engine.globalTime * 0.5);
         break;
-        
+
       case 'rapid_fire':
         // Rapid Fire: Yellow lightning bolt
         ctx.save();
@@ -345,12 +484,15 @@ export class Renderer {
         ctx.fillStyle = 'rgba(255, 200, 0, 0.3)';
         ctx.strokeStyle = '#ffcc00';
         ctx.lineWidth = 2;
-        if (glow) { ctx.shadowColor = '#ffcc00'; ctx.shadowBlur = 15; }
+        if (glow) {
+          ctx.shadowColor = '#ffcc00';
+          ctx.shadowBlur = 15;
+        }
         ctx.fill();
         ctx.stroke();
         ctx.restore();
         break;
-        
+
       case 'slow_mo':
         // Slow Mo: Purple spiral
         ctx.save();
@@ -364,10 +506,13 @@ export class Renderer {
           ctx.lineWidth = 2;
           ctx.stroke();
         }
-        if (glow) { ctx.shadowColor = '#9966ff'; ctx.shadowBlur = 10; }
+        if (glow) {
+          ctx.shadowColor = '#9966ff';
+          ctx.shadowBlur = 10;
+        }
         ctx.restore();
         break;
-        
+
       case 'freeze':
         // Freeze: Cyan snowflake
         ctx.save();
@@ -385,10 +530,13 @@ export class Renderer {
           ctx.lineWidth = 2;
           ctx.stroke();
         }
-        if (glow) { ctx.shadowColor = '#66ccff'; ctx.shadowBlur = 10; }
+        if (glow) {
+          ctx.shadowColor = '#66ccff';
+          ctx.shadowBlur = 10;
+        }
         ctx.restore();
         break;
-        
+
       case 'spike_burst':
         // Spike Burst: Magenta star
         ctx.beginPath();
@@ -404,11 +552,44 @@ export class Renderer {
         ctx.fillStyle = 'rgba(255, 0, 255, 0.2)';
         ctx.strokeStyle = '#ff00ff';
         ctx.lineWidth = 2;
-        if (glow) { ctx.shadowColor = '#ff00ff'; ctx.shadowBlur = 15; }
+        if (glow) {
+          ctx.shadowColor = '#ff00ff';
+          ctx.shadowBlur = 15;
+        }
         ctx.fill();
         ctx.stroke();
         break;
-        
+
+      case 'magnet':
+        // Magnet: Green polarity ring that attracts nearby powerups
+        ctx.save();
+        ctx.rotate(this.engine.globalTime * 1.8);
+        ctx.beginPath();
+        ctx.arc(0, 0, size + 12, Math.PI * 0.15, Math.PI * 1.85);
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        if (glow) {
+          ctx.shadowColor = '#22c55e';
+          ctx.shadowBlur = 18;
+        }
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(-(size + 10), -4);
+        ctx.lineTo(-(size + 18), -10);
+        ctx.moveTo(size + 10, -4);
+        ctx.lineTo(size + 18, -10);
+        ctx.stroke();
+        ctx.restore();
+        ctx.beginPath();
+        ctx.arc(0, 0, size + 5, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.16)';
+        ctx.strokeStyle = '#86efac';
+        ctx.lineWidth = 1;
+        ctx.fill();
+        ctx.stroke();
+        break;
+
       case 'nuke': {
         // Nuke: Red warning
         const flash = Math.sin(this.engine.globalTime * 15) > 0;
@@ -417,10 +598,13 @@ export class Renderer {
         ctx.fillStyle = flash ? 'rgba(255, 50, 50, 0.3)' : 'rgba(50, 0, 0, 0.5)';
         ctx.strokeStyle = '#ff3333';
         ctx.lineWidth = 3;
-        if (glow) { ctx.shadowColor = '#ff3333'; ctx.shadowBlur = 20; }
+        if (glow) {
+          ctx.shadowColor = '#ff3333';
+          ctx.shadowBlur = 20;
+        }
         ctx.fill();
         ctx.stroke();
-        
+
         ctx.beginPath();
         ctx.moveTo(0, -size);
         ctx.lineTo(0, size);
@@ -431,7 +615,7 @@ export class Renderer {
         ctx.stroke();
         break;
       }
-        
+
       default:
         // Default: Diamond shape
         if (p.collection === 'hover') {
@@ -451,7 +635,7 @@ export class Renderer {
           ctx.lineWidth = 1;
           ctx.stroke();
         }
-        
+
         ctx.rotate(this.engine.globalTime);
         ctx.beginPath();
         ctx.moveTo(0, -(size + pulse));
@@ -459,18 +643,21 @@ export class Renderer {
         ctx.lineTo(0, size + pulse);
         ctx.lineTo(-(size + pulse), 0);
         ctx.closePath();
-        
+
         ctx.fillStyle = 'rgba(5, 5, 5, 0.9)';
         ctx.fill();
         ctx.strokeStyle = p.color;
         ctx.lineWidth = 2;
-        if (glow) { ctx.shadowColor = p.color; ctx.shadowBlur = 10; }
+        if (glow) {
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 10;
+        }
         ctx.stroke();
-        
+
         ctx.rotate(-this.engine.globalTime);
         break;
     }
-    
+
     // Draw icon
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 11px "JetBrains Mono", monospace';
@@ -478,7 +665,7 @@ export class Renderer {
     ctx.textBaseline = 'middle';
     ctx.shadowBlur = 0;
     ctx.fillText(p.icon, 0, 1);
-    
+
     ctx.restore();
   }
 
@@ -487,7 +674,7 @@ export class Renderer {
     ctx.save();
     ctx.translate(s.x, s.y);
     ctx.rotate(s.rotation);
-    
+
     const alpha = Math.min(1, s.life / 2);
     ctx.globalAlpha = alpha;
     ctx.fillStyle = s.color;
@@ -495,11 +682,11 @@ export class Renderer {
       ctx.shadowColor = s.color;
       ctx.shadowBlur = 15;
     }
-    
+
     ctx.beginPath();
     ctx.arc(0, 0, s.size, 0, Math.PI * 2);
     ctx.fill();
-    
+
     s.drops.forEach((drop: any) => {
       ctx.beginPath();
       ctx.moveTo(0, 0);
@@ -507,12 +694,12 @@ export class Renderer {
       ctx.lineWidth = drop.size;
       ctx.strokeStyle = s.color;
       ctx.stroke();
-      
+
       ctx.beginPath();
       ctx.arc(drop.x, drop.y, drop.size, 0, Math.PI * 2);
       ctx.fill();
     });
-    
+
     ctx.restore();
   }
 
@@ -521,7 +708,7 @@ export class Renderer {
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.rotation);
-    
+
     const alpha = p.life / p.maxLife;
     ctx.globalAlpha = alpha;
     ctx.fillStyle = p.color;
@@ -529,19 +716,19 @@ export class Renderer {
       ctx.shadowColor = p.color;
       ctx.shadowBlur = 10;
     }
-    
+
     ctx.beginPath();
     ctx.moveTo(0, -p.size);
-    ctx.lineTo(p.size/3, -p.size/3);
+    ctx.lineTo(p.size / 3, -p.size / 3);
     ctx.lineTo(p.size, 0);
-    ctx.lineTo(p.size/3, p.size/3);
+    ctx.lineTo(p.size / 3, p.size / 3);
     ctx.lineTo(0, p.size);
-    ctx.lineTo(-p.size/3, p.size/3);
+    ctx.lineTo(-p.size / 3, p.size / 3);
     ctx.lineTo(-p.size, 0);
-    ctx.lineTo(-p.size/3, -p.size/3);
+    ctx.lineTo(-p.size / 3, -p.size / 3);
     ctx.closePath();
     ctx.fill();
-    
+
     ctx.restore();
   }
 

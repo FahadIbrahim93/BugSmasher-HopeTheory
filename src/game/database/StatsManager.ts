@@ -16,11 +16,11 @@ let supabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient | null {
   if (supabase) return supabase;
-  
+
   const url = getSupabaseUrl();
   const key = getSupabaseAnonKey();
   if (!url || !key) return null;
-  
+
   supabase = createClient(url, key);
   return supabase;
 }
@@ -39,29 +39,28 @@ export class StatsManager {
     this.stats = parseJSON<UserStats | null>(statsData, null, 'StatsManager.stats');
 
     const achievementsData = localStorage.getItem(ACHIEVEMENTS_KEY);
-    const saved = parseJSON<Achievement[]>(
-      achievementsData,
-      [],
-      'StatsManager.achievements'
-    );
-    
-    this.achievements = ACHIEVEMENTS_LIST.map(a => {
+    const saved = parseJSON<Achievement[]>(achievementsData, [], 'StatsManager.achievements');
+
+    this.achievements = ACHIEVEMENTS_LIST.map((a) => {
       const savedAch = saved.find((s: Achievement) => s.id === a.id);
       return savedAch || a;
     });
 
     logger.info('StatsManager', 'Loaded stats', {
       hasStats: !!this.stats,
-      achieveCount: this.achievements.length
+      achieveCount: this.achievements.length,
     });
   }
 
   private save(): void {
     try {
       if (this.stats) {
-        localStorage.setItem(STATS_KEY, JSON.stringify(this.stats));
+        localStorage.setItem(STATS_KEY, stringifyJSON(this.stats, 'StatsManager.save.stats'));
       }
-      localStorage.setItem(ACHIEVEMENTS_KEY, JSON.stringify(this.achievements));
+      localStorage.setItem(
+        ACHIEVEMENTS_KEY,
+        stringifyJSON(this.achievements, 'StatsManager.save.achievements'),
+      );
       this.notify();
     } catch (e) {
       console.warn('Failed to save stats:', e);
@@ -69,7 +68,7 @@ export class StatsManager {
   }
 
   private notify(): void {
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach((listener) => listener());
   }
 
   subscribe(listener: () => void): () => void {
@@ -118,22 +117,25 @@ export class StatsManager {
     if (!sb || !this.stats) return;
 
     try {
-      await sb.from('user_stats').upsert({
-        profile_id: this.stats.profile_id,
-        total_playtime: this.stats.total_playtime,
-        total_kills: this.stats.total_kills,
-        total_score: this.stats.total_score,
-        highest_wave: this.stats.highest_wave,
-        games_played: this.stats.games_played,
-        bugs_smashed: this.stats.bugs_smashed,
-        enemies_killed: this.stats.enemies_killed,
-        powerups_collected: this.stats.powerups_collected,
-        upgrades_purchased: this.stats.upgrades_purchased,
-        achievements_unlocked: this.stats.achievements_unlocked,
-        current_streak: this.stats.current_streak,
-        longest_streak: this.stats.longest_streak,
-        last_played_at: this.stats.last_played_at,
-      }, { onConflict: 'profile_id' });
+      await sb.from('user_stats').upsert(
+        {
+          profile_id: this.stats.profile_id,
+          total_playtime: this.stats.total_playtime,
+          total_kills: this.stats.total_kills,
+          total_score: this.stats.total_score,
+          highest_wave: this.stats.highest_wave,
+          games_played: this.stats.games_played,
+          bugs_smashed: this.stats.bugs_smashed,
+          enemies_killed: this.stats.enemies_killed,
+          powerups_collected: this.stats.powerups_collected,
+          upgrades_purchased: this.stats.upgrades_purchased,
+          achievements_unlocked: this.stats.achievements_unlocked,
+          current_streak: this.stats.current_streak,
+          longest_streak: this.stats.longest_streak,
+          last_played_at: this.stats.last_played_at,
+        },
+        { onConflict: 'profile_id' },
+      );
     } catch (e) {
       console.warn('Stats cloud sync failed:', e);
     }
@@ -285,7 +287,7 @@ export class StatsManager {
   }
 
   getUnlockedCount(): number {
-    return this.achievements.filter(a => a.unlocked).length;
+    return this.achievements.filter((a) => a.unlocked).length;
   }
 
   getTotalCount(): number {

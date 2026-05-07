@@ -16,10 +16,16 @@ export class WaveManager {
 
   startWave() {
     this.waveActive = true;
-    this.bugsToSpawn = GameConfig.waves.baseBugs + this.engine.wave * GameConfig.waves.bugsPerWave;
     this.spawnTimer = 0;
     // Reset special cooldowns on new wave
     this.specialCooldowns = {};
+
+    const biomeId = this.engine.currentBiome?.id ?? biomeManager.getCurrentBiome().id;
+    const prestigeLevel = this.engine.saveManager.getPrestigeLevel();
+    const boss = this.engine.bossManager.startBossForWave(this.engine.wave, biomeId, prestigeLevel);
+    this.bugsToSpawn = boss
+      ? 0
+      : GameConfig.waves.baseBugs + this.engine.wave * GameConfig.waves.bugsPerWave;
   }
 
   update(dt: number) {
@@ -32,7 +38,7 @@ export class WaveManager {
       this.spawnTimer += dt;
       const baseSpawnRate = Math.max(
         GameConfig.waves.minSpawnRate,
-        GameConfig.waves.baseSpawnRate - this.engine.wave * GameConfig.waves.spawnRateReduction
+        GameConfig.waves.baseSpawnRate - this.engine.wave * GameConfig.waves.spawnRateReduction,
       );
       // Harder biomes spawn faster
       const difficultyMult = biomeManager.getDifficulty(this.engine.currentBiome?.id);
@@ -42,31 +48,36 @@ export class WaveManager {
         this.spawnTimer = 0;
         this.spawnBug();
       }
-    } else if (this.engine.bugs.length === 0) {
-      this.waveActive = false;
-      const completedWave = this.engine.wave;
-      this.engine.saveManager.setHighestWave(completedWave);
-
-      const newlyUnlocked = biomeManager.checkUnlocks(
-        completedWave,
-        this.engine.saveManager.getHighScore(),
-        this.engine.saveManager.getPrestigeLevel()
-      );
-
-      for (const biomeId of newlyUnlocked) {
-        this.engine.saveManager.unlockBiome(biomeId);
-      }
-
-      this.engine.wave++;
-
-      // Award XP for completing wave (scaled by biome difficulty)
-      const difficultyMult = biomeManager.getDifficulty(this.engine.currentBiome?.id);
-      const waveXP = Math.floor(completedWave * 10 * difficultyMult);
-      this.engine.awardXP(waveXP, 'wave_complete');
-
-      this.engine.onWaveComplete?.(completedWave);
-      this.engine.stop();
+    } else if (this.engine.bugs.length === 0 && !this.engine.boss) {
+      this.completeWave();
     }
+  }
+
+  completeWave() {
+    if (!this.waveActive) return;
+    this.waveActive = false;
+    const completedWave = this.engine.wave;
+    this.engine.saveManager.setHighestWave(completedWave);
+
+    const newlyUnlocked = biomeManager.checkUnlocks(
+      completedWave,
+      this.engine.saveManager.getHighScore(),
+      this.engine.saveManager.getPrestigeLevel(),
+    );
+
+    for (const biomeId of newlyUnlocked) {
+      this.engine.saveManager.unlockBiome(biomeId);
+    }
+
+    this.engine.wave++;
+
+    // Award XP for completing wave (scaled by biome difficulty)
+    const difficultyMult = biomeManager.getDifficulty(this.engine.currentBiome?.id);
+    const waveXP = Math.floor(completedWave * 10 * difficultyMult);
+    this.engine.awardXP(waveXP, 'wave_complete');
+
+    this.engine.onWaveComplete?.(completedWave);
+    this.engine.stop();
   }
 
   private updateSpecialEffects(dt: number) {
@@ -91,10 +102,19 @@ export class WaveManager {
           if (bug.active && bug.type === 'phase') {
             // Teleport to random edge
             const edge = Math.floor(Math.random() * 4);
-            if (edge === 0) { bug.x = Math.random() * this.engine.width; bug.y = -30; }
-            else if (edge === 1) { bug.x = this.engine.width + 30; bug.y = Math.random() * this.engine.height; }
-            else if (edge === 2) { bug.x = Math.random() * this.engine.width; bug.y = this.engine.height + 30; }
-            else { bug.x = -30; bug.y = Math.random() * this.engine.height; }
+            if (edge === 0) {
+              bug.x = Math.random() * this.engine.width;
+              bug.y = -30;
+            } else if (edge === 1) {
+              bug.x = this.engine.width + 30;
+              bug.y = Math.random() * this.engine.height;
+            } else if (edge === 2) {
+              bug.x = Math.random() * this.engine.width;
+              bug.y = this.engine.height + 30;
+            } else {
+              bug.x = -30;
+              bug.y = Math.random() * this.engine.height;
+            }
             // Spawn shimmer particles
             this.engine.particleSystem.spawnShockwave(bug.x, bug.y, '#a855f7', 80);
           }
@@ -108,11 +128,21 @@ export class WaveManager {
     this.bugsToSpawn--;
 
     const edge = Math.floor(Math.random() * 4);
-    let x = 0, y = 0;
-    if (edge === 0) { x = Math.random() * this.engine.width; y = -50; }
-    else if (edge === 1) { x = this.engine.width + 50; y = Math.random() * this.engine.height; }
-    else if (edge === 2) { x = Math.random() * this.engine.width; y = this.engine.height + 50; }
-    else { x = -50; y = Math.random() * this.engine.height; }
+    let x = 0,
+      y = 0;
+    if (edge === 0) {
+      x = Math.random() * this.engine.width;
+      y = -50;
+    } else if (edge === 1) {
+      x = this.engine.width + 50;
+      y = Math.random() * this.engine.height;
+    } else if (edge === 2) {
+      x = Math.random() * this.engine.width;
+      y = this.engine.height + 50;
+    } else {
+      x = -50;
+      y = Math.random() * this.engine.height;
+    }
 
     const wave = this.engine.wave;
     const biome = biomeManager.getCurrentBiome();
@@ -134,7 +164,10 @@ export class WaveManager {
     const extraRoll = Math.random();
     if (biome.gameplay.bugs.extraTypes.length > 0 && extraRoll < 0.1) {
       // 10% chance of extra type
-      type = biome.gameplay.bugs.extraTypes[Math.floor(Math.random() * biome.gameplay.bugs.extraTypes.length)];
+      type =
+        biome.gameplay.bugs.extraTypes[
+          Math.floor(Math.random() * biome.gameplay.bugs.extraTypes.length)
+        ];
     } else if (r < g.basicWeight) {
       type = 'basic';
     } else if (r < g.basicWeight + g.scoutWeight) {
@@ -208,7 +241,8 @@ export class WaveManager {
 
     this.engine.bugs.push({
       active: true,
-      x, y,
+      x,
+      y,
       type,
       speed,
       color,
@@ -223,12 +257,19 @@ export class WaveManager {
   }
 
   /** Called when a golden bug dies — spawns 2 mini golden bugs */
-  onBugDeath(bug: { type: string; x: number; y: number; color: string; size: number; scoreValue: number }) {
+  onBugDeath(bug: {
+    type: string;
+    x: number;
+    y: number;
+    color: string;
+    size: number;
+    scoreValue: number;
+  }) {
     const biome = biomeManager.getCurrentBiome();
     if (biome.gameplay.specialEffect === 'split' && bug.type === 'golden') {
       // Spawn 2 mini bugs
       for (let i = 0; i < 2; i++) {
-        const angle = (Math.PI * 2 / 2) * i + Math.random() * 0.5;
+        const angle = ((Math.PI * 2) / 2) * i + Math.random() * 0.5;
         const dist = 30;
         this.engine.bugs.push({
           active: true,

@@ -18,7 +18,13 @@ import type { GameStateSnapshot } from '../game/database/types';
 
 const PRESTIGE_THRESHOLD = 1000; // Minimum score to unlock prestige offer
 
-export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resumeState?: GameStateSnapshot | null }) {
+export function Game({
+  onMainMenu,
+  resumeState,
+}: {
+  onMainMenu: () => void;
+  resumeState?: GameStateSnapshot | null;
+}) {
   const [isGameOver, setIsGameOver] = useState(false);
   const [finalWaves, setFinalWaves] = useState(1);
   const [finalKills, setFinalKills] = useState(0);
@@ -39,6 +45,9 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [finalBiomeId, setFinalBiomeId] = useState('neon_core');
+  const [finalBossId, setFinalBossId] = useState<string | undefined>();
+  const [finalBossOutcome, setFinalBossOutcome] = useState<'victory' | 'defeat' | undefined>();
+  const [finalBossTime, setFinalBossTime] = useState<number | undefined>();
   const [gameId, setGameId] = useState(0);
   const [, setShowBiomeSelect] = useState(false);
   const isLoggedIn = !!authManager.getUser();
@@ -59,48 +68,69 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
 
   const engineRef = useRef<GameEngine | null>(null);
 
-  const handleGameOver = useCallback((score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number, biomeId: string) => {
-    const ptsEarned = Math.floor(score / 100);
-    const prestigeLevel = saveManager.getPrestigeLevel();
-    Math.floor(100 * Math.pow(1.5, prestigeLevel));
+  const handleGameOver = useCallback(
+    (
+      score: number,
+      waves: number,
+      kills: number,
+      sessionXP: number,
+      sessionCrystals: number,
+      missCount: number,
+      playTimeSeconds: number,
+      biomeId: string,
+      bossId?: string,
+      bossOutcome?: 'victory' | 'defeat',
+      bossTimeSeconds?: number,
+    ) => {
+      const ptsEarned = Math.floor(score / 100);
+      const prestigeLevel = saveManager.getPrestigeLevel();
+      Math.floor(100 * Math.pow(1.5, prestigeLevel));
 
-    // Check for biome unlocks
-    const highScore = saveManager.getHighScore();
-    const highestWave = saveManager.getHighestWave();
-    const unlocked = biomeManager.checkUnlocks(highestWave, highScore, prestigeLevel);
-    if (unlocked.length > 0) {
-      setNewBiomes(unlocked);
-    }
+      // Check for biome unlocks
+      const highScore = saveManager.getHighScore();
+      const highestWave = saveManager.getHighestWave();
+      const unlocked = biomeManager.checkUnlocks(highestWave, highScore, prestigeLevel);
+      if (unlocked.length > 0) {
+        setNewBiomes(unlocked);
+      }
 
-    setFinalScore(score);
-    setFinalWaves(waves);
-    setFinalKills(kills);
-    setFinalSessionXP(sessionXP);
-    setFinalSessionCrystals(sessionCrystals);
-    setFinalMissCount(missCount);
-    setFinalPlayTime(playTimeSeconds);
-    setFinalBiomeId(biomeId);
-    setPrestigePointsEarned(ptsEarned);
+      setFinalScore(score);
+      setFinalWaves(waves);
+      setFinalKills(kills);
+      setFinalSessionXP(sessionXP);
+      setFinalSessionCrystals(sessionCrystals);
+      setFinalMissCount(missCount);
+      setFinalPlayTime(playTimeSeconds);
+      setFinalBiomeId(biomeId);
+      setFinalBossId(bossId);
+      setFinalBossOutcome(bossOutcome);
+      setFinalBossTime(bossTimeSeconds);
+      setPrestigePointsEarned(ptsEarned);
 
-    // Offer prestige if player earned enough points and hasn't hit the threshold
-    if (ptsEarned >= PRESTIGE_THRESHOLD) {
-      setShowPrestige(true);
-    } else {
-      setShowPrestige(false);
-    }
+      // Offer prestige if player earned enough points and hasn't hit the threshold
+      if (ptsEarned >= PRESTIGE_THRESHOLD) {
+        setShowPrestige(true);
+      } else {
+        setShowPrestige(false);
+      }
 
-    setIsGameOver(true);
-    cloudSaveManager.deleteSave();
-  }, []);
+      setIsGameOver(true);
+      cloudSaveManager.deleteSave();
+    },
+    [],
+  );
 
   const handlePrestigeComplete = useCallback(() => {
     setShowPrestige(false);
     setIsGameOver(false);
     setIsUpgrading(false);
     setFinalScore(0);
+    setFinalBossId(undefined);
+    setFinalBossOutcome(undefined);
+    setFinalBossTime(undefined);
     setCurrentWave(1);
     setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
-    setGameId(id => id + 1);
+    setGameId((id) => id + 1);
     onMainMenu();
   }, [onMainMenu]);
 
@@ -179,10 +209,13 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
     setIsGameOver(false);
     setIsUpgrading(false);
     setFinalScore(0);
+    setFinalBossId(undefined);
+    setFinalBossOutcome(undefined);
+    setFinalBossTime(undefined);
     setCurrentWave(1);
     setUpgradeLevels({ health: 0, radius: 0, turret: 0 });
     setFinalBiomeId('neon_core');
-    setGameId(id => id + 1);
+    setGameId((id) => id + 1);
   };
 
   return (
@@ -195,7 +228,9 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
         resumeState={resumeState}
       />
 
-      {!isGameOver && !isUpgrading && <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />}
+      {!isGameOver && !isUpgrading && (
+        <HUD engineRef={engineRef} onPauseToggle={togglePause} isPaused={isPaused} />
+      )}
 
       {isPaused && !isUpgrading && !isGameOver && (
         <PauseMenu
@@ -219,9 +254,7 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
         />
       )}
 
-      {!isGameOver && !isUpgrading && (
-        <TutorialOverlay engineRef={engineRef} />
-      )}
+      {!isGameOver && !isUpgrading && <TutorialOverlay engineRef={engineRef} />}
 
       {showPrestige && (
         <PrestigeScreen
@@ -241,6 +274,9 @@ export function Game({ onMainMenu, resumeState }: { onMainMenu: () => void; resu
           sessionXP={finalSessionXP}
           sessionCrystals={finalSessionCrystals}
           biomeId={finalBiomeId}
+          bossId={finalBossId}
+          bossOutcome={finalBossOutcome}
+          bossTimeSeconds={finalBossTime}
           onRetry={handleRetry}
           onMainMenu={onMainMenu}
           newBiomes={newBiomes}

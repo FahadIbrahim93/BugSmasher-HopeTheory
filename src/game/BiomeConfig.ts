@@ -17,9 +17,9 @@ export interface BiomeBugConfig {
 }
 
 export interface BiomePowerupConfig {
-  dropChanceMultiplier: number;   // ×base drop rate
-  preferredTypes: string[];       // weighted toward these
-  rareBoost: number;              // 1+N chance of rare powerups
+  dropChanceMultiplier: number; // ×base drop rate
+  preferredTypes: string[]; // weighted toward these
+  rareBoost: number; // 1+N chance of rare powerups
 }
 
 export interface BiomeGameplay {
@@ -68,48 +68,108 @@ export interface Biome {
 // ── Gameplay per biome ──────────────────────────────────────────────────────
 
 const NEON_CORE_BUGS: BiomeBugConfig = {
-  basicWeight: 0.70, scoutWeight: 0.20, tankWeight: 0.10,
-  speedMultiplier: 1.0, hpMultiplier: 1.0, scoreMultiplier: 1.0,
+  basicWeight: 0.7,
+  scoutWeight: 0.2,
+  tankWeight: 0.1,
+  speedMultiplier: 1.0,
+  hpMultiplier: 1.0,
+  scoreMultiplier: 1.0,
   extraTypes: [],
 };
 const NEON_CORE_POWERUPS: BiomePowerupConfig = {
-  dropChanceMultiplier: 1.0, preferredTypes: [], rareBoost: 0,
+  dropChanceMultiplier: 1.0,
+  preferredTypes: [],
+  rareBoost: 0,
 };
 
 const QUANTUM_VOID_BUGS: BiomeBugConfig = {
-  basicWeight: 0.40, scoutWeight: 0.45, tankWeight: 0.15,
-  speedMultiplier: 1.15, hpMultiplier: 0.85, scoreMultiplier: 1.1,
+  basicWeight: 0.4,
+  scoutWeight: 0.45,
+  tankWeight: 0.15,
+  speedMultiplier: 1.15,
+  hpMultiplier: 0.85,
+  scoreMultiplier: 1.1,
   extraTypes: ['phase'], // phase bugs phase in/out — harder to click
 };
 const QUANTUM_VOID_POWERUPS: BiomePowerupConfig = {
-  dropChanceMultiplier: 1.3, preferredTypes: ['slow_mo', 'freeze'], rareBoost: 1,
+  dropChanceMultiplier: 1.3,
+  preferredTypes: ['slow_mo', 'freeze'],
+  rareBoost: 1,
 };
 
 const EMBER_DEPTHS_BUGS: BiomeBugConfig = {
-  basicWeight: 0.35, scoutWeight: 0.20, tankWeight: 0.45,
-  speedMultiplier: 1.05, hpMultiplier: 1.25, scoreMultiplier: 1.2,
+  basicWeight: 0.35,
+  scoutWeight: 0.2,
+  tankWeight: 0.45,
+  speedMultiplier: 1.05,
+  hpMultiplier: 1.25,
+  scoreMultiplier: 1.2,
   extraTypes: ['ember'], // ember bugs leave lava trail
 };
 const EMBER_DEPTHS_POWERUPS: BiomePowerupConfig = {
-  dropChanceMultiplier: 1.5, preferredTypes: ['shield', 'freeze'], rareBoost: 2,
+  dropChanceMultiplier: 1.5,
+  preferredTypes: ['shield', 'freeze'],
+  rareBoost: 2,
 };
 
 const FROSTBYTE_BUGS: BiomeBugConfig = {
-  basicWeight: 0.50, scoutWeight: 0.30, tankWeight: 0.20,
-  speedMultiplier: 0.85, hpMultiplier: 1.1, scoreMultiplier: 1.15,
+  basicWeight: 0.5,
+  scoutWeight: 0.3,
+  tankWeight: 0.2,
+  speedMultiplier: 0.85,
+  hpMultiplier: 1.1,
+  scoreMultiplier: 1.15,
   extraTypes: ['frost'], // frost bugs slow the player
 };
 const FROSTBYTE_POWERUPS: BiomePowerupConfig = {
-  dropChanceMultiplier: 1.2, preferredTypes: ['rapid_fire', 'multiplier'], rareBoost: 1,
+  dropChanceMultiplier: 1.2,
+  preferredTypes: ['rapid_fire', 'multiplier'],
+  rareBoost: 1,
 };
 
 const GOLDEN_CACHE_BUGS: BiomeBugConfig = {
-  basicWeight: 0.30, scoutWeight: 0.30, tankWeight: 0.40,
-  speedMultiplier: 1.25, hpMultiplier: 1.5, scoreMultiplier: 1.5,
+  basicWeight: 0.3,
+  scoutWeight: 0.3,
+  tankWeight: 0.4,
+  speedMultiplier: 1.25,
+  hpMultiplier: 1.5,
+  scoreMultiplier: 1.5,
   extraTypes: ['golden'], // golden bugs are rare but worth 3× score
 };
 const GOLDEN_CACHE_POWERUPS: BiomePowerupConfig = {
-  dropChanceMultiplier: 2.0, preferredTypes: ['nuke', 'spike_burst', 'multiplier'], rareBoost: 3,
+  dropChanceMultiplier: 2.0,
+  preferredTypes: ['nuke', 'spike_burst', 'multiplier'],
+  rareBoost: 3,
+};
+
+const VOID_ABYSS_BUGS: BiomeBugConfig = {
+  basicWeight: 0.3,
+  scoutWeight: 0.45,
+  tankWeight: 0.25,
+  speedMultiplier: 1.35,
+  hpMultiplier: 1.35,
+  scoreMultiplier: 1.65,
+  extraTypes: ['phase'], // void phase bugs teleport under heavy wave pressure
+};
+const VOID_ABYSS_POWERUPS: BiomePowerupConfig = {
+  dropChanceMultiplier: 1.6,
+  preferredTypes: ['freeze', 'slow_mo', 'magnet'],
+  rareBoost: 2,
+};
+
+const GOLDEN_SPIRE_BUGS: BiomeBugConfig = {
+  basicWeight: 0.25,
+  scoutWeight: 0.25,
+  tankWeight: 0.5,
+  speedMultiplier: 1.2,
+  hpMultiplier: 1.9,
+  scoreMultiplier: 2.1,
+  extraTypes: ['golden'], // regenerating golden elites create relentless pressure
+};
+const GOLDEN_SPIRE_POWERUPS: BiomePowerupConfig = {
+  dropChanceMultiplier: 2.2,
+  preferredTypes: ['nuke', 'spike_burst', 'magnet'],
+  rareBoost: 4,
 };
 
 export const BIOMES: Biome[] = [
@@ -272,6 +332,71 @@ export const BIOMES: Biome[] = [
     },
     unlockRequirement: { prestigeLevel: 1 },
   },
+
+  {
+    id: 'void_abyss',
+    name: 'Void Abyss',
+    description: 'Wave-20 anomaly horizon',
+    tagline: 'Abyss Protocol',
+    theme: {
+      background: '#020112',
+      gridColor: 'rgba(99, 102, 241, 0.16)',
+      gridColorSecondary: 'rgba(99, 102, 241, 0.05)',
+      coreColor: '#6366f1',
+      coreGlow: 'rgba(129, 140, 248, 0.55)',
+      fogColor: 'rgba(67, 56, 202, 0.04)',
+    },
+    bugs: {
+      baseColor: '#c7d2fe',
+      scoutColor: '#818cf8',
+      tankColor: '#a78bfa',
+      eliteColor: '#f0abfc',
+    },
+    particles: {
+      splatter: '#6366f1',
+      glow: '#818cf8',
+    },
+    gameplay: {
+      bugs: VOID_ABYSS_BUGS,
+      powerups: VOID_ABYSS_POWERUPS,
+      specialEffect: 'teleport',
+      specialDesc: 'Void phase — bugs blink from the edge of perception',
+      difficultyMultiplier: 2.25,
+    },
+    unlockRequirement: { wavesCompleted: 20 },
+  },
+  {
+    id: 'golden_spire',
+    name: 'Golden Spire',
+    description: 'Prestige apex defense trial',
+    tagline: 'Ascendant Protocol',
+    theme: {
+      background: '#120b02',
+      gridColor: 'rgba(245, 158, 11, 0.18)',
+      gridColorSecondary: 'rgba(245, 158, 11, 0.06)',
+      coreColor: '#f59e0b',
+      coreGlow: 'rgba(251, 191, 36, 0.6)',
+      fogColor: 'rgba(245, 158, 11, 0.04)',
+    },
+    bugs: {
+      baseColor: '#fef3c7',
+      scoutColor: '#facc15',
+      tankColor: '#f97316',
+      eliteColor: '#fb7185',
+    },
+    particles: {
+      splatter: '#f59e0b',
+      glow: '#fbbf24',
+    },
+    gameplay: {
+      bugs: GOLDEN_SPIRE_BUGS,
+      powerups: GOLDEN_SPIRE_POWERUPS,
+      specialEffect: 'regen',
+      specialDesc: 'Regenerating elites — keep pressure on every target',
+      difficultyMultiplier: 2.75,
+    },
+    unlockRequirement: { prestigeLevel: 3 },
+  },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -280,25 +405,46 @@ export const BIOMES: Biome[] = [
 export function getBiomeBugStats(
   biome: Biome,
   wave: number,
-  baseConfig: typeof import('./GameConfig').GameConfig.bugs
+  baseConfig: typeof import('./GameConfig').GameConfig.bugs,
 ) {
   const g = biome.gameplay;
   const b = g.bugs;
 
   return {
     basic: {
-      speed: (baseConfig.basic.baseSpeed + wave * baseConfig.basic.speedPerWave) * b.speedMultiplier * g.difficultyMultiplier,
-      hp: Math.ceil((baseConfig.basic.baseHp + wave * baseConfig.basic.hpPerWave) * b.hpMultiplier * g.difficultyMultiplier),
+      speed:
+        (baseConfig.basic.baseSpeed + wave * baseConfig.basic.speedPerWave) *
+        b.speedMultiplier *
+        g.difficultyMultiplier,
+      hp: Math.ceil(
+        (baseConfig.basic.baseHp + wave * baseConfig.basic.hpPerWave) *
+          b.hpMultiplier *
+          g.difficultyMultiplier,
+      ),
       score: Math.ceil(baseConfig.basic.score * b.scoreMultiplier),
     },
     scout: {
-      speed: (baseConfig.scout.baseSpeed + wave * baseConfig.scout.speedPerWave) * b.speedMultiplier * g.difficultyMultiplier,
-      hp: Math.ceil((baseConfig.scout.baseHp + wave * baseConfig.scout.hpPerWave) * b.hpMultiplier * g.difficultyMultiplier),
+      speed:
+        (baseConfig.scout.baseSpeed + wave * baseConfig.scout.speedPerWave) *
+        b.speedMultiplier *
+        g.difficultyMultiplier,
+      hp: Math.ceil(
+        (baseConfig.scout.baseHp + wave * baseConfig.scout.hpPerWave) *
+          b.hpMultiplier *
+          g.difficultyMultiplier,
+      ),
       score: Math.ceil(baseConfig.scout.score * b.scoreMultiplier),
     },
     tank: {
-      speed: (baseConfig.tank.baseSpeed + wave * baseConfig.tank.speedPerWave) * b.speedMultiplier * g.difficultyMultiplier,
-      hp: Math.ceil((baseConfig.tank.baseHp + wave * baseConfig.tank.hpPerWave) * b.hpMultiplier * g.difficultyMultiplier),
+      speed:
+        (baseConfig.tank.baseSpeed + wave * baseConfig.tank.speedPerWave) *
+        b.speedMultiplier *
+        g.difficultyMultiplier,
+      hp: Math.ceil(
+        (baseConfig.tank.baseHp + wave * baseConfig.tank.hpPerWave) *
+          b.hpMultiplier *
+          g.difficultyMultiplier,
+      ),
       score: Math.ceil(baseConfig.tank.score * b.scoreMultiplier),
     },
   };

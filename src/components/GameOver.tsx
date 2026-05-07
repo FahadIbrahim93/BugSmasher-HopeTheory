@@ -1,5 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Skull, RotateCcw, Home, Trophy, Target, Layers, Share2, Globe, Medal, Diamond, Zap, Loader2 } from 'lucide-react';
+import {
+  Skull,
+  RotateCcw,
+  Home,
+  Trophy,
+  Target,
+  Layers,
+  Share2,
+  Globe,
+  Medal,
+  Diamond,
+  Zap,
+  Loader2,
+} from 'lucide-react';
 import { leaderboardManager } from '../game/database/LeaderboardManager';
 import { leaderboard } from '../game/Leaderboard';
 import { saveManager } from '../game/SaveManager';
@@ -8,6 +21,7 @@ import { biomeManager } from '../game/BiomeManager';
 import { soundManager } from '../game/SoundManager';
 import { authManager } from '../game/database/AuthManager';
 import { shareDeathCard } from '../game/DeathCardGenerator';
+import { getBossById } from '../game/BossConfig';
 import type { LeaderboardEntry } from '../game/database/types';
 
 interface GameOverProps {
@@ -24,6 +38,9 @@ interface GameOverProps {
   newBiomes?: string[];
   /** Biome ID used in this run — drives death card theming */
   biomeId?: string;
+  bossId?: string;
+  bossOutcome?: 'victory' | 'defeat';
+  bossTimeSeconds?: number;
 }
 
 export function GameOver({
@@ -37,6 +54,9 @@ export function GameOver({
   onRetry,
   onMainMenu,
   biomeId = 'neon_core',
+  bossId,
+  bossOutcome,
+  bossTimeSeconds,
 }: GameOverProps) {
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [leaderboardTab, setLeaderboardTab] = useState<'local' | 'global'>('local');
@@ -48,6 +68,7 @@ export function GameOver({
   const [globalLoading, setGlobalLoading] = useState(false);
 
   const profile = authManager.getProfile();
+  const bossName = bossId ? (getBossById(bossId)?.name ?? bossId.replace(/_/g, ' ')) : undefined;
   const currentLevel = profile?.level ?? 1;
   const levelsGained = Math.max(0, currentLevel - startLevel);
 
@@ -69,7 +90,7 @@ export function GameOver({
       kills,
       waves,
       missCount,
-      playTimeSeconds
+      playTimeSeconds,
     );
 
     if (completed && !saveManager.hasCompletedDailyChallenge()) {
@@ -108,10 +129,17 @@ export function GameOver({
         playTimeSeconds,
         biomeId,
         rank: rank > 0 ? rank : undefined,
+        bossId,
+        bossOutcome,
+        bossTimeSeconds,
       });
     } catch {
       // Fallback: text only
-      const text = `I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by HopeTheory!\n${kills} bugs smashed\n#BugSmasher #HighScore`;
+      const bossText =
+        bossId && bossOutcome === 'victory'
+          ? `Boss defeated: ${bossName}${bossTimeSeconds ? ` in ${bossTimeSeconds}s` : ''}`
+          : undefined;
+      const text = `${bossText ? `${bossText}\n` : ''}I scored ${score.toLocaleString()} points and reached Wave ${waves} in BugSmasher by HopeTheory!\n${kills} bugs smashed\n#BugSmasher #HighScore`;
       try {
         if (navigator.share) {
           await navigator.share({ text });
@@ -122,7 +150,18 @@ export function GameOver({
         // silent fail
       }
     }
-  }, [score, waves, kills, playTimeSeconds, biomeId, rank]);
+  }, [
+    score,
+    waves,
+    kills,
+    playTimeSeconds,
+    biomeId,
+    rank,
+    bossId,
+    bossName,
+    bossOutcome,
+    bossTimeSeconds,
+  ]);
 
   const percentileText = globalRank > 0 ? leaderboardManager.getPercentile(globalRank) : null;
 
@@ -135,15 +174,15 @@ export function GameOver({
             <Skull className="w-7 h-7 text-red-500 opacity-90" />
           </div>
           <div>
-            <h2 
-              className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1" 
+            <h2
+              className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-1"
               style={{ fontFamily: '"Orbitron", sans-serif' }}
             >
               {isNewHighScore && rank === 1 ? 'NEW HIGH SCORE!' : 'SYSTEM BREACH'}
             </h2>
             <div className="h-px w-12 bg-red-500/50 mx-auto my-3" />
-            <p 
-              className="text-zinc-400 text-sm font-bold tracking-widest uppercase" 
+            <p
+              className="text-zinc-400 text-sm font-bold tracking-widest uppercase"
               style={{ fontFamily: '"Orbitron", sans-serif' }}
             >
               Defense Array Destroyed
@@ -154,9 +193,14 @@ export function GameOver({
         {/* Score Display */}
         <div className="bg-black/40 backdrop-blur-md rounded-2xl p-6 border border-white/5 shadow-2xl space-y-4">
           <p className="text-xs text-zinc-500 uppercase tracking-widest font-mono">Final Score</p>
-          <p className="score-display text-5xl sm:text-6xl">
-            {score.toString().padStart(6, '0')}
-          </p>
+          <p className="score-display text-5xl sm:text-6xl">{score.toString().padStart(6, '0')}</p>
+
+          {bossId && (
+            <div className="mx-auto inline-flex items-center justify-center rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-fuchsia-200">
+              {bossOutcome === 'victory' ? 'Boss defeated' : 'Boss encounter'} · {bossName}
+              {bossTimeSeconds ? ` · ${bossTimeSeconds}s` : ''}
+            </div>
+          )}
 
           {/* Percentile Badge */}
           {globalRank > 0 && (
@@ -171,7 +215,9 @@ export function GameOver({
           {/* Progression Summary */}
           {(sessionXP > 0 || sessionCrystals > 0) && (
             <div className="bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-cyan-500/20 shadow-2xl">
-              <p className="text-xs text-cyan-400 uppercase tracking-widest font-mono mb-3 text-center">Session Rewards</p>
+              <p className="text-xs text-cyan-400 uppercase tracking-widest font-mono mb-3 text-center">
+                Session Rewards
+              </p>
               <div className="flex justify-center gap-6">
                 <div className="flex items-center gap-2">
                   <Zap className="w-4 h-4 text-cyan-400" />
@@ -179,7 +225,9 @@ export function GameOver({
                 </div>
                 <div className="flex items-center gap-2">
                   <Diamond className="w-4 h-4 text-cyan-400" />
-                  <span className="text-cyan-300 text-sm font-mono font-bold">+{sessionCrystals} Crystals</span>
+                  <span className="text-cyan-300 text-sm font-mono font-bold">
+                    +{sessionCrystals} Crystals
+                  </span>
                 </div>
               </div>
               {levelsGained > 0 && (
@@ -218,8 +266,15 @@ export function GameOver({
         {/* Action Buttons */}
         <div className="flex flex-col space-y-3">
           <button
-            onClick={() => { soundManager.init(); soundManager.uiClick(); onRetry(); }}
-            onMouseEnter={() => { soundManager.init(); soundManager.uiHover(); }}
+            onClick={() => {
+              soundManager.init();
+              soundManager.uiClick();
+              onRetry();
+            }}
+            onMouseEnter={() => {
+              soundManager.init();
+              soundManager.uiHover();
+            }}
             aria-label="Play Again"
             className="btn-primary group relative w-full py-4 rounded-full font-bold text-sm uppercase tracking-widest flex items-center justify-center transition-all overflow-hidden"
           >
@@ -232,7 +287,10 @@ export function GameOver({
 
           <div className="flex gap-3">
             <button
-              onClick={() => { soundManager.uiClick(); setShowLeaderboard(!showLeaderboard); }}
+              onClick={() => {
+                soundManager.uiClick();
+                setShowLeaderboard(!showLeaderboard);
+              }}
               className="btn-secondary flex-1 py-3 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
             >
               <Trophy className="w-4 h-4 mr-2" />
@@ -248,7 +306,10 @@ export function GameOver({
             </button>
 
             <button
-              onClick={() => { soundManager.uiClick(); onMainMenu(); }}
+              onClick={() => {
+                soundManager.uiClick();
+                onMainMenu();
+              }}
               className="btn-ghost flex-1 py-3 rounded-full font-medium text-xs font-mono uppercase tracking-widest flex items-center justify-center transition-colors"
             >
               <Home className="w-4 h-4 mr-2" />
@@ -265,7 +326,9 @@ export function GameOver({
                 <button
                   onClick={() => setLeaderboardTab('local')}
                   className={`px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider transition-colors ${
-                    leaderboardTab === 'local' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
+                    leaderboardTab === 'local'
+                      ? 'bg-white text-black'
+                      : 'text-zinc-500 hover:text-white'
                   }`}
                 >
                   Local
@@ -273,7 +336,9 @@ export function GameOver({
                 <button
                   onClick={() => setLeaderboardTab('global')}
                   className={`px-3 py-1 rounded-full text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1 ${
-                    leaderboardTab === 'global' ? 'bg-white text-black' : 'text-zinc-500 hover:text-white'
+                    leaderboardTab === 'global'
+                      ? 'bg-white text-black'
+                      : 'text-zinc-500 hover:text-white'
                   }`}
                 >
                   <Globe className="w-3 h-3" />
@@ -282,8 +347,7 @@ export function GameOver({
               </div>
               {leaderboardTab === 'global' && globalRank > 0 && (
                 <div className="flex items-center gap-1 text-xs text-zinc-500">
-                  <Medal className="w-3 h-3 text-amber-400" />
-                  #{globalRank}
+                  <Medal className="w-3 h-3 text-amber-400" />#{globalRank}
                 </div>
               )}
             </div>
@@ -296,10 +360,14 @@ export function GameOver({
                     className={`flex items-center justify-between p-2 rounded-lg ${entry.score === score ? 'bg-yellow-500/20 border border-yellow-500/30' : 'bg-black/20'}`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`w-6 text-center font-mono text-sm ${idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-zinc-300' : idx === 2 ? 'text-amber-600' : 'text-zinc-600'}`}>
+                      <span
+                        className={`w-6 text-center font-mono text-sm ${idx === 0 ? 'text-yellow-400' : idx === 1 ? 'text-zinc-300' : idx === 2 ? 'text-amber-600' : 'text-zinc-600'}`}
+                      >
                         #{idx + 1}
                       </span>
-                      <span className="text-white text-sm font-mono">{entry.score.toLocaleString()}</span>
+                      <span className="text-white text-sm font-mono">
+                        {entry.score.toLocaleString()}
+                      </span>
                     </div>
                     <div className="flex items-center gap-4 text-xs text-zinc-500">
                       <span>W{entry.waves}</span>
@@ -320,16 +388,28 @@ export function GameOver({
                     <div
                       key={entry.rank}
                       className={`flex items-center justify-between p-2 rounded-lg ${
-                        entry.rank === globalRank ? 'bg-cyan-500/20 border border-cyan-500/30' : 'bg-black/20'
+                        entry.rank === globalRank
+                          ? 'bg-cyan-500/20 border border-cyan-500/30'
+                          : 'bg-black/20'
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <span className={`w-6 text-center font-mono text-sm ${
-                          entry.rank === 1 ? 'text-yellow-400' : entry.rank === 2 ? 'text-zinc-300' : entry.rank === 3 ? 'text-amber-600' : 'text-zinc-600'
-                        }`}>
+                        <span
+                          className={`w-6 text-center font-mono text-sm ${
+                            entry.rank === 1
+                              ? 'text-yellow-400'
+                              : entry.rank === 2
+                                ? 'text-zinc-300'
+                                : entry.rank === 3
+                                  ? 'text-amber-600'
+                                  : 'text-zinc-600'
+                          }`}
+                        >
                           #{entry.rank}
                         </span>
-                        <span className={`text-sm font-mono ${entry.rank === globalRank ? 'text-cyan-300' : 'text-white'}`}>
+                        <span
+                          className={`text-sm font-mono ${entry.rank === globalRank ? 'text-cyan-300' : 'text-white'}`}
+                        >
                           {entry.username}
                         </span>
                       </div>
@@ -349,9 +429,7 @@ export function GameOver({
 
             {leaderboardTab === 'global' && percentileText && (
               <div className="mt-3 pt-3 border-t border-white/5 text-center">
-                <p className="text-xs text-zinc-500">
-                  {percentileText} of all players
-                </p>
+                <p className="text-xs text-zinc-500">{percentileText} of all players</p>
               </div>
             )}
           </div>

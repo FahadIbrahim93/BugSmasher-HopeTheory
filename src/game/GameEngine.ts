@@ -13,9 +13,36 @@ import { leaderboardManager } from './database/LeaderboardManager';
 import { cosmeticsManager } from './CosmeticsManager';
 import { upgradeSystem } from './UpgradeSystem';
 import { biomeManager } from './BiomeManager';
+import { BossManager } from './BossManager';
+import type { Boss } from './BossConfig';
 
-export interface Bug { active: boolean; x: number; y: number; type: string; speed: number; color: string; size: number; scoreValue: number; hp: number; maxHp: number; walkCycle: number; rotation: number; offsetTime: number; }
-export interface Powerup { active: boolean; x: number; y: number; type: string; color: string; icon: string; life: number; maxLife: number; size: number; collection: string; }
+export interface Bug {
+  active: boolean;
+  x: number;
+  y: number;
+  type: string;
+  speed: number;
+  color: string;
+  size: number;
+  scoreValue: number;
+  hp: number;
+  maxHp: number;
+  walkCycle: number;
+  rotation: number;
+  offsetTime: number;
+}
+export interface Powerup {
+  active: boolean;
+  x: number;
+  y: number;
+  type: string;
+  color: string;
+  icon: string;
+  life: number;
+  maxLife: number;
+  size: number;
+  collection: string;
+}
 
 export class GameEngine {
   canvas: HTMLCanvasElement;
@@ -24,31 +51,36 @@ export class GameEngine {
   height: number;
   dpr: number = 1;
   isMobile: boolean = false;
-  
+
   bugs: Bug[] = [];
-  
+
+  get boss(): Boss | null {
+    return this.bossManager?.currentBoss ?? null;
+  }
+
   particleSystem: ParticleSystem;
   waveManager: WaveManager;
+  bossManager: BossManager;
   saveManager: SaveManager;
-  
+
   powerups: Powerup[] = [];
-  
+
   score: number = 0;
   highScore: number = 0;
   health: number = GameConfig.player.maxHealth;
   maxHealth: number = GameConfig.player.maxHealth;
   wave: number = 1;
-  
+
   lastTime: number = 0;
   globalTime: number = 0;
   animationFrameId: number = 0;
-  
+
   shakeTime: number = 0;
   shakeMagnitude: number = 0;
-  
+
   isRunning: boolean = false;
   isPaused: boolean = false;
-  
+
   // Upgrades
   clickRadiusMultiplier: number = 1;
   autoTurretLevel: number = 0;
@@ -60,13 +92,14 @@ export class GameEngine {
 
   // Current biome (set from biomeManager on start)
   currentBiome: import('./BiomeConfig').Biome | null = null;
-  
+
   // Active Powerups
   shieldTimer: number = 0;
   multiplierTimer: number = 0;
   rapidFireTimer: number = 0;
   freezeTimer: number = 0;
   slowMoTimer: number = 0;
+  magnetTimer: number = 0;
   autoTurretTimer: number = 0;
 
   // Session tracking
@@ -79,16 +112,28 @@ export class GameEngine {
   sessionXP: number = 0;
   sessionCrystals: number = 0;
   startLevel: number = 1;
-  
+
   // Combo / Chain system
   chainCombo: number = 0;
-  chainComboFlash: number = 0;     // seconds remaining for screen flash
+  chainComboFlash: number = 0; // seconds remaining for screen flash
   chainComboFlashColor: string = '';
   chainComboFlashAlpha: number = 0;
-  
+
   renderer: Renderer;
-  
-  onGameOver?: (score: number, waves: number, kills: number, sessionXP: number, sessionCrystals: number, missCount: number, playTimeSeconds: number, biomeId: string) => void;
+
+  onGameOver?: (
+    score: number,
+    waves: number,
+    kills: number,
+    sessionXP: number,
+    sessionCrystals: number,
+    missCount: number,
+    playTimeSeconds: number,
+    biomeId: string,
+    bossId?: string,
+    bossOutcome?: 'victory' | 'defeat',
+    bossTimeSeconds?: number,
+  ) => void;
   onWaveComplete?: (completedWave: number) => void;
   onLevelUp?: (newLevel: number, crystalReward: number) => void;
 
@@ -97,32 +142,33 @@ export class GameEngine {
     this.ctx = canvas.getContext('2d', { alpha: false })!; // Optimize by disabling alpha on root canvas
     this.width = canvas.width;
     this.height = canvas.height;
-    
+
     this.handleResize = this.handleResize.bind(this);
     window.addEventListener('resize', this.handleResize);
     this.handleResize();
-    
+
     this.particleSystem = new ParticleSystem();
     this.waveManager = new WaveManager(this);
+    this.bossManager = new BossManager(this);
     this.saveManager = new SaveManager();
     this.highScore = this.saveManager.getHighScore();
     this.applyPrestigeBonus();
     this.applyUpgradeBonuses();
-    
+
     this.handlePointerDown = this.handlePointerDown.bind(this);
     this.handlePointerMove = this.handlePointerMove.bind(this);
     this.canvas.addEventListener('pointerdown', this.handlePointerDown);
     this.canvas.addEventListener('pointermove', this.handlePointerMove);
-    
+
     this.renderer = new Renderer(this);
 
     // Hook achievement XP rewards
     achievementSystem.setOnXPUnlock((xp) => this.awardXP(xp, 'achievement'));
   }
-  
+
   applyPrestigeBonus(): void {
     const prestigeLevel = this.saveManager.getPrestigeLevel();
-    const multiplier = 1 + (prestigeLevel * 0.1);
+    const multiplier = 1 + prestigeLevel * 0.1;
     this.maxHealth = Math.floor(GameConfig.player.maxHealth * multiplier);
     this.health = this.maxHealth;
     this.clickRadiusMultiplier = multiplier;
@@ -130,21 +176,25 @@ export class GameEngine {
 
   applyUpgradeBonuses(): void {
     const prestigeMult = this.saveManager.getPrestigeMultiplier();
-    this.clickDamageBonus = upgradeSystem.getClickDamage(prestigeMult) - GameConfig.player.hitDamage;
+    this.clickDamageBonus =
+      upgradeSystem.getClickDamage(prestigeMult) - GameConfig.player.hitDamage;
     this.critChanceBonus = upgradeSystem.getCritChance();
     this.turretDamageBonus = upgradeSystem.getTurretDamage(prestigeMult) - 5;
   }
-  
+
   handleResize() {
     const parent = this.canvas.parentElement;
     if (parent) {
       // Cap DPR on mobile to save fill rate
       this.isMobile = window.innerWidth < 768;
-      this.dpr = Math.min(window.devicePixelRatio || 1, this.isMobile ? GameConfig.canvas.mobileDprCap : GameConfig.canvas.desktopDprCap);
-      
+      this.dpr = Math.min(
+        window.devicePixelRatio || 1,
+        this.isMobile ? GameConfig.canvas.mobileDprCap : GameConfig.canvas.desktopDprCap,
+      );
+
       const clientWidth = parent.clientWidth || window.innerWidth;
       const clientHeight = parent.clientHeight || window.innerHeight;
-      
+
       this.canvas.width = clientWidth * this.dpr;
       this.canvas.height = clientHeight * this.dpr;
       this.canvas.style.width = `${clientWidth}px`;
@@ -157,7 +207,7 @@ export class GameEngine {
       this.height = clientHeight;
     }
   }
-  
+
   start() {
     if (this.isRunning) return;
     soundManager.init();
@@ -205,16 +255,17 @@ export class GameEngine {
     this.bugs = [];
     this.particleSystem.reset();
     this.powerups = [];
+    this.bossManager.reset();
     this.chainCombo = 0;
     this.chainComboFlash = 0;
     this.freezeTimer = 0;
     this.missCount = 0;
   }
-  
+
   startWave() {
     this.waveManager.startWave();
   }
-  
+
   stop() {
     this.isRunning = false;
     cloudSaveManager.stopAutoSave();
@@ -289,39 +340,39 @@ export class GameEngine {
       daily_challenge_completed: false,
     };
   }
-  
+
   destroy() {
     this.stop();
     window.removeEventListener('resize', this.handleResize);
     this.canvas.removeEventListener('pointerdown', this.handlePointerDown);
     this.canvas.removeEventListener('pointermove', this.handlePointerMove);
   }
-  
+
   shake(duration: number, magnitude: number) {
     this.shakeTime = duration;
     this.shakeMagnitude = magnitude;
   }
-  
+
   loop(currentTime: number) {
     if (!this.isRunning) return;
-    
+
     const dt = Math.min((currentTime - this.lastTime) / 1000, 0.1);
     this.lastTime = currentTime;
-    
+
     if (this.isPaused) {
       this.draw();
       this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
       return;
     }
-    
+
     this.globalTime += dt;
-    
+
     this.update(dt);
     this.draw();
-    
+
     this.animationFrameId = requestAnimationFrame(this.loop.bind(this));
   }
-  
+
   spawnPowerup(x: number, y: number, force: boolean = false) {
     // Apply biome-specific drop chance multiplier
     const biomeDropMult = this.currentBiome?.gameplay.powerups.dropChanceMultiplier ?? 1;
@@ -329,13 +380,21 @@ export class GameEngine {
     if (!force && Math.random() > baseChance) return;
 
     const types = GameConfig.powerups.types;
+    const biomePowerups = this.currentBiome?.gameplay.powerups;
+    const preferredTypes = new Set(biomePowerups?.preferredTypes ?? []);
+    const rareBoost = biomePowerups?.rareBoost ?? 0;
 
-    // Weighted selection for better gameplay balance
-    const totalWeight = types.reduce((sum, t) => sum + (t.weight ?? 1), 0);
+    // Weighted selection for better gameplay balance, with biome-tactical nudges.
+    const weightedTypes = types.map((t) => {
+      const preferredMultiplier = preferredTypes.has(t.type) ? 1.75 : 1;
+      const rareMultiplier = (t.weight ?? 1) <= 10 ? 1 + rareBoost * 0.18 : 1;
+      return { ...t, effectiveWeight: (t.weight ?? 1) * preferredMultiplier * rareMultiplier };
+    });
+    const totalWeight = weightedTypes.reduce((sum, t) => sum + t.effectiveWeight, 0);
     let roll = Math.random() * totalWeight;
-    let pType = types[0];
-    for (const t of types) {
-      roll -= (t.weight ?? 1);
+    let pType = weightedTypes[0];
+    for (const t of weightedTypes) {
+      roll -= t.effectiveWeight;
       if (roll <= 0) {
         pType = t;
         break;
@@ -344,17 +403,18 @@ export class GameEngine {
 
     this.powerups.push({
       active: true,
-      x, y,
+      x,
+      y,
       type: pType.type,
       color: pType.color,
       icon: pType.icon,
       life: GameConfig.powerups.life,
       maxLife: GameConfig.powerups.life,
       size: 15,
-      collection: pType.collection
+      collection: pType.collection,
     });
   }
-  
+
   update(dt: number) {
     if (this.health <= 0) {
       this.isRunning = false;
@@ -362,15 +422,15 @@ export class GameEngine {
       this.saveManager.addPrestigePoints(prestigePointsEarned);
       this.saveManager.addBugsSmashed(this.totalKills);
       this.saveManager.addPlayTime(this.globalTime);
-      
+
       achievementSystem.onGameEnd(this.score, this.missCount);
-      
+
       // New database system integration
       const playTimeSeconds = Math.floor(this.globalTime);
       statsManager.recordGameEnd(this.score, this.wave, this.totalKills, playTimeSeconds);
-      
+
       // Award XP and crystals based on performance (supplements in-game awards)
-      const xpEarned = Math.floor(this.score / 50) + (this.wave * 5);
+      const xpEarned = Math.floor(this.score / 50) + this.wave * 5;
       const rawCrystals = Math.floor(this.score / 500) + (this.wave > 5 ? 5 : 0);
       const crystalsEarned = Math.floor(rawCrystals * upgradeSystem.getCrystalMultiplier());
       this.awardXP(xpEarned, 'game_over');
@@ -378,17 +438,31 @@ export class GameEngine {
       upgradeSystem.addCrystals(crystalsEarned);
       this.saveManager.addCrystalsEarned(crystalsEarned);
       this.sessionCrystals += crystalsEarned;
-      
+
       // Submit to leaderboard
       leaderboardManager.submitScore(this.score, this.wave);
-      
+
       // Auto-save cloud state
       this.saveCloudState();
-      
-      this.onGameOver?.(this.score, this.wave, this.totalKills, this.sessionXP, this.sessionCrystals, this.missCount, Math.floor(this.globalTime), this.currentBiome?.id ?? 'neon_core');
+
+      this.onGameOver?.(
+        this.score,
+        this.wave,
+        this.totalKills,
+        this.sessionXP,
+        this.sessionCrystals,
+        this.missCount,
+        Math.floor(this.globalTime),
+        this.currentBiome?.id ?? 'neon_core',
+        this.boss?.config.id ?? this.bossManager.lastDefeatedBossId ?? undefined,
+        this.boss ? 'defeat' : this.bossManager.lastDefeatedBossId ? 'victory' : undefined,
+        this.boss?.elapsed
+          ? Math.ceil(this.boss.elapsed)
+          : (this.bossManager.lastDefeatedBossTimeSeconds ?? undefined),
+      );
       return;
     }
-    
+
     if (this.shakeTime > 0) this.shakeTime -= dt;
     if (this.chainComboFlash > 0) {
       this.chainComboFlash -= dt;
@@ -399,32 +473,41 @@ export class GameEngine {
     if (this.rapidFireTimer > 0) this.rapidFireTimer -= dt;
     if (this.freezeTimer > 0) this.freezeTimer -= dt;
     if (this.slowMoTimer > 0) this.slowMoTimer -= dt;
-    
+    if (this.magnetTimer > 0) {
+      this.magnetTimer -= dt;
+      this.updateMagnetPowerup(dt);
+    }
+
     this.waveManager.update(dt);
-    
+    this.bossManager.update(dt);
+
     if (this.autoTurretLevel > 0 || this.rapidFireTimer > 0) {
       this.autoTurretTimer += dt;
-      let fireRate = Math.max(GameConfig.upgrades.turret.minFireRate, GameConfig.upgrades.turret.baseFireRate - this.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction);
+      let fireRate = Math.max(
+        GameConfig.upgrades.turret.minFireRate,
+        GameConfig.upgrades.turret.baseFireRate -
+          this.autoTurretLevel * GameConfig.upgrades.turret.fireRateReduction,
+      );
       let isRapidFire = false;
       if (this.rapidFireTimer > 0) {
         fireRate = 0.05; // Rapid fire strongly overrides normal fire rate
         isRapidFire = true;
       }
-      if (this.autoTurretTimer > fireRate && this.bugs.length > 0) {
+      if (this.autoTurretTimer > fireRate && (this.bugs.length > 0 || this.boss)) {
         this.autoTurretTimer = 0;
         this.fireAutoTurret(isRapidFire);
       }
     }
-    
+
     const centerX = this.width / 2;
     const centerY = this.height / 2;
-    
+
     for (let i = this.bugs.length - 1; i >= 0; i--) {
       const bug = this.bugs[i];
       const dx = centerX - bug.x;
       const dy = centerY - bug.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      
+
       if (dist < 30) {
         if (this.shieldTimer <= 0) {
           this.health -= GameConfig.player.hitDamage;
@@ -438,7 +521,7 @@ export class GameEngine {
         this.bugs.splice(i, 1);
         continue;
       }
-      
+
       let vx = (dx / dist) * bug.speed;
       let vy = (dy / dist) * bug.speed;
 
@@ -450,7 +533,7 @@ export class GameEngine {
         vx *= GameConfig.powerups.slowMoFactor;
         vy *= GameConfig.powerups.slowMoFactor;
       }
-      
+
       if (bug.type === 'scout') {
         const perpX = -vy;
         const perpY = vx;
@@ -458,36 +541,89 @@ export class GameEngine {
         vx += perpX * erratic;
         vy += perpY * erratic;
       }
-      
+
       bug.rotation = Math.atan2(vy, vx) - Math.PI / 2;
       bug.x += vx * dt;
       bug.y += vy * dt;
       bug.walkCycle += bug.speed * dt * 0.2;
     }
-    
+
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const p = this.powerups[i];
       p.life -= dt;
       if (p.life <= 0) this.powerups.splice(i, 1);
     }
-    
+
     this.particleSystem.update(dt);
   }
-  
+
+  private updateMagnetPowerup(dt: number) {
+    const centerX = this.width / 2;
+    const centerY = this.height / 2;
+    const radius = GameConfig.powerups.magnetRadius;
+    const pullSpeed = 520;
+
+    for (let i = this.powerups.length - 1; i >= 0; i--) {
+      const p = this.powerups[i];
+      if (p.type === 'magnet') continue;
+
+      const dx = centerX - p.x;
+      const dy = centerY - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > radius) continue;
+
+      if (dist < Math.max(24, p.size * 2)) {
+        this.activatePowerup(p.type);
+        this.powerups.splice(i, 1);
+        continue;
+      }
+
+      const pull = Math.min(dist, pullSpeed * dt * (1 - dist / radius + 0.35));
+      p.x += (dx / dist) * pull;
+      p.y += (dy / dist) * pull;
+
+      const remainingDx = centerX - p.x;
+      const remainingDy = centerY - p.y;
+      if (
+        Math.sqrt(remainingDx * remainingDx + remainingDy * remainingDy) < Math.max(24, p.size * 2)
+      ) {
+        this.activatePowerup(p.type);
+        this.powerups.splice(i, 1);
+      }
+    }
+  }
+
   fireAutoTurret(isRapidFire: boolean = false) {
     let closest = null;
     let minDist = Infinity;
     const cx = this.width / 2;
     const cy = this.height / 2;
-    
+
     for (const bug of this.bugs) {
-      const dist = Math.sqrt((bug.x - cx)**2 + (bug.y - cy)**2);
+      const dist = Math.sqrt((bug.x - cx) ** 2 + (bug.y - cy) ** 2);
       if (dist < minDist) {
         minDist = dist;
         closest = bug;
       }
     }
-    
+
+    if (!closest && this.boss) {
+      soundManager.shoot();
+      this.particleSystem.spawnLaser(
+        cx,
+        cy,
+        this.boss.weakPoint.x,
+        this.boss.weakPoint.y,
+        isRapidFire ? '#ff00ff' : '#00ffcc',
+      );
+      this.bossManager.damageBossAt(
+        this.boss.weakPoint.x,
+        this.boss.weakPoint.y,
+        1 + this.turretDamageBonus,
+      );
+      return;
+    }
+
     if (closest) {
       soundManager.shoot();
       if (isRapidFire) {
@@ -499,7 +635,7 @@ export class GameEngine {
       this.damageBug(closest, 1 + this.turretDamageBonus);
     }
   }
-  
+
   damageBug(bug: Bug, amount: number, isCrit = false) {
     bug.hp -= amount;
     if (bug.hp <= 0) {
@@ -509,14 +645,14 @@ export class GameEngine {
         statsManager.recordKill();
         achievementSystem.onKill();
         this.chainCombo++;
-        
+
         // Track combo achievement
         achievementSystem.onCombo(this.chainCombo);
-        
+
         // Milestone flash effects
         const milestones: Record<number, { color: string; size: number; dur: number }> = {
-          3:  { color: '#00ffcc', size: 400, dur: 0.4 },
-          5:  { color: '#ffaa00', size: 600, dur: 0.5 },
+          3: { color: '#00ffcc', size: 400, dur: 0.4 },
+          5: { color: '#ffaa00', size: 600, dur: 0.5 },
           10: { color: '#ff4444', size: 900, dur: 0.6 },
         };
         const m = milestones[this.chainCombo];
@@ -527,48 +663,53 @@ export class GameEngine {
           this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, m.color, m.size);
           this.shake(m.dur * 0.3, 15);
         }
-        
+
         const mult = this.multiplierTimer > 0 ? 2 : 1;
         const pointsEarned = (isCrit ? 2 : 1) * bug.scoreValue * mult;
         this.score += pointsEarned;
 
         // Spawn damage number popup — crits get larger text
-        this.particleSystem.spawnDamageNumber(bug.x, bug.y - 20, pointsEarned, isCrit ? '#ff00ff' : mult > 1 ? '#ff00ff' : '#ffff00');
+        this.particleSystem.spawnDamageNumber(
+          bug.x,
+          bug.y - 20,
+          pointsEarned,
+          isCrit ? '#ff00ff' : mult > 1 ? '#ff00ff' : '#ffff00',
+        );
         if (isCrit) {
           this.particleSystem.spawnShockwave(bug.x, bug.y, '#ff00ff', 200);
         }
-        
+
         // Trigger haptics
         if (this.chainCombo >= 3) {
           hapticsManager.combo();
         } else {
           hapticsManager.hit();
         }
-        
+
         // Update high score
         if (this.score > this.highScore) {
           this.highScore = this.score;
           this.saveManager.updateHighScore(this.highScore);
         }
-        
+
         soundManager.splat();
         this.shake(0.15, 8);
         this.particleSystem.spawnSplatter(bug.x, bug.y, bug.color);
         this.particleSystem.spawnGibs(bug.x, bug.y, bug.color);
         this.particleSystem.spawnShockwave(bug.x, bug.y, bug.color, 100);
-        
+
         if (this.forceNextPowerup) {
-           this.forceNextPowerup = false;
-           this.spawnPowerup(bug.x, bug.y, true);
+          this.forceNextPowerup = false;
+          this.spawnPowerup(bug.x, bug.y, true);
         } else {
-           this.spawnPowerup(bug.x, bug.y);
+          this.spawnPowerup(bug.x, bug.y);
         }
 
         // Handle biome special effects (e.g. golden split)
         this.waveManager.onBugDeath(bug);
 
         this.bugs.splice(idx, 1);
-        
+
         // Award XP for kill
         this.awardXP(1, 'kill');
       }
@@ -578,30 +719,31 @@ export class GameEngine {
       this.particleSystem.spawnShockwave(bug.x, bug.y, '#ffffff', 30);
     }
   }
-  
+
   draw() {
     this.renderer.draw();
   }
-  
+
   handlePointerDown(e: PointerEvent) {
     e.preventDefault();
     if (this.isPaused) return;
     soundManager.init();
     this.processClick(e.clientX, e.clientY);
   }
-  
+
   handlePointerMove(e: PointerEvent) {
     if (!this.isRunning || !this.waveManager.waveActive || this.isPaused) return;
-    
+
     const rect = this.canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const p = this.powerups[i];
       if (p.collection === 'hover') {
-        const dist = Math.sqrt((p.x - x)**2 + (p.y - y)**2);
-        if (dist < p.size * 3) { // Slightly larger collection radius for hover
+        const dist = Math.sqrt((p.x - x) ** 2 + (p.y - y) ** 2);
+        if (dist < p.size * 3) {
+          // Slightly larger collection radius for hover
           this.activatePowerup(p.type);
           this.powerups.splice(i, 1);
         }
@@ -611,30 +753,45 @@ export class GameEngine {
 
   processClick(clientX: number, clientY: number) {
     if (!this.isRunning || !this.waveManager.waveActive || this.isPaused) return;
-    
+
     const rect = this.canvas.getBoundingClientRect();
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-    
+
     for (let i = this.powerups.length - 1; i >= 0; i--) {
       const p = this.powerups[i];
-      const dist = Math.sqrt((p.x - x)**2 + (p.y - y)**2);
+      const dist = Math.sqrt((p.x - x) ** 2 + (p.y - y) ** 2);
       if (dist < p.size * 2) {
         this.activatePowerup(p.type);
         this.powerups.splice(i, 1);
         return;
       }
     }
-    
+
     let hit = false;
-    
+
+    if (this.boss) {
+      const isCrit = this.critChanceBonus > 0 && Math.random() * 100 < this.critChanceBonus;
+      const baseDamage = 1 + this.clickDamageBonus;
+      const damage = isCrit ? baseDamage * 3 : baseDamage;
+      hit = this.bossManager.damageBossAt(x, y, damage, isCrit);
+      if (hit) {
+        if (this.chainCombo >= 3) hapticsManager.combo();
+        else hapticsManager.hit();
+        return;
+      }
+    }
+
     for (let i = this.bugs.length - 1; i >= 0; i--) {
       const bug = this.bugs[i];
       const dx = bug.x - x;
       const dy = bug.y - y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      
-      if (dist < bug.size * GameConfig.player.baseClickRadiusMultiplier * this.clickRadiusMultiplier) {
+
+      if (
+        dist <
+        bug.size * GameConfig.player.baseClickRadiusMultiplier * this.clickRadiusMultiplier
+      ) {
         hit = true;
         const isCrit = this.critChanceBonus > 0 && Math.random() * 100 < this.critChanceBonus;
         const baseDamage = 1 + this.clickDamageBonus;
@@ -643,7 +800,7 @@ export class GameEngine {
         break;
       }
     }
-    
+
     if (!hit) {
       this.chainCombo = 0;
       this.missCount++;
@@ -653,16 +810,19 @@ export class GameEngine {
       this.particleSystem.spawnClickRipple(x, y);
     }
   }
-  
+
   activatePowerup(type: string) {
     this.totalPowerupsCollected++;
     statsManager.recordPowerupCollected();
     if (type === 'nuke') {
       soundManager.nuke();
       this.shake(1.5, 40); // Massive screen shake
-      this.particleSystem.spawnShockwave(this.width/2, this.height/2, '#ffaa00', 1000);
+      this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#ffaa00', 1000);
       for (let i = this.bugs.length - 1; i >= 0; i--) {
         this.damageBug(this.bugs[i], 100);
+      }
+      if (this.boss) {
+        this.bossManager.damageBossAt(this.boss.weakPoint.x, this.boss.weakPoint.y, 35);
       }
     } else if (type === 'spike_burst') {
       soundManager.powerup();
@@ -673,12 +833,20 @@ export class GameEngine {
 
       // Burst damages closest bugs instantly
       const targets = [...this.bugs]
-        .sort((a, b) => ((a.x - centerX) ** 2 + (a.y - centerY) ** 2) - ((b.x - centerX) ** 2 + (b.y - centerY) ** 2))
+        .sort(
+          (a, b) =>
+            (a.x - centerX) ** 2 +
+            (a.y - centerY) ** 2 -
+            ((b.x - centerX) ** 2 + (b.y - centerY) ** 2),
+        )
         .slice(0, GameConfig.powerups.spikeBurstTargets);
-      targets.forEach(b => this.damageBug(b, 2));
+      targets.forEach((b) => this.damageBug(b, 2));
+      if (this.boss) {
+        this.bossManager.damageBossAt(this.boss.weakPoint.x, this.boss.weakPoint.y, 8);
+      }
     } else {
       soundManager.powerup();
-      this.particleSystem.spawnShockwave(this.width/2, this.height/2, '#ffffff', 300);
+      this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#ffffff', 300);
       if (type === 'shield') {
         this.shieldTimer = GameConfig.powerups.duration;
       } else if (type === 'multiplier') {
@@ -691,14 +859,17 @@ export class GameEngine {
       } else if (type === 'slow_mo') {
         this.slowMoTimer = GameConfig.powerups.slowMoDuration;
         this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#9966ff', 500);
+      } else if (type === 'magnet') {
+        this.magnetTimer = GameConfig.powerups.magnetDuration;
+        this.particleSystem.spawnShockwave(this.width / 2, this.height / 2, '#22c55e', 500);
       }
     }
   }
-  
+
   private saveCloudState(): void {
     const profile = authManager.getProfile();
     if (!profile) return;
-    
+
     const gameState = {
       score: this.score,
       wave: this.wave,
@@ -718,9 +889,10 @@ export class GameEngine {
       prestige_level: this.saveManager.getPrestigeLevel(),
       achievement_unlocks: [],
       daily_challenge_date: new Date().toISOString().split('T')[0],
-      daily_challenge_completed: this.saveManager.getDailyChallengeCompleted() === new Date().toISOString().split('T')[0],
+      daily_challenge_completed:
+        this.saveManager.getDailyChallengeCompleted() === new Date().toISOString().split('T')[0],
     };
-    
+
     cloudSaveManager.saveGame(gameState);
   }
 }
