@@ -5,7 +5,12 @@ import {defineConfig} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
+  // GitHub Pages project site needs a non-root base. Vercel and local keep '/'.
+  const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+  const base = isGitHubPages ? '/BugSmasher-HopeTheory/' : '/';
+
   return {
+    base,
     plugins: [
       react(),
       tailwindcss(),
@@ -16,20 +21,20 @@ export default defineConfig(() => {
           name: 'BUGSMASHER — Tactical QA System',
           short_name: 'BUGSMASHER',
           description: 'Defend the core. Smash the swarm. Brutalist OS vs bio-luminescent bugs.',
-          start_url: '/',
+          start_url: base,
           display: 'standalone',
           background_color: '#050505',
           theme_color: '#050505',
           orientation: 'any',
           icons: [
             {
-              src: '/icon-192.png',
+              src: 'icon-192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/icon-512.png',
+              src: 'icon-512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable',

@@ -2,7 +2,7 @@
 
 **Status:** Operational reference; verify current `docs/STATUS.md` before release.  
 **Primary hosting:** Vercel  
-**Secondary hosting:** Firebase Hosting  
+**Secondary hosting:** Firebase Hosting + GitHub Pages (portfolio mirror)  
 **Source of truth:** `main`
 
 ## 1. Before deploying
@@ -77,6 +77,21 @@ Vercel is the primary player-facing host. Automatic Git-based deployment depends
 
 Firebase Hosting is a secondary target. The GitHub workflow can deploy when the required `FIREBASE_SERVICE_ACCOUNT` secret is configured. A successful GitHub build alone does not prove Firebase Hosting updated.
 
+### GitHub Pages (portfolio mirror)
+
+Free secondary host for portfolio / backup. Target URL after first successful deploy:
+
+`https://fahadibrahim93.github.io/BugSmasher-HopeTheory/`
+
+Workflow: `.github/workflows/deploy-pages.yml`  
+- Builds with `GITHUB_PAGES=true` so Vite uses `base: '/BugSmasher-HopeTheory/'`.
+- Copies `index.html` → `404.html` so SPA client routes survive refresh (Pages has no rewrite rules).
+- Deploys via the official Pages actions.
+
+**One-time setup (required):** Repo Settings → Pages → Build and deployment → Source = **GitHub Actions**.
+
+Vercel continues to use `base: '/'` and remains the primary player-facing host.
+
 ## 7. Manual deployment
 
 ### Vercel
@@ -88,83 +103,5 @@ Use the Vercel dashboard or CLI according to the currently configured project. V
 ```bash
 npm ci
 npm run build
-firebase login
-firebase deploy --only hosting --project studio-1155838266-56095
+# then firebase deploy --only hosting (with correct project & credentials)
 ```
-
-Only deploy to the intended production project. Verify the resulting URL after deployment.
-
-### Firestore rules
-
-```bash
-firebase deploy --only firestore:rules --project studio-1155838266-56095
-```
-
-Security-sensitive rule changes require emulator evidence before deployment.
-
-### Cloud Functions
-
-```bash
-cd functions
-npm ci
-npm run build
-cd ..
-firebase deploy --only functions --project studio-1155838266-56095
-```
-
-Keep server secrets configured in the appropriate production secret/environment mechanism.
-
-## 8. Release checklist
-
-- [ ] Current `docs/STATUS.md` reviewed
-- [ ] No unresolved P0 blocker
-- [ ] `npm run ci` green on the release commit
-- [ ] Playwright E2E green
-- [ ] Security/dependency gates green or formally accepted under `RELEASE_CERTIFICATION.md`
-- [ ] Production build artifact reviewed
-- [ ] Firestore rules tested
-- [ ] Environment configuration verified
-- [ ] User-facing deployment smoke test completed
-- [ ] Rollback path confirmed
-- [ ] Changelog/version updated when this is a formal release
-- [ ] `docs/VERIFICATION_YYYY-MM-DD.md` created/updated with exact evidence
-- [ ] `docs/STATUS.md` updated
-- [ ] `TASKBOARD.md` reflects completed release tasks
-- [ ] `docs/RELEASE_CERTIFICATION.md` remains truthful
-
-## 9. Rollback
-
-Rollback is platform-specific.
-
-For Firebase Hosting, use the Firebase Console/version controls or redeploy a known-good commit.
-
-For Vercel, use the project deployment history to promote a known-good production deployment.
-
-For code-level rollback, prefer a normal Git revert on `main` rather than rewriting shared history.
-
-## 10. Incident procedure
-
-If a production deployment is broken:
-
-1. stop discretionary releases;
-2. identify the exact deployed commit;
-3. compare against the latest known-good release;
-4. capture logs/errors;
-5. revert or promote the known-good deployment;
-6. create a regression test for the defect;
-7. update `docs/STATUS.md` and the verification record.
-
-## 11. Important truth rule
-
-This document intentionally avoids asserting that a deployment, provider integration or monitoring system is active unless it is currently verified. Configuration may change outside GitHub; check the deployment platform before relying on historical statements.
-
-## Related documentation
-
-- [README](./README.md)
-- [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md)
-- [Agentic Workflow](./docs/AGENTIC_WORKFLOW.md)
-- [Current Status](./docs/STATUS.md)
-- [Release Certification](./docs/RELEASE_CERTIFICATION.md)
-- [Taskboard](./TASKBOARD.md)
-- [Architecture](./docs/ARCHITECTURE.md)
-- [Security](./SECURITY.md)
