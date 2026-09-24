@@ -83,11 +83,18 @@ export default defineConfig(() => {
               // their own chunks. Everything else (react, react-dom, scheduler,
               // motion, recharts, @firebase/*, @google/*) merges into a single
               // 'vendor' chunk: these packages import each other in cycles
-              // and cannot be cleanly split without circular-chunk warnings.
+              // (react <-> scheduler, vendor recharts -> react, motion <->
+              // other libs), and splitting them across chunks produced circular
+              // chunk dependencies that crashed the page at module-eval time
+              // with 'Cannot read properties of undefined (forwardRef)' and
+              // 'Cannot access ... before initialization'. A single vendor
+              // chunk lets Rollup hoist intra-chunk cycles safely.
               if (id.includes('/firebase/')) return 'firebase';
-              if (id.includes('/@google/')) return 'google-ai';
+              if (id.includes('/lucide-react/')) return 'icons';
               return 'vendor';
             }
+            // Future: split heavy game/ UI if desired (e.g. if (id.includes('game/rendering')) return 'rendering';)
+            return undefined; // explicit for all paths
           },
         },
       },
