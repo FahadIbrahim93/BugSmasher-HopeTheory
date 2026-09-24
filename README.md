@@ -16,6 +16,8 @@ React 19 + TypeScript + Canvas 2D + Firebase.
 
 > **Current release truth:** BugSmasher is **not currently certified 10/10**. The latest inspected `main` CI run (2026-08-30, commit `bbc7250`) is green across CI, CodeQL and Security Audit; remaining gaps are code-quality, coverage, accessibility, performance and operations evidence. See [docs/STATUS.md](./docs/STATUS.md).
 
+**Portfolio showcase:** [docs/PORTFOLIO_SHOWCASE.md](./docs/PORTFOLIO_SHOWCASE.md) — honest 9/10 engineering summary for reviewers.
+
 - **Live:** https://bugsmasher-hopetheory.vercel.app
 - **Repo:** https://github.com/FahadIbrahim93/BugSmasher-HopeTheory
 
