@@ -106,3 +106,33 @@ Use `npm run ci` for the full repository gate once the individual failure is und
 Agents must be skeptical, incremental and auditable. Before editing, inspect the relevant implementation and current branch/PR state. After editing, explain the behavioral risk and verify it. Leave a structured handoff if work is incomplete.
 
 The objective is not to produce the most code. The objective is to leave the repository more correct, more understandable and more independently verifiable.
+
+## Review standards (Universal Output Contract)
+
+Every code or security review finding must use:
+
+- **Title** | Severity (Critical / High / Medium / Low / Info)
+- **Location**: `file:line` or `file:start-end`
+- **Problem**: one precise sentence
+- **Impact / Exploit scenario** (if security or correctness)
+- **Fix**: copy-ready code or config change
+- **Why this is real**: one sentence justifying it is not theoretical
+
+If a category has zero real issues: `None found.`
+
+Silent self-critique at end of every review: remove any finding that cannot be defended with a specific line or clear impact.
+
+## Preferred review skills (load on demand)
+
+- security-review — AppSec + supply-chain + infra
+- performance-review — latency, N+1, memory, caching
+- code-quality-review — correctness, design, readability, maintainability
+- ai-slop-cleanup — remove AI-generated noise while preserving function
+- behavior-preserving-refactor — structure only, semantics unchanged
+
+## S.C.O.P.E. for multi-file work
+
+SITUATION / CONTEXT / OBJECTIVE / PROHIBITION / EXPECTATION.
+List every file to touch + reason. Wait for confirmation before writing (unless full autonomy granted).
+Preserve public APIs and observable behavior unless the task explicitly requires otherwise.
+Match existing comment density. No AI-style verbosity.
