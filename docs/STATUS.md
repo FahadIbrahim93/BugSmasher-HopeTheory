@@ -1,8 +1,21 @@
 # BugSmasher — Current Status Ledger
 
-**Status timestamp:** 2026-08-30  
-**Branch:** `main` @ `bbc7250`  
+**Status timestamp:** 2026-08-30 (CI baseline) · **docs update:** 2026-09-25  
+**Branch tip:** `main` @ `cb60902` (mobile HUD fix + portfolio docs + Pages workflow)  
 **Certification:** **NOT CERTIFIED 10/10**
+
+## Recent production deploys (Vercel)
+
+| When | Commit | What |
+|------|--------|------|
+| 2026-09-25 | `cb60902` | **Mobile HUD compact** (PR #75) — left meters no longer block play area. Production READY. |
+| 2026-09-25 | `ed7f1a3` | Portfolio showcase docs + AGENTS contract (PR #73). |
+| 2026-09-24 | `6e52ec1` | GitHub Pages secondary deploy workflow (PR #74). |
+
+**Live:** https://bugsmasher-hopetheory.vercel.app  
+**Pages (after Settings → Source = GitHub Actions):** https://fahadibrahim93.github.io/BugSmasher-HopeTheory/
+
+The numeric CI baseline below remains the last fully re-verified gate set (2026-08-30). Tip commits above are documentation + layout; full CI on tip should be checked in Actions before claiming new coverage numbers.
 
 ## Current verified state
 

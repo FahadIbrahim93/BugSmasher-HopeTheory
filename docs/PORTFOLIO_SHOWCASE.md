@@ -14,11 +14,14 @@
 | Testing                | 752+ frontend tests, 26 emulator, Playwright E2E, coverage floors enforced | 9/10 |
 | CI/CD                  | Full GitHub Actions (typecheck, lint, coverage, emulator, build, CodeQL) | 9/10 |
 | Performance            | Delta-time game loop, PerformanceScaler, 60+ FPS target                 | 8/10 |
-| Accessibility          | Difficulty presets, reduced motion, colorblind modes                     | 8/10 |
+| Accessibility          | Difficulty presets, reduced motion, colorblind modes; mobile HUD occlusion fixed 2026-09-25 (PR #75) | 7.5/10 |
+| Mobile UX              | Left HUD compact on small screens (Rage/Goo side-by-side); verify on device after deploy | 7.5/10 |
 | Code quality           | Strict TS, modular, AGENTS.md + S.C.O.P.E. discipline                    | 8/10 |
 | Documentation honesty  | STATUS.md + verification records over victory claims                     | 9/10 |
 
-**Overall portfolio rating: 9/10** — ship as showcase immediately. Remaining gaps are polish (ESLint warnings volume, Prettier gate, deeper a11y/performance evidence), not blockers.
+**Overall portfolio rating: 8.7/10** — ship as showcase immediately. Remaining gaps are polish (ESLint warnings, Prettier gate, deeper a11y/performance evidence, audio depth), not blockers.
+
+**Production tip:** `main` @ `cb60902` — live on Vercel.
 
 ## Engineering highlights for reviewers
 
