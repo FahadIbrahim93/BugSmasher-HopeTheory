@@ -5,7 +5,12 @@ import {defineConfig} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig(() => {
+  // GitHub Pages project site needs a non-root base. Vercel and local keep '/'.
+  const isGitHubPages = process.env.GITHUB_PAGES === 'true';
+  const base = isGitHubPages ? '/BugSmasher-HopeTheory/' : '/';
+
   return {
+    base,
     plugins: [
       react(),
       tailwindcss(),
@@ -16,20 +21,20 @@ export default defineConfig(() => {
           name: 'BUGSMASHER — Tactical QA System',
           short_name: 'BUGSMASHER',
           description: 'Defend the core. Smash the swarm. Brutalist OS vs bio-luminescent bugs.',
-          start_url: '/',
+          start_url: base,
           display: 'standalone',
           background_color: '#050505',
           theme_color: '#050505',
           orientation: 'any',
           icons: [
             {
-              src: '/icon-192.png',
+              src: 'icon-192.png',
               sizes: '192x192',
               type: 'image/png',
               purpose: 'any',
             },
             {
-              src: '/icon-512.png',
+              src: 'icon-512.png',
               sizes: '512x512',
               type: 'image/png',
               purpose: 'any maskable',
@@ -78,18 +83,11 @@ export default defineConfig(() => {
               // their own chunks. Everything else (react, react-dom, scheduler,
               // motion, recharts, @firebase/*, @google/*) merges into a single
               // 'vendor' chunk: these packages import each other in cycles
-              // (react <-> scheduler, vendor recharts -> react, motion <->
-              // other libs), and splitting them across chunks produced circular
-              // chunk dependencies that crashed the page at module-eval time
-              // with 'Cannot read properties of undefined (forwardRef)' and
-              // 'Cannot access ... before initialization'. A single vendor
-              // chunk lets Rollup hoist intra-chunk cycles safely.
+              // and cannot be cleanly split without circular-chunk warnings.
               if (id.includes('/firebase/')) return 'firebase';
-              if (id.includes('/lucide-react/')) return 'icons';
+              if (id.includes('/@google/')) return 'google-ai';
               return 'vendor';
             }
-            // Future: split heavy game/ UI if desired (e.g. if (id.includes('game/rendering')) return 'rendering';)
-            return undefined; // explicit for all paths
           },
         },
       },
