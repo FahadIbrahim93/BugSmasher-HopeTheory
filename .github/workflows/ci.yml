@@ -29,6 +29,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # CQ-05: Prettier formatting gate.
+      # Currently soft (continue-on-error) until the tree is made clean with
+      # `npm run format` on a full local checkout. After that PR lands, flip
+      # continue-on-error to false and this becomes a hard certification gate.
+      - name: Format check (prettier — soft until CQ-05 complete)
+        run: npm run format:check
+        continue-on-error: true
+
       - name: Typecheck (tsc — hard gate)
         run: npm run typecheck
 
