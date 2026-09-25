@@ -34,7 +34,11 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{md,json,yml,yaml,css}": "prettier --write"
+    "*.{md,json,yml,yaml,css}": "prettier --write",
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   },
   "dependencies": {
     "@google/genai": "^2.7.0",
