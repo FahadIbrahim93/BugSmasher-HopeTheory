@@ -1,8 +1,19 @@
 # BugSmasher — Current Status Ledger
 
-**Status timestamp:** 2026-08-30 (CI baseline) · **docs update:** 2026-09-25  
-**Branch tip:** `main` @ `cb60902` (mobile HUD fix + portfolio docs + Pages workflow)  
+**Status timestamp:** 2026-08-30 (CI baseline) · **docs update:** 2026-09-26  
+**Branch tip (main):** `main` @ `cb60902` (mobile HUD fix + portfolio docs + Pages workflow)  
+**Active track:** `enterprise-10-10-revamp` (see [docs/ENTERPRISE_REVAMP.md](./ENTERPRISE_REVAMP.md))  
 **Certification:** **NOT CERTIFIED 10/10**
+
+## Active enterprise track (2026-09-26)
+
+Manager-locked priorities (full autonomy granted):
+
+1. Engineering — strictly close every gap already defined in RELEASE_CERTIFICATION + TASKBOARD (Option A).
+2. Visual — Canvas-preserving art pipeline upgrade (Option B) only after engineering foundation.
+3. Gameplay — secondary UX polish only.
+
+Single source of truth for this track: [docs/ENTERPRISE_REVAMP.md](./ENTERPRISE_REVAMP.md).
 
 ## Recent production deploys (Vercel)
 
@@ -41,17 +52,18 @@ The P0 emulator-test defect (P0-CI-01) is fixed and verified: the monotonic-scor
 - P0-CI-01: emulator regression test fixed and verified (26/26).
 - P0-CI-02: full gate suite green on the exact `main` commit (GitHub Actions + local re-run).
 
-## Current P0/P1 direction
+## Current P0/P1 direction (enterprise track)
 
-1. Eliminate static-analysis and React correctness debt (910 ESLint warnings → 0; CQ-01/CQ-02/CQ-03).
-2. Bring the tree Prettier-clean and gate formatting in CI (CQ-05).
-3. Raise coverage toward the 85/85/85/75 targets (T-01), especially branch coverage.
+1. **CQ-05** Bring the tree Prettier-clean and gate formatting in CI.
+2. **CQ-01 / CQ-02 / CQ-03** Eliminate static-analysis and React correctness debt (910 ESLint warnings → 0).
+3. **T-01** Raise coverage toward the 85/85/85/75 targets, especially branch coverage.
 4. Harden competitive-integrity validation (S-04/S-05).
 5. Certify performance and accessibility with evidence (PERF-01..04, AX-01..05).
 6. Verify deployment and operations; real providers or explicit de-scope for monitoring/ads/monetization stubs (OPS-01..06).
 7. Establish repository governance/protection (P0-GOV-01 — requires GitHub settings access).
 8. Keep documentation synchronized with actual evidence.
 9. Perform final adversarial release audit.
+10. Only after the above: visual pipeline upgrade (professional SFX + higher-fidelity assets).
 
 ## Important truth rules
 
@@ -63,6 +75,7 @@ The P0 emulator-test defect (P0-CI-01) is fixed and verified: the monotonic-scor
 
 ## Documentation control plane
 
+- `docs/ENTERPRISE_REVAMP.md` — **active track** single source of truth.
 - `docs/PROJECT_OPERATING_SYSTEM.md` — how the multi-agent project is managed.
 - `AGENTS.md` — coding/architecture rules.
 - `TASKBOARD.md` — live work queue and acceptance criteria.
@@ -74,7 +87,7 @@ The P0 emulator-test defect (P0-CI-01) is fixed and verified: the monotonic-scor
 
 ## Resume rule
 
-After a context switch, read `STATUS.md`, then `TASKBOARD.md`, then inspect the latest GitHub Actions run. Resume the highest-priority unresolved task. Do not restart from memory.
+After a context switch, read `STATUS.md`, then `docs/ENTERPRISE_REVAMP.md`, then `TASKBOARD.md`, then inspect the latest GitHub Actions run. Resume the highest-priority unresolved task. Do not restart from memory.
 
 ## Certification rule
 

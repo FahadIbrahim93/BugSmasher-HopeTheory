@@ -1,10 +1,11 @@
 # BugSmasher — Live 10/10 Taskboard
 
-**Last updated:** 2026-08-30  
+**Last updated:** 2026-09-26  
 **Certification:** NOT CERTIFIED  
-**Current state:** strong engineering baseline; `main` @ `bbc7250` CI is GREEN (CI + CodeQL + Security Audit), verified locally on the exact commit.
+**Active track:** `enterprise-10-10-revamp` → [docs/ENTERPRISE_REVAMP.md](./docs/ENTERPRISE_REVAMP.md)  
+**Current state:** strong engineering baseline; last fully verified CI on `main` @ `bbc7250` is GREEN (CI + CodeQL + Security Audit).
 
-Read first: [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md) · [Release Certification](./docs/RELEASE_CERTIFICATION.md) · [Current Status](./docs/STATUS.md) · [AGENTS.md](./AGENTS.md)
+Read first: [Enterprise Revamp](./docs/ENTERPRISE_REVAMP.md) · [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md) · [Release Certification](./docs/RELEASE_CERTIFICATION.md) · [Current Status](./docs/STATUS.md) · [AGENTS.md](./AGENTS.md)
 
 ## Operating rules
 
@@ -26,7 +27,7 @@ Read first: [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md) · [R
 | ----------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
 | P0-CI-01    | Fix failing emulator regression test        | `functions/test/callables.test.ts` uses a plausible score for a fresh session; anti-cheat logic remains intact; emulator suite green | `[x]` verified 2026-08-30: emulator 26/26 on `bbc7250`                               |
 | P0-CI-02    | Run full CI on exact main commit            | typecheck + functions + coverage + emulator + build + lint + E2E all green                                                           | `[x]` verified 2026-08-30: GitHub CI green on `bbc7250` + local re-run of every gate |
-| P0-TRUTH-01 | Synchronize README/STATUS/verification docs | no stale test, coverage or CI claims                                                                                                 | `[~]` AGENTS/STATUS/TASKBOARD synced 2026-08-30                                      |
+| P0-TRUTH-01 | Synchronize README/STATUS/verification docs | no stale test, coverage or CI claims                                                                                                 | `[~]` STATUS + ENTERPRISE_REVAMP synced 2026-09-26                                   |
 | P0-GOV-01   | Protect `main`                              | required CI checks + no unsafe direct merges                                                                                         | `[ ]` requires repository admin settings                                             |
 
 ---
@@ -141,9 +142,9 @@ Read first: [Project Operating System](./docs/PROJECT_OPERATING_SYSTEM.md) · [R
 
 ## 10/10 exit checklist
 
-- [ ] P0-CI-01
-- [ ] P0-CI-02
-- [ ] P0-TRUTH-01
+- [x] P0-CI-01
+- [x] P0-CI-02
+- [~] P0-TRUTH-01
 - [ ] P0-GOV-01
 - [ ] S-01 through S-05 accepted
 - [ ] CQ-01 through CQ-05 accepted
