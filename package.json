@@ -52,6 +52,10 @@
     "react-is": "^19.2.7",
     "recharts": "^3.8.1"
   },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.6",
+    "source-map-js": "^1.2.2"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.62.1",
