@@ -14,7 +14,7 @@
 **Arcade clicker-defense with server-validated leaderboards.**  
 React 19 + TypeScript + Canvas 2D + Firebase.
 
-> **Current release truth:** BugSmasher is **not currently certified 10/10**. The latest inspected `main` CI run (2026-08-30, commit `bbc7250`) is green across CI, CodeQL and Security Audit; remaining gaps are code-quality, coverage, accessibility, performance and operations evidence. See [docs/STATUS.md](./docs/STATUS.md).
+> **Release status:** BugSmasher is not certified. The latest inspected `main` CI run (2026-08-30, commit `bbc7250`) is green across CI, CodeQL and Security Audit; remaining gaps are code-quality, coverage, accessibility, performance and operations evidence. See [docs/STATUS.md](./docs/STATUS.md).
 
 **Portfolio showcase:** [docs/PORTFOLIO_SHOWCASE.md](./docs/PORTFOLIO_SHOWCASE.md) — honest 9/10 engineering summary for reviewers.
 
@@ -93,5 +93,5 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md), [AGENTS.md](./AGENTS.md) and [docs/AGE
 
 ## Status
 
-**10/10 certification:** NOT CERTIFIED  
+**Certification:** Not certified.
 **Next priority:** lint, prettier, accessibility, and operations evidence — then the live taskboard.
